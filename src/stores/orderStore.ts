@@ -1,0 +1,149 @@
+import { create } from 'zustand'
+import type { Order, OrderSide, QuickOrderScenario, ScenarioStep } from '../types'
+import { orders as fixtureOrders } from '../data/orders'
+import { quickOrderScenarios } from '../data/scenarios'
+
+interface OrderState {
+  orders: Order[]
+  activeScenario: QuickOrderScenario | null
+  scenarioStepIndex: number
+
+  getOpenOrders: () => Order[]
+  getOrdersByMarket: (marketId: string) => Order[]
+  getOrdersByStatus: (status: Order['status']) => Order[]
+
+  placeQuickOrder: (
+    marketId: string,
+    marketTitle: string,
+    side: OrderSide,
+    quantity: number,
+    scenarioId?: string,
+  ) => void
+  placeLimitOrder: (
+    marketId: string,
+    marketTitle: string,
+    side: OrderSide,
+    price: number,
+    quantity: number,
+  ) => void
+  cancelOrder: (orderId: string) => void
+  cancelAllOrders: (marketId?: string) => void
+}
+
+let scenarioTimers: ReturnType<typeof setTimeout>[] = []
+
+function clearScenarioTimers() {
+  scenarioTimers.forEach(clearTimeout)
+  scenarioTimers = []
+}
+
+export const useOrderStore = create<OrderState>((set, get) => ({
+  orders: [...fixtureOrders],
+  activeScenario: null,
+  scenarioStepIndex: 0,
+
+  getOpenOrders: () => get().orders.filter((o) => o.status === 'Open' || o.status === 'PartialFill'),
+
+  getOrdersByMarket: (marketId) => get().orders.filter((o) => o.marketId === marketId),
+
+  getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
+
+  placeQuickOrder: (marketId, marketTitle, side, quantity, scenarioId) => {
+    clearScenarioTimers()
+
+    const scenario =
+      quickOrderScenarios.find((s) => s.id === scenarioId) ??
+      quickOrderScenarios.find((s) => s.marketId === marketId) ??
+      quickOrderScenarios[0]
+
+    const orderId = `ord-${Date.now()}`
+    const now = new Date().toISOString()
+
+    const newOrder: Order = {
+      id: orderId,
+      marketId,
+      marketTitle,
+      side,
+      type: 'market',
+      price: scenario.estimatedAvgPrice,
+      quantity,
+      filledQuantity: 0,
+      status: 'Pending',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    set((state) => ({
+      orders: [newOrder, ...state.orders],
+      activeScenario: scenario,
+      scenarioStepIndex: 0,
+    }))
+
+    let cumulativeDelay = 0
+    scenario.steps.forEach((step: ScenarioStep, i: number) => {
+      cumulativeDelay += step.delay
+      const timer = setTimeout(() => {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  status: step.status,
+                  filledQuantity: step.filledQuantity ?? o.filledQuantity,
+                  rejectReason: step.rejectReason,
+                  rejectCta: step.rejectCta,
+                  updatedAt: new Date().toISOString(),
+                }
+              : o,
+          ),
+          scenarioStepIndex: i + 1,
+        }))
+      }, cumulativeDelay)
+      scenarioTimers.push(timer)
+    })
+  },
+
+  placeLimitOrder: (marketId, marketTitle, side, price, quantity) => {
+    const orderId = `ord-${Date.now()}`
+    const now = new Date().toISOString()
+
+    const newOrder: Order = {
+      id: orderId,
+      marketId,
+      marketTitle,
+      side,
+      type: 'limit',
+      price,
+      quantity,
+      filledQuantity: 0,
+      status: 'Open',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    set((state) => ({
+      orders: [newOrder, ...state.orders],
+    }))
+  },
+
+  cancelOrder: (orderId) => {
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        o.id === orderId && (o.status === 'Open' || o.status === 'PartialFill')
+          ? { ...o, status: 'Cancelled' as const, updatedAt: new Date().toISOString() }
+          : o,
+      ),
+    }))
+  },
+
+  cancelAllOrders: (marketId) => {
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        (o.status === 'Open' || o.status === 'PartialFill') &&
+        (!marketId || o.marketId === marketId)
+          ? { ...o, status: 'Cancelled' as const, updatedAt: new Date().toISOString() }
+          : o,
+      ),
+    }))
+  },
+}))
