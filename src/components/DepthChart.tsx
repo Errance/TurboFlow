@@ -46,7 +46,7 @@ function buildStepPath(
   side: 'bid' | 'ask',
   xScale: (p: number) => number,
   yScale: (q: number) => number,
-  drawAreaHeight: number,
+  _drawAreaHeight: number,
 ): { line: string; area: string } {
   if (points.length === 0) return { line: '', area: '' }
 

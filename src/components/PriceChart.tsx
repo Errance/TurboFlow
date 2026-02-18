@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { createChart, LineSeries, type IChartApi, type ISeriesApi, type Time } from 'lightweight-charts'
+import { createChart, LineSeries, type IChartApi, type Time } from 'lightweight-charts'
 import { priceHistories } from '../data/priceHistory'
 
 interface Props {
