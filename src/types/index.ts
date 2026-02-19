@@ -1,4 +1,103 @@
-// === Market ===
+// ============================================================
+// V2 Event-centric types
+// ============================================================
+
+export type EventType = 'standard' | 'multi-option' | 'sports'
+export type OutcomeModel = 'independent' | 'mutually-exclusive'
+
+export type EventStatus = 'OPEN' | 'CLOSED' | 'RESOLVING' | 'SETTLED' | 'CANCELLED' | 'VOIDED'
+export type EventSubStatus = 'normal' | 'paused' | 'disputed' | 'delayed' | 'emergency'
+
+export type EventAction =
+  | 'appeal'
+  | 'view_dispute'
+  | 'request_settle'
+  | 'report_issue'
+  | 'view_refund'
+  | 'view_evidence'
+
+export interface EventStatusInfo {
+  status: EventStatus
+  subStatus: EventSubStatus
+  reason: string
+  reasonDetail?: string
+  actionAvailable?: EventAction[]
+  updatedAt: string
+}
+
+export interface EventTimeline {
+  openDate: string
+  closeDate: string
+  expectedSettleWindow?: string
+  settledDate?: string
+}
+
+export interface IncentiveTag {
+  type: 'volume_bonus' | 'liquidity_reward' | 'new_market'
+  label: string
+}
+
+export interface TeamInfo {
+  name: string
+  abbreviation: string
+  record?: string
+  logoUrl?: string
+}
+
+export interface SportsMetadata {
+  sport: string
+  league: string
+  homeTeam: TeamInfo
+  awayTeam: TeamInfo
+  gameTime: string
+  status: 'scheduled' | 'live' | 'final'
+  score?: { home: number; away: number }
+}
+
+export type ContractStatus = 'OPEN' | 'CLOSED' | 'RESOLVING' | 'SETTLED' | 'CANCELLED' | 'VOIDED'
+
+export interface Contract {
+  id: string
+  eventId: string
+  label: string
+  type?: 'binary' | 'moneyline' | 'spread' | 'total'
+  status: ContractStatus
+  yesPrice: number       // 0.01–0.99 USDC
+  noPrice: number
+  probability: number    // display percentage 0–100
+  change24h: number      // percentage points
+  volume: number         // USDC
+  expiresAt: string
+  settlementResult?: 'YES' | 'NO'
+  payoutPerShare: number // typically 1 USDC
+}
+
+export interface PredictionEvent {
+  id: string
+  type: EventType
+  outcomeModel: OutcomeModel
+  title: string
+  description: string
+  category: string
+  tags: string[]
+  status: EventStatus
+  statusInfo: EventStatusInfo
+  imageUrl?: string
+  rulesMeasurement: string
+  rulesClosing: string
+  resolutionSource: string
+  rulesDetail?: string
+  timeline: EventTimeline
+  contracts: Contract[]
+  totalVolume: number    // USDC
+  featured?: boolean
+  incentive?: IncentiveTag
+  sports?: SportsMetadata
+}
+
+// ============================================================
+// V1 backward-compatible types (used by CLOB / Portfolio / Orders)
+// ============================================================
 
 export type MarketStatus = 'OPEN' | 'CLOSED' | 'RESOLVING' | 'SETTLED'
 

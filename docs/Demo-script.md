@@ -1,79 +1,107 @@
-# Demo 演示脚本（回归闸门）
+# Demo 演示脚本（V2 — Event-based Prediction Market）
 
 > 每次改动后都能按脚本跑通，确保主干路径没有变长、没有变乱、没有变得不可解释。
 
-## 演示目标（3 分钟）
-- 让观众理解：这是一个 CLOB 预测市场原型
-- 看到"最短路径树"：主干短；需要时才展开分叉；不会信息爆炸
-- 看到"丝滑 + 严谨"：动作即时反馈；订单状态清晰；盘口用 snapshot→delta 维护
-- 看到"低理解成本"：看见按钮/图标/布局就能猜到功能与结果
+## 演示目标（5 分钟）
+- 让观众理解：这是一个 **Event-centric 预测市场**，用 USDC 统一结算
+- 看到信息架构：Event → Contracts → Trade（渐进披露）
+- 看到预测市场核心：Rules Summary / Timeline & Payout / 概率 % + USDC
+- 看到独立 Sports UI、CLOB 高级交易作为深层分叉
+- 看到异常场景处理：争议/取消/暂停的状态Banner和用户操作
 
 ---
 
-## 1) 主干演示（Trunk）
+## 1) 标准预测市场主干（桌面）
 
-1. 打开 Markets 列表页
-2. 浏览市场卡片（看到不同状态：OPEN / CLOSED / SETTLED）
-3. 进入一个 **OPEN** 市场详情
-4. 看到盘口在"活"着（delta 微变）
-5. 使用 Quick Order：选 YES/NO → 输入金额 → 点下单
-6. 看到确认弹窗（预估均价/吃几档/费用）→ 确认
-7. 看到反馈链：Pending → Filled（脚本 1：动画过场）
-8. （可选）再下一笔 Quick Order → 触发 PartialFill → Filled（脚本 2），或触发 Rejected（脚本 3）
-9. 进入一个 **CLOSED** 市场 → 看到按钮禁用 + reason "市场已截止，等待结算"
-10. 切换到 Portfolio 页 → 看到 Positions / Open Orders tabs
-
----
-
-## 2) 分叉演示（Branches）
-
-1. 触发意图信号：点击盘口某个价位
-2. 弹出 Limit Order 分叉（Drawer / BottomSheet）
-3. 价格已自动填入 → 输入数量 → 下单
-4. 一步回主干，确认主干上下文不丢
+1. 打开 Explore 首页（`/`）
+2. 看到 Featured Banner（热点事件 + 激励标签）
+3. 看到 Sports 运营位 Banner（点击可进入 Sports 页）
+4. 看到分类 Tab（All / Politics / Economics / Crypto / Sports → / Tech / Culture）
+5. 看到事件卡片：标题 + 状态 Badge + 内嵌合约行 + Yes/No 概率按钮 + 成交量(USDC)
+6. 点击一张事件卡片 → 进入 **EventDetailPage**
+7. 看到 **RulesSummaryCard**（三要素：测量对象 / 截止方式 / 结算来源）
+8. 看到 **TimelinePayoutCard**（Open/Close 时间线 + "赢=1 USDC/份, 输=0"）
+9. 看到互斥事件的 **OutcomeModelHint**（"这些合约互斥..."）
+10. 看到合约行表格：label / 概率% / 24h变化 / 成交量 / Yes/No 按钮 / 图表图标
+11. 点合约行 Yes 按钮 → 右侧 TradePanel 切换到该合约
+12. TradePanel 显示：事件名 + 合约名（自解释）+ Yes/No 切换 + Quick Buy/Limit 说明
+13. 输入金额 → 看到估算（份数/均价/潜在收益/Payout说明）→ 确认
 
 ---
 
-## 3) 错误/拒绝演示
+## 2) 移动端主干
 
-1. 触发一次 Rejected 场景（如在 CLOSED 市场尝试下单）
-2. 看到错误提示：reason + CTA 按钮（如"去查看持仓"）
-3. 点击 CTA → 页面确实跳转到对应位置（如 Portfolio 的 Open Orders tab），且跳转后上下文合理
+1. 在 Explore 首页点事件卡片的 Yes 按钮 → BottomSheet 弹出
+2. BottomSheet 与桌面 TradePanel 完全一致（同一组件不同容器）
+3. 显示"您正在交易：[事件名] — [合约名]"
 
 ---
 
-## 4) 备注叙事点（口头阐述，不强制演示）
+## 3) Sports 独立 UI
 
-- 盘口采用 snapshot → delta 结构（对齐 Kalshi WS 协议），原型用预设数据模拟
-- 可选演示 DevTools "Simulate Reconnect"（重新 loadSnapshot）
-- 原型用预设市场覆盖 OPEN/CLOSED/RESOLVING/SETTLED；产品化时市场状态来自 WS market status updates 实时流（Kalshi WS 包含 orderbook / trade executions / market status updates / fill notifications）
-- Quick Order = marketable limit（对齐 Polymarket：所有订单本质是 limit）
+1. 从 Explore 点 Sports 分类 Tab 或 Sports 运营位 Banner → 进入 `/sports`
+2. 看到 Upcoming / Live / Results tabs
+3. 看到运动分类过滤（All / Basketball / Tennis 等）
+4. 看到比赛卡片：队名(战绩) vs 队名(战绩) + Moneyline/Spread/Total 概率
+5. 点击比赛卡片 → 进入 SportsGamePage
+6. 看到对阵头部 + 投注线列表 + 右侧 TradePanel（桌面）/ BottomSheet（移动）
+7. Rules & Settlement 折叠展开
+
+---
+
+## 4) CLOB 高级交易（分叉 — Advanced Trading）
+
+1. 在 EventDetailPage 的合约行右侧点图表小图标 → 进入 `/contract/:id`
+2. 看到事件归属头部（可点击返回事件详情）+ 合约名 + 当前概率
+3. 看到 "Advanced Trading" Badge
+4. 看到 Orderbook（盘口delta在"活"着）+ PriceChart
+5. 可使用 Quick Order / Limit Order
+6. 点盘口价位 → 自动填入 Limit Order 价格
+
+---
+
+## 5) 异常场景演示
+
+1. 找到 "US Airstrike on Iran" 事件（RESOLVING + disputed）
+   - 看到红色 StatusBanner："Settlement Disputed" + 原因
+   - 点 "View Dispute" → SideDrawer 打开 DisputePanel
+   - 看到争议时间线 + 双方论据 + "Submit Evidence" 按钮
+2. 找到 "Lakers vs Celtics" 事件（CANCELLED）
+   - 看到灰色 StatusBanner + RefundBanner（退款信息）
+3. 找到 "Ethereum ETF" 事件（OPEN + paused）
+   - 看到黄色 StatusBanner："Trading Paused" + 原因
+   - Yes/No 按钮显示为 disabled
+
+---
+
+## 6) Portfolio & Leaderboard
+
+1. 切换到 Portfolio tab → 看到持仓（USDC 计价）/ Open Orders / Activity / Trade History
+2. 切换到 Leaderboard tab → 看到排行榜 + Volume/Liquidity Incentives 卡片
 
 ---
 
 ## 回归清单（每次改动必须勾选）
 
 ### A) 主干/分叉结构
-- [ ] 主干未引入不必要的解释/选择/跳转
-- [ ] 分叉只在意图信号出现时展开
-- [ ] 分叉短进短出回主干，且上下文保留
+- [ ] Explore → EventDetail → Trade 主干路径畅通
+- [ ] Sports 从 Explore 的分类 Tab 或 Banner 可到达
+- [ ] CLOB 高级交易只在合约行图表图标点击后才展开
+- [ ] 分叉短进短出回主干，上下文保留
 
-### B) 丝滑与严谨
-- [ ] 关键动作都有立即反馈（无假死）
-- [ ] Pending 最终都收敛到明确结果状态
-- [ ] Rejected 有 reason + CTA 按钮（不只是文字）
-- [ ] 盘口 snapshot/delta 叙事正常（loadSnapshot → applyDelta 定时推送）
+### B) 预测市场信息完整
+- [ ] RulesSummaryCard 显示三要素（测量/截止/来源）
+- [ ] TimelinePayoutCard 显示时间线 + "赢=1 USDC, 输=0"
+- [ ] 互斥事件有 OutcomeModelHint
+- [ ] 全站价格统一 USDC（无 ¢ 残留）
 
-### C) 低理解成本（自解释）
-- [ ] 主要动作"看见就懂"：按钮/图标/入口无需讲解也能猜到用途
-- [ ] 关键图标若可能误解，已配文字或就地提示
-- [ ] 二元盘口有"仅显示 Bids"标签 + tooltip 解释等价关系
-- [ ] 用户不需要记住信息再跳去别处使用
-- [ ] 错误提示含 CTA 按钮（"去查看持仓""返回市场列表"等）
-- [ ] 点击关键动作后，状态变化/反馈能强化理解
+### C) 交互反馈
+- [ ] TradePanel 自解释（显示事件名+合约名）
+- [ ] Quick Buy / Limit Order 有文案解释
+- [ ] 异常状态 StatusBanner 正确显示 + 操作按钮可用
+- [ ] DisputePanel / RefundBanner 可从 StatusBanner 打开
 
 ### D) 桌面端 + 移动端
-- [ ] 主干流程桌面/移动一致
-- [ ] 移动端分叉用 BottomSheet，不依赖 hover
+- [ ] TradePanel 桌面固定右侧 / 移动 BottomSheet 完全一致
 - [ ] 所有可点击元素触控区 >= 44x44px
-- [ ] 盘口价位整行可点
+- [ ] 移动端分类 Tab 可横向滚动

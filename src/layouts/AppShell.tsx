@@ -2,8 +2,9 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { ToastContainer } from '../components/ui/Toast'
 
 const navItems = [
-  { to: '/', label: 'Markets' },
+  { to: '/', label: 'Explore' },
   { to: '/portfolio', label: 'Portfolio' },
+  { to: '/leaderboard', label: 'Leaderboard' },
 ]
 
 export default function AppShell() {
@@ -76,24 +77,29 @@ export default function AppShell() {
 
 function MobileIcon({ name, active }: { name: string; active: boolean }) {
   const color = active ? '#2DD4BF' : '#8A8A9A'
-  if (name === 'Markets') {
+  if (name === 'Explore') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path
-          d="M3 14l4-4 3 3 7-7"
-          stroke={color}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <circle cx="10" cy="10" r="7" stroke={color} strokeWidth="1.5" />
+        <path d="M8 12l4.5-4.5M12.5 7.5L11 11l-3 1 1.5-4.5z" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     )
   }
+  if (name === 'Portfolio') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="3" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
+        <rect x="3" y="11" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
+        <rect x="11" y="3" width="6" height="14" rx="1" stroke={color} strokeWidth="1.5" />
+      </svg>
+    )
+  }
+  // Leaderboard
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <rect x="3" y="3" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
-      <rect x="3" y="11" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
-      <rect x="11" y="3" width="6" height="14" rx="1" stroke={color} strokeWidth="1.5" />
+      <rect x="3" y="10" width="4" height="7" rx="0.5" stroke={color} strokeWidth="1.5" />
+      <rect x="8" y="4" width="4" height="13" rx="0.5" stroke={color} strokeWidth="1.5" />
+      <rect x="13" y="7" width="4" height="10" rx="0.5" stroke={color} strokeWidth="1.5" />
     </svg>
   )
 }
