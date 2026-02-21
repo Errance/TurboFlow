@@ -91,7 +91,7 @@ export default function SportsGamePage() {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
         <p className="text-[#8A8A9A]">Game not found</p>
-        <Button variant="ghost" className="mt-4" onClick={() => navigate('/sports')}>
+        <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
           Back to Sports
         </Button>
       </div>
@@ -112,21 +112,22 @@ export default function SportsGamePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row">
-        {/* Left main area */}
-        <div className="flex-1 px-4 md:px-6 py-6 md:pr-0">
-          {/* Back */}
-          <button
-            onClick={() => navigate('/sports')}
-            className="flex items-center gap-1 text-[#8A8A9A] hover:text-white text-sm mb-4 min-h-[44px] transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back to Sports
-          </button>
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
+      {/* Full-width back button */}
+      <button
+        onClick={() => navigate('/')}
+        className="flex items-center gap-1 text-[#8A8A9A] hover:text-white text-sm mb-4 min-h-[44px] transition-colors"
+      >
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to Sports
+      </button>
 
+      {/* Two-column layout */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left main area */}
+        <div className="flex-1">
           {/* Game header */}
           <div className="bg-[#161622] border border-[#252536] rounded-xl p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
@@ -234,7 +235,7 @@ export default function SportsGamePage() {
         </div>
 
         {/* Right trade panel — desktop */}
-        <div className="hidden md:block w-[340px] shrink-0 sticky top-14 self-start py-6 px-4">
+        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 self-start">
           <TradePanel event={event} />
         </div>
       </div>

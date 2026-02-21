@@ -33,7 +33,7 @@ function generateHistory(
   return points
 }
 
-export const priceHistories: Record<string, PricePoint[]> = {
+const staticHistories: Record<string, PricePoint[]> = {
   'mkt-btc-100k': generateHistory(58, 90, 2.5, 42),
   'mkt-fed-rates': generateHistory(38, 90, 1.8, 77),
   'mkt-eth-merge': generateHistory(70, 75, 2.0, 13),
@@ -41,3 +41,26 @@ export const priceHistories: Record<string, PricePoint[]> = {
   'mkt-apple-ar': generateHistory(30, 90, 3.0, 55),
   'mkt-tsla-400': generateHistory(60, 90, 4.0, 31),
 }
+
+function hashString(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
+
+const dynamicCache: Record<string, PricePoint[]> = {}
+
+export function getPriceHistory(marketId: string): PricePoint[] {
+  if (staticHistories[marketId]) return staticHistories[marketId]
+  if (dynamicCache[marketId]) return dynamicCache[marketId]
+  const h = hashString(marketId)
+  const startPrice = 20 + (h % 60)
+  const days = 45 + (h % 60)
+  const volatility = 1.0 + (h % 30) / 10
+  dynamicCache[marketId] = generateHistory(startPrice, days, volatility, h)
+  return dynamicCache[marketId]
+}
+
+export const priceHistories: Record<string, PricePoint[]> = staticHistories

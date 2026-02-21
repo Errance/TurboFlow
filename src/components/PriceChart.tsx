@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createChart, LineSeries, type IChartApi, type Time } from 'lightweight-charts'
-import { priceHistories } from '../data/priceHistory'
+import { getPriceHistory } from '../data/priceHistory'
 
 interface Props {
   marketId: string
@@ -40,25 +40,26 @@ export default function PriceChart({ marketId, className }: Props) {
       handleScale: true,
     })
 
+    const logoEl = containerRef.current.querySelector('[class*="apply-common-tooltip"]') as HTMLElement
+    if (logoEl) logoEl.style.display = 'none'
+
     const yesSeries = chart.addSeries(LineSeries, {
       color: '#2DD4BF',
       lineWidth: 2,
       title: 'YES',
-      priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(1)}¢` },
+      priceFormat: { type: 'custom', formatter: (p: number) => `${(p / 100).toFixed(2)}` },
     })
 
     const noSeries = chart.addSeries(LineSeries, {
       color: '#E85A7E',
       lineWidth: 2,
       title: 'NO',
-      priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(1)}¢` },
+      priceFormat: { type: 'custom', formatter: (p: number) => `${(p / 100).toFixed(2)}` },
     })
 
-    const history = priceHistories[marketId]
-    if (history) {
-      yesSeries.setData(history.map((p) => ({ time: p.time as Time, value: p.yes })))
-      noSeries.setData(history.map((p) => ({ time: p.time as Time, value: p.no })))
-    }
+    const history = getPriceHistory(marketId)
+    yesSeries.setData(history.map((p) => ({ time: p.time as Time, value: p.yes })))
+    noSeries.setData(history.map((p) => ({ time: p.time as Time, value: p.no })))
 
     chart.timeScale().fitContent()
     chartRef.current = chart

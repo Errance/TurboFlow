@@ -2,9 +2,9 @@ import { create } from 'zustand'
 import type { PredictionEvent, Contract } from '../types'
 import { events as fixtureEvents, getContractById } from '../data/events'
 
-const CATEGORIES = ['All', 'Politics', 'Economics', 'Crypto', 'Finance', 'Tech', 'Culture'] as const
+const CATEGORIES = ['All', 'Live', 'Politics', 'Economics', 'Crypto', 'Finance', 'Tech', 'Culture', 'Sports'] as const
 
-export type EventCategory = (typeof CATEGORIES)[number] | 'Sports'
+export type EventCategory = (typeof CATEGORIES)[number]
 
 interface EventState {
   events: PredictionEvent[]
@@ -37,11 +37,18 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   getFilteredEvents: () => {
     const { events, selectedCategory, searchQuery } = get()
-    let filtered = events.filter((e) => e.category !== 'Sports')
+    let filtered: PredictionEvent[]
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter((e) => e.category === selectedCategory)
+    if (selectedCategory === 'All') {
+      filtered = events.filter((e) => e.type !== 'sports' && e.type !== 'instant')
+    } else if (selectedCategory === 'Live') {
+      filtered = events.filter((e) => e.type === 'instant')
+    } else if (selectedCategory === 'Sports') {
+      filtered = events.filter((e) => e.category === 'Sports')
+    } else {
+      filtered = events.filter((e) => e.category === selectedCategory && e.type !== 'instant')
     }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       filtered = filtered.filter(

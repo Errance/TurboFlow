@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
 import type { PredictionEvent, Contract, EventStatusInfo } from '../types'
 import Badge from '../components/ui/Badge'
@@ -176,8 +176,8 @@ function OutcomeModelHint({ event }: { event: PredictionEvent }) {
     <div className="bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2 mb-4">
       <p className="text-xs text-[#8A8A9A]">
         <span className="text-[#F59E0B] font-medium">Mutually exclusive: </span>
-        These contracts represent competing outcomes — exactly one will resolve YES.
-        Probabilities may not sum to exactly 100% due to bid-ask spreads.
+        Only one option will settle YES; all others settle NO.
+        Yes probabilities may not sum to exactly 100% due to bid-ask spreads.
       </p>
     </div>
   )
@@ -190,11 +190,13 @@ function ContractTableRow({
   isSelected,
   onSelect,
   disabled,
+  isMutuallyExclusive,
 }: {
   contract: Contract
   isSelected: boolean
   onSelect: (contractId: string, side: 'YES' | 'NO') => void
   disabled: boolean
+  isMutuallyExclusive?: boolean
 }) {
   const navigate = useNavigate()
   const noProb = Math.round((1 - contract.yesPrice) * 100)
@@ -236,6 +238,7 @@ function ContractTableRow({
         <button
           onClick={() => !disabled && onSelect(contract.id, 'NO')}
           disabled={disabled}
+          title={isMutuallyExclusive ? `Buy NO: Betting "${contract.label}" will NOT be the final result` : undefined}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] min-w-[56px] transition-colors ${
             disabled
               ? 'bg-[#252536] text-[#8A8A9A] cursor-not-allowed'
@@ -277,6 +280,7 @@ function SpreadNote({ event }: { event: PredictionEvent }) {
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const getEvent = useEventStore((s) => s.getEvent)
   const openTradePanel = useEventStore((s) => s.openTradePanel)
@@ -287,6 +291,15 @@ export default function EventDetailPage() {
   const [disputeDrawerOpen, setDisputeDrawerOpen] = useState(false)
 
   const event = getEvent(eventId ?? '')
+
+  useEffect(() => {
+    const contractParam = searchParams.get('contract')
+    const sideParam = searchParams.get('side') as 'YES' | 'NO' | null
+    if (contractParam && sideParam) {
+      openTradePanel(contractParam, sideParam)
+      setSearchParams({}, { replace: true })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!event) {
     return (
@@ -314,34 +327,36 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row">
-        {/* Left main area */}
-        <div className="flex-1 px-4 md:px-6 py-6 md:pr-0">
-          {/* Back + title */}
-          <div className="flex items-start gap-3 mb-4">
-            <button
-              onClick={() => navigate('/')}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[#8A8A9A] hover:text-white rounded-lg hover:bg-[#252536] transition-colors shrink-0 -ml-2"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-white">{event.title}</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
-                  {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status}
-                </Badge>
-                <span className="text-xs text-[#8A8A9A]">{event.category}</span>
-                <span className="text-xs text-[#8A8A9A] font-mono">{formatVolume(event.totalVolume)} vol</span>
-              </div>
-            </div>
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
+      {/* Full-width header */}
+      <div className="flex items-start gap-3 mb-4">
+        <button
+          onClick={() => navigate('/')}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[#8A8A9A] hover:text-white rounded-lg hover:bg-[#252536] transition-colors shrink-0 -ml-2"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-white">{event.title}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
+              {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status}
+            </Badge>
+            <span className="text-xs text-[#8A8A9A]">{event.category}</span>
+            <span className="text-xs text-[#8A8A9A] font-mono">{formatVolume(event.totalVolume)} vol</span>
           </div>
+        </div>
+      </div>
 
-          {/* Status banner */}
-          <StatusBanner statusInfo={event.statusInfo} onAction={handleStatusAction} />
+      {/* Status banner */}
+      <StatusBanner statusInfo={event.statusInfo} onAction={handleStatusAction} />
+
+      {/* Two-column layout */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left main area */}
+        <div className="flex-1">
 
           {/* Refund banner for cancelled/voided */}
           {isRefundable && (
@@ -361,7 +376,10 @@ export default function EventDetailPage() {
           <div className="bg-[#161622] border border-[#252536] rounded-xl p-3 mb-4">
             <div className="flex items-center justify-between mb-2 px-1">
               <h3 className="text-sm font-semibold text-white">Contracts</h3>
-              <span className="text-xs text-[#8A8A9A]">{event.contracts.length} total</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded">Payout: 1 USDC/share</span>
+                <span className="text-xs text-[#8A8A9A]">{event.contracts.length} total</span>
+              </div>
             </div>
             <div className="space-y-1">
               {event.contracts.map((contract) => (
@@ -371,6 +389,7 @@ export default function EventDetailPage() {
                   isSelected={selectedContractId === contract.id}
                   onSelect={handleSelectContract}
                   disabled={isDisabled}
+                  isMutuallyExclusive={event.outcomeModel === 'mutually-exclusive'}
                 />
               ))}
             </div>
@@ -390,7 +409,7 @@ export default function EventDetailPage() {
         </div>
 
         {/* Right trade panel — desktop only */}
-        <div className="hidden md:block w-[340px] shrink-0 sticky top-14 self-start py-6 px-4">
+        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 self-start">
           <TradePanel event={event} />
         </div>
       </div>

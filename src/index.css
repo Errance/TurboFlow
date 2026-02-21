@@ -12,6 +12,17 @@
   }
 }
 
+@keyframes slide-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes slide-in-from-right {
   from {
     opacity: 0;
@@ -41,4 +52,21 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.glow-card {
+  position: relative;
+  background: #161622;
+  border-radius: 12px;
+  border: 2px solid rgba(45, 212, 191, 0.25);
+  transition: border-color 0.2s ease;
+}
+
+.glow-card:hover {
+  border-color: rgba(45, 212, 191, 0.65);
+}
+
+[class*="apply-common-tooltip"],
+a[target="_blank"][href*="tradingview"] {
+  display: none !important;
 }

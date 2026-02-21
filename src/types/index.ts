@@ -2,7 +2,7 @@
 // V2 Event-centric types
 // ============================================================
 
-export type EventType = 'standard' | 'multi-option' | 'sports'
+export type EventType = 'standard' | 'multi-option' | 'sports' | 'instant'
 export type OutcomeModel = 'independent' | 'mutually-exclusive'
 
 export type EventStatus = 'OPEN' | 'CLOSED' | 'RESOLVING' | 'SETTLED' | 'CANCELLED' | 'VOIDED'
@@ -47,6 +47,7 @@ export interface TeamInfo {
 export interface SportsMetadata {
   sport: string
   league: string
+  subLeague?: string
   homeTeam: TeamInfo
   awayTeam: TeamInfo
   gameTime: string
@@ -72,6 +73,20 @@ export interface Contract {
   payoutPerShare: number // typically 1 USDC
 }
 
+export type AssetClass = 'crypto' | 'stocks' | 'commodities' | 'forex'
+
+export interface InstantMarketMeta {
+  asset: string
+  assetIcon?: string
+  assetClass: AssetClass
+  currentPrice: number
+  strikePrice: number
+  direction: 'UP' | 'DOWN'
+  durationSeconds: number
+  startedAt: string
+  endsAt: string
+}
+
 export interface PredictionEvent {
   id: string
   type: EventType
@@ -93,6 +108,7 @@ export interface PredictionEvent {
   featured?: boolean
   incentive?: IncentiveTag
   sports?: SportsMetadata
+  instant?: InstantMarketMeta
 }
 
 // ============================================================

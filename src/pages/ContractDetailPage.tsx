@@ -59,8 +59,8 @@ export default function ContractDetailPage() {
   )
   const recentTrades = useMemo(() => relevantTrades.slice(0, 5), [relevantTrades])
 
+  const [orderTab, setOrderTab] = useState<'market' | 'limit'>('market')
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
-  const [limitDrawerOpen, setLimitDrawerOpen] = useState(false)
   const [prefillPrice, setPrefillPrice] = useState<number | undefined>()
   const [prefillSide, setPrefillSide] = useState<OrderSide | undefined>()
   const [rulesDrawerOpen, setRulesDrawerOpen] = useState(false)
@@ -77,17 +77,12 @@ export default function ContractDetailPage() {
   const handlePriceClick = useCallback((price: number, side: OrderSide) => {
     setPrefillPrice(price)
     setPrefillSide(side)
-    setLimitDrawerOpen(true)
-  }, [])
-
-  const handleLimitClick = useCallback(() => {
-    setPrefillPrice(undefined)
-    setPrefillSide(undefined)
-    setLimitDrawerOpen(true)
+    setOrderTab('limit')
   }, [])
 
   const handleLimitOrderPlaced = useCallback(() => {
-    setLimitDrawerOpen(false)
+    setPrefillPrice(undefined)
+    setPrefillSide(undefined)
   }, [])
 
   if (!result || !legacyMarket || !contractId) {
@@ -104,12 +99,33 @@ export default function ContractDetailPage() {
   const { event, contract } = result
   const showChart = isOpen || legacyMarket.status === 'CLOSED'
 
+  const OrderTabBar = ({ current, onChange }: { current: 'market' | 'limit'; onChange: (v: 'market' | 'limit') => void }) => (
+    <div className="flex gap-1 bg-[#0B0B0F] rounded-lg p-0.5 mb-3">
+      <button
+        onClick={() => onChange('market')}
+        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
+          current === 'market' ? 'bg-[#252536] text-white' : 'text-[#8A8A9A] hover:text-white'
+        }`}
+      >
+        Market
+      </button>
+      <button
+        onClick={() => onChange('limit')}
+        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
+          current === 'limit' ? 'bg-[#252536] text-white' : 'text-[#8A8A9A] hover:text-white'
+        }`}
+      >
+        Limit
+      </button>
+    </div>
+  )
+
   return (
     <div className="px-4 md:px-6 py-6 max-w-6xl mx-auto">
       {/* Event attribution header */}
       <div className="mb-4">
         <button
-          onClick={() => navigate(event.category === 'Sports' ? `/sports/${event.id}` : `/event/${event.id}`)}
+          onClick={() => navigate(event.category === 'Sports' ? `/game/${event.id}` : `/event/${event.id}`)}
           className="text-[#2DD4BF] hover:underline text-xs mb-2 flex items-center gap-1 min-h-[44px]"
         >
           ← {event.title}
@@ -130,7 +146,6 @@ export default function ContractDetailPage() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left column */}
         <div className="flex-1 flex flex-col gap-5">
-          {/* Rules summary */}
           <div className="flex items-center justify-between">
             <p className="text-xs text-[#8A8A9A] flex-1">{event.resolutionSource}</p>
             {event.rulesDetail && (
@@ -140,16 +155,13 @@ export default function ContractDetailPage() {
             )}
           </div>
 
-          {/* Price Chart */}
           {showChart && <PriceChart marketId={legacyMarket.id} />}
 
-          {/* Orderbook */}
           <div>
             <h3 className="text-sm font-medium text-white mb-2">Orderbook</h3>
             <Orderbook isOpen={!!isOpen} onPriceClick={isOpen ? handlePriceClick : undefined} />
           </div>
 
-          {/* Recent Trades */}
           {recentTrades.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -176,10 +188,23 @@ export default function ContractDetailPage() {
           )}
         </div>
 
-        {/* Right column — desktop Quick Order */}
+        {/* Right column — unified Market/Limit panel */}
         <div className="hidden md:block w-80 shrink-0">
-          <div className="sticky top-20">
-            <QuickOrderPanel market={legacyMarket} onLimitClick={handleLimitClick} />
+          <div className="sticky top-24 bg-[#161622] rounded-xl border border-[#252536] p-4">
+            <OrderTabBar current={orderTab} onChange={setOrderTab} />
+            {orderTab === 'market' ? (
+              <QuickOrderPanel
+                market={legacyMarket}
+                className="border-0 bg-transparent p-0"
+              />
+            ) : (
+              <LimitOrderPanel
+                market={legacyMarket}
+                prefillPrice={prefillPrice}
+                prefillSide={prefillSide}
+                onOrderPlaced={handleLimitOrderPlaced}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -196,31 +221,30 @@ export default function ContractDetailPage() {
         </div>
       )}
 
-      {/* Mobile BottomSheet */}
+      {/* Mobile BottomSheet — unified Market/Limit */}
       <Drawer
         isOpen={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
-        title="Quick Order"
+        title="Trade"
       >
-        <QuickOrderPanel market={legacyMarket} className="border-0 bg-transparent p-0" onLimitClick={() => {
-          setMobileDrawerOpen(false)
-          setTimeout(() => handleLimitClick(), 250)
-        }} />
+        <OrderTabBar current={orderTab} onChange={setOrderTab} />
+        {orderTab === 'market' ? (
+          <QuickOrderPanel
+            market={legacyMarket}
+            className="border-0 bg-transparent p-0"
+          />
+        ) : (
+          <LimitOrderPanel
+            market={legacyMarket}
+            prefillPrice={prefillPrice}
+            prefillSide={prefillSide}
+            onOrderPlaced={() => {
+              handleLimitOrderPlaced()
+              setMobileDrawerOpen(false)
+            }}
+          />
+        )}
       </Drawer>
-
-      {/* Limit Order Drawer */}
-      <SideDrawer
-        isOpen={limitDrawerOpen}
-        onClose={() => setLimitDrawerOpen(false)}
-        title="Limit Order"
-      >
-        <LimitOrderPanel
-          market={legacyMarket}
-          prefillPrice={prefillPrice}
-          prefillSide={prefillSide}
-          onOrderPlaced={handleLimitOrderPlaced}
-        />
-      </SideDrawer>
 
       {/* Rules Drawer */}
       <SideDrawer
