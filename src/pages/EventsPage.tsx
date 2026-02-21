@@ -71,11 +71,7 @@ function EventCard({ event }: { event: PredictionEvent }) {
 
   const handleContractTrade = (contractId: string, side: 'YES' | 'NO') => (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (window.innerWidth >= 768) {
-      navigate(`/event/${event.id}?contract=${contractId}&side=${side}`)
-    } else {
-      openTradePanel(contractId, side)
-    }
+    openTradePanel(contractId, side)
   }
 
   return (
@@ -817,18 +813,34 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Mobile BottomSheet for trading */}
+      {/* Quick trade overlay */}
       {tradePanelOpen && (() => {
         const selected = getSelectedContract()
         if (!selected) return null
         return (
-          <div className="md:hidden fixed inset-0 z-40">
-            <div className="fixed inset-0 bg-black/60" onClick={closeTradePanel} />
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#161622] rounded-t-xl border-t border-[#252536] max-h-[85vh] overflow-y-auto animate-[slide-in-from-bottom_0.25s_ease-out]">
-              <div className="w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2 mb-3" />
-              <div className="px-4 pb-6"><TradePanel event={selected.event} context="list" /></div>
+          <>
+            {/* Desktop: centered popup */}
+            <div className="hidden md:flex fixed inset-0 z-40 items-center justify-center">
+              <div className="fixed inset-0 bg-black/60" onClick={closeTradePanel} />
+              <div className="relative z-50 w-[380px] max-h-[85vh] overflow-y-auto bg-[#161622] border border-[#252536] rounded-2xl shadow-2xl">
+                <div className="flex items-center justify-between px-4 pt-3 pb-0">
+                  <span className="text-[10px] text-[#8A8A9A] uppercase tracking-wider">Quick Trade</span>
+                  <button onClick={closeTradePanel} className="min-w-[32px] min-h-[32px] flex items-center justify-center text-[#8A8A9A] hover:text-white rounded-lg hover:bg-[#252536]">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11 3L3 11M3 3l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                  </button>
+                </div>
+                <div className="px-4 pb-4"><TradePanel event={selected.event} context="list" /></div>
+              </div>
             </div>
-          </div>
+            {/* Mobile: BottomSheet */}
+            <div className="md:hidden fixed inset-0 z-40">
+              <div className="fixed inset-0 bg-black/60" onClick={closeTradePanel} />
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#161622] rounded-t-xl border-t border-[#252536] max-h-[85vh] overflow-y-auto animate-[slide-in-from-bottom_0.25s_ease-out]">
+                <div className="w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2 mb-3" />
+                <div className="px-4 pb-6"><TradePanel event={selected.event} context="list" /></div>
+              </div>
+            </div>
+          </>
         )
       })()}
     </div>

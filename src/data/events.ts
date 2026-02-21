@@ -4269,6 +4269,49 @@ const instantMarkets: PredictionEvent[] = [
   mkInstant('evt-inst-usd', 'USD (DXY)', 'DXY', 'forex', 104.2, 105, 'UP', 46, 16900, -2, 3),
 ]
 
+const instantHedgeMap: Record<string, { label: string; asset: string; action: string }[]> = {
+  BTC: [
+    { label: 'Short BTC-PERP', asset: 'BTC-PERP', action: 'Delta-neutral hedge against upside bet' },
+    { label: 'Buy BTC Put (5min)', asset: 'BTC-PUT', action: 'Capped downside protection' },
+  ],
+  ETH: [
+    { label: 'Short ETH-PERP', asset: 'ETH-PERP', action: 'Delta-neutral hedge against upside bet' },
+    { label: 'Buy ETH Put (5min)', asset: 'ETH-PUT', action: 'Capped downside protection' },
+  ],
+  AAPL: [
+    { label: 'Buy AAPL Put', asset: 'AAPL-PUT', action: 'Hedge with short-dated options' },
+    { label: 'Short QQQ', asset: 'QQQ', action: 'Broader tech sector hedge' },
+  ],
+  NVDA: [
+    { label: 'Buy NVDA Put', asset: 'NVDA-PUT', action: 'Hedge with short-dated options' },
+    { label: 'Short SMH (Semis ETF)', asset: 'SMH', action: 'Sector-level hedge' },
+  ],
+  TSLA: [
+    { label: 'Buy TSLA Put', asset: 'TSLA-PUT', action: 'Hedge high-volatility directional bet' },
+    { label: 'Short TSLA-PERP', asset: 'TSLA-PERP', action: 'Delta-neutral hedge' },
+  ],
+  GOOGLE: [
+    { label: 'Buy GOOG Put', asset: 'GOOG-PUT', action: 'Hedge with short-dated options' },
+    { label: 'Short XLC (Comms ETF)', asset: 'XLC', action: 'Communication sector hedge' },
+  ],
+  GOLD: [
+    { label: 'Short Gold Futures', asset: 'GC', action: 'Direct hedge via futures' },
+    { label: 'Short GLD ETF', asset: 'GLD', action: 'ETF-based hedge' },
+  ],
+  OIL: [
+    { label: 'Short CL Futures', asset: 'CL', action: 'Direct crude oil hedge' },
+    { label: 'Short USO ETF', asset: 'USO', action: 'Oil ETF hedge' },
+  ],
+  SILVER: [
+    { label: 'Short Silver Futures', asset: 'SI', action: 'Direct hedge via futures' },
+    { label: 'Short SLV ETF', asset: 'SLV', action: 'ETF-based hedge' },
+  ],
+  'USD (DXY)': [
+    { label: 'Long EUR/USD', asset: 'EURUSD', action: 'Counter-dollar position' },
+    { label: 'Long Gold', asset: 'GLD', action: 'Dollar weakness hedge via gold' },
+  ],
+}
+
 function mkInstant(
   id: string, asset: string, icon: string, assetClass: 'crypto' | 'stocks' | 'commodities' | 'forex',
   current: number, strike: number, dir: 'UP' | 'DOWN', prob: number, vol: number,
@@ -4302,6 +4345,14 @@ function mkInstant(
       strikePrice: strike, direction: dir, durationSeconds: 300,
       startedAt: instantTime(startOff), endsAt: instantTime(endOff),
     },
+    summary: `5-minute price prediction on ${asset}. Predict whether the price will be ${cmp} ${priceLabel} when this market closes.`,
+    keyPoints: [
+      `Current ${asset} price: $${current.toLocaleString()}`,
+      `Strike: ${priceLabel} (${dir === 'UP' ? 'must close above' : 'must close below'})`,
+      `Duration: 5 minutes from open`,
+      `Resolution: Real-time price feed at expiry`,
+    ],
+    hedgeHints: instantHedgeMap[asset] ?? [],
   }
 }
 

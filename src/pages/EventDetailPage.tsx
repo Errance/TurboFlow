@@ -10,6 +10,7 @@ import TradePanel from '../components/TradePanel'
 import DisputePanel from '../components/DisputePanel'
 import RefundBanner from '../components/RefundBanner'
 import ShareButton from '../components/ShareButton'
+import PriceChart from '../components/PriceChart'
 
 function formatVolume(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -589,6 +590,17 @@ export default function EventDetailPage() {
 
           {/* Timeline & Payout */}
           <TimelinePayoutCard event={event} />
+
+          {/* Probability chart */}
+          {event.contracts.length > 0 && (
+            <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Probability History</h3>
+              <PriceChart
+                marketId={selectedContractId || event.contracts[0].id}
+                className=""
+              />
+            </div>
+          )}
 
           {/* Outcome model hint */}
           <OutcomeModelHint event={event} />

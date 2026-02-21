@@ -150,5 +150,20 @@
 
 ### E) 桌面端 + 移动端
 - [ ] TradePanel 桌面固定右侧 / 移动 BottomSheet 完全一致
+- [ ] 列表页桌面端 Quick Trade 弹窗可用（不跳转）
 - [ ] 所有可点击元素触控区 >= 44x44px
 - [ ] 移动端分类 Tab 可横向滚动
+
+### F) 走势图
+- [ ] EventDetailPage 显示概率走势图（选中合约 or 首个合约）
+- [ ] ContractDetailPage (CLOB) 走势图正常
+
+---
+
+## 待讨论需求（暂不实现）
+
+### Parlay / 串关组合下单
+类似体育博彩的 parlay bet：用户可以从不同事件中挑选多个合约，组合成一个 package 下单。赔率相乘，潜在收益翻倍。需要组合定价逻辑和关联结算机制。待与 GPT 详细讨论产品方案。
+
+### 跟单 / Copy Trade
+参考 GMGN 的跟单机制：看到某个 Top Forecaster 的交易后，一键复制同样的仓位。当前已实现 Follow + Top Forecasters 基础层，但真正的跟单需要更深的仓位同步逻辑。待讨论是否符合产品方向。
