@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useEventStore } from '../stores/eventStore'
-import type { PredictionEvent } from '../types'
+import { useToastStore } from '../stores/toastStore'
+import { useForecastStore } from '../stores/forecastStore'
+import type { PredictionEvent, HedgeHint } from '../types'
 import Button from './ui/Button'
 
 function formatUsdc(v: number): string {
@@ -9,18 +11,243 @@ function formatUsdc(v: number): string {
 
 const MOCK_BALANCE = 1000
 
-interface TradePanelProps {
-  event: PredictionEvent
+interface TradeResult {
+  side: 'YES' | 'NO'
+  price: number
+  shares: number
+  total: number
+  payout: number
+  profit: number
+  contractLabel: string
 }
 
-export default function TradePanel({ event }: TradePanelProps) {
+// ── TradeConfirmModal (detail page only) ────────────────────────
+
+function TradeConfirmModal({
+  event,
+  result,
+  hedgeHints,
+  onClose,
+}: {
+  event: PredictionEvent
+  result: TradeResult
+  hedgeHints?: HedgeHint[]
+  onClose: () => void
+}) {
+  const addForecast = useForecastStore((s) => s.addForecast)
+  const addToast = useToastStore((s) => s.addToast)
+  const [phase, setPhase] = useState<'receipt' | 'forecast-input' | 'share'>('receipt')
+  const [comment, setComment] = useState('')
+  const [forecastId, setForecastId] = useState<string | null>(null)
+  const getForecastById = useForecastStore((s) => s.getForecastById)
+  const forecast = forecastId ? getForecastById(forecastId) : null
+
+  const handleGenerateForecast = () => {
+    setPhase('forecast-input')
+  }
+
+  const handleSubmitForecast = () => {
+    const contract = event.contracts.find((c) => c.label === result.contractLabel)
+    const fc = addForecast({
+      eventId: event.id,
+      contractId: contract?.id ?? '',
+      eventTitle: event.title,
+      contractLabel: result.contractLabel,
+      side: result.side,
+      price: result.price,
+      shares: result.shares,
+      comment,
+      outcomeModel: event.outcomeModel,
+      eventStatus: event.status,
+    })
+    setForecastId(fc.id)
+    setPhase('share')
+  }
+
+  const handleCopyText = async () => {
+    const text = `My prediction on ${event.title}: ${result.side} on "${result.contractLabel}" at ${formatUsdc(result.price)} USDC (${result.shares.toFixed(1)} shares)${comment ? `\n\n${comment}` : ''}\n\nTrade on TurboFlow`
+    try {
+      await navigator.clipboard.writeText(text)
+      addToast({ type: 'success', message: 'Copied to clipboard' })
+    } catch {
+      addToast({ type: 'error', message: 'Failed to copy' })
+    }
+  }
+
+  const handleMockShare = (platform: string) => {
+    addToast({ type: 'info', message: `${platform} sharing will be available in production` })
+  }
+
+  const handleHedge = (hint: HedgeHint) => {
+    addToast({ type: 'info', message: `Hedge: ${hint.label} — ${hint.action}` })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/70" onClick={onClose} />
+      <div className="relative bg-[#161622] border border-[#252536] rounded-2xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto">
+        <div className="p-5">
+          {phase === 'receipt' && (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <svg className="w-6 h-6 text-[#2DD4BF]" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                  <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <h3 className="text-lg font-bold text-white">Trade Confirmed</h3>
+              </div>
+              <div className="bg-[#0B0B0F] rounded-xl p-4 mb-4 space-y-2">
+                <p className="text-xs text-[#8A8A9A]">{event.title}</p>
+                <p className="text-sm font-medium text-white">{result.contractLabel}</p>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#8A8A9A]">Side</span>
+                  <span className={result.side === 'YES' ? 'text-[#2DD4BF] font-medium' : 'text-[#E85A7E] font-medium'}>{result.side}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#8A8A9A]">Price</span>
+                  <span className="text-white font-mono">{formatUsdc(result.price)} USDC</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#8A8A9A]">Shares</span>
+                  <span className="text-white font-mono">{result.shares.toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#8A8A9A]">Total cost</span>
+                  <span className="text-white font-mono">{formatUsdc(result.total)} USDC</span>
+                </div>
+                <div className="flex justify-between text-xs border-t border-[#252536] pt-2">
+                  <span className="text-[#8A8A9A]">Potential profit</span>
+                  <span className="text-[#2DD4BF] font-mono font-medium">+{formatUsdc(result.profit)} USDC</span>
+                </div>
+              </div>
+
+              {hedgeHints && hedgeHints.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-[#F59E0B] mb-2">Hedge Suggestions</p>
+                  <div className="space-y-1.5">
+                    {hedgeHints.map((hint, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleHedge(hint)}
+                        className="w-full flex items-center justify-between bg-[#0B0B0F] rounded-lg px-3 py-2 hover:bg-[#252536] transition-colors text-left"
+                      >
+                        <span className="text-xs text-white">{hint.label}</span>
+                        <span className="text-[10px] text-[#8A8A9A]">{hint.action}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
+                  Close
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleGenerateForecast} className="flex-1">
+                  Generate Forecast Card
+                </Button>
+              </div>
+            </>
+          )}
+
+          {phase === 'forecast-input' && (
+            <>
+              <h3 className="text-lg font-bold text-white mb-1">Your Forecast</h3>
+              <p className="text-xs text-[#8A8A9A] mb-4">Add your analysis or reasoning for this trade.</p>
+              <div className="bg-[#0B0B0F] rounded-xl p-3 mb-3">
+                <p className="text-xs text-[#8A8A9A]">{event.title}</p>
+                <p className="text-sm text-white mt-0.5">{result.side} on "{result.contractLabel}" at {formatUsdc(result.price)} USDC</p>
+              </div>
+              <textarea
+                className="w-full bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none mb-4"
+                rows={4}
+                placeholder="Share your reasoning — why did you make this trade?"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setPhase('receipt')} className="flex-1">
+                  Back
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleSubmitForecast} disabled={!comment.trim()} className="flex-1">
+                  Create Card
+                </Button>
+              </div>
+            </>
+          )}
+
+          {phase === 'share' && forecast && (
+            <>
+              <h3 className="text-lg font-bold text-white mb-4">Share Your Forecast</h3>
+              <div className="bg-gradient-to-br from-[#2DD4BF]/10 to-[#6366F1]/10 border border-[#2DD4BF]/20 rounded-xl p-4 mb-4">
+                <p className="text-[10px] text-[#8A8A9A] uppercase tracking-wider mb-2">TurboFlow Forecast</p>
+                <p className="text-sm font-medium text-white mb-1">{event.title}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${forecast.side === 'YES' ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]' : 'bg-[#E85A7E]/20 text-[#E85A7E]'}`}>
+                    {forecast.side}
+                  </span>
+                  <span className="text-xs text-white">{forecast.contractLabel}</span>
+                  <span className="text-xs text-[#8A8A9A] font-mono">{formatUsdc(forecast.price)} USDC</span>
+                </div>
+                {forecast.comment && (
+                  <p className="text-xs text-[#C0C0D0] italic mb-3">"{forecast.comment}"</p>
+                )}
+                <div className="w-24 h-24 bg-[#252536] rounded-lg flex items-center justify-center mx-auto mt-2">
+                  <span className="text-[10px] text-[#8A8A9A]">QR Code</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-4">
+                <button
+                  onClick={handleCopyText}
+                  className="w-full flex items-center justify-center gap-2 bg-[#252536] hover:bg-[#2DD4BF]/20 text-white rounded-lg py-2.5 text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                    <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                    <path d="M11 5V3a1 1 0 00-1-1H3a1 1 0 00-1 1v7a1 1 0 001 1h2" stroke="currentColor" strokeWidth="1.2" />
+                  </svg>
+                  Copy Text
+                </button>
+                <button
+                  onClick={() => handleMockShare('Save Image')}
+                  className="w-full flex items-center justify-center gap-2 bg-[#252536] hover:bg-[#252536]/80 text-[#8A8A9A] rounded-lg py-2.5 text-sm transition-colors"
+                >
+                  Save Image
+                </button>
+                <button
+                  onClick={() => handleMockShare('Share to X')}
+                  className="w-full flex items-center justify-center gap-2 bg-[#252536] hover:bg-[#252536]/80 text-[#8A8A9A] rounded-lg py-2.5 text-sm transition-colors"
+                >
+                  Share to X
+                </button>
+              </div>
+
+              <Button variant="ghost" fullWidth size="sm" onClick={onClose}>
+                Done
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface TradePanelProps {
+  event: PredictionEvent
+  context?: 'list' | 'detail'
+}
+
+export default function TradePanel({ event, context = 'detail' }: TradePanelProps) {
   const selectedContractId = useEventStore((s) => s.selectedContractId)
   const selectedSide = useEventStore((s) => s.selectedSide)
   const openTradePanel = useEventStore((s) => s.openTradePanel)
   const closeTradePanel = useEventStore((s) => s.closeTradePanel)
+  const addToast = useToastStore((s) => s.addToast)
 
   const contract = event.contracts.find((c) => c.id === selectedContractId)
   const [orderType, setOrderType] = useState<'quick' | 'limit'>('quick')
+  const [tradeResult, setTradeResult] = useState<TradeResult | null>(null)
 
   // Quick Buy state
   const [spendAmount, setSpendAmount] = useState('')
@@ -109,7 +336,54 @@ export default function TradePanel({ event }: TradePanelProps) {
     }
   }
 
+  const executeTrade = (tradePrice: number, tradeShares: number, tradeTotal: number) => {
+    const payout = tradeShares * contract!.payoutPerShare
+    const profit = payout - tradeTotal
+    const result: TradeResult = {
+      side: selectedSide!,
+      price: tradePrice,
+      shares: tradeShares,
+      total: tradeTotal,
+      payout,
+      profit,
+      contractLabel: contract!.label,
+    }
+
+    if (context === 'list') {
+      addToast({
+        type: 'success',
+        message: `${selectedSide} ${result.shares.toFixed(1)} shares of "${contract!.label}" at ${formatUsdc(tradePrice)} USDC`,
+      })
+      resetFields()
+      closeTradePanel()
+    } else {
+      setTradeResult(result)
+    }
+  }
+
+  const handleQuickBuy = () => {
+    if (parsedSpend <= 0) return
+    executeTrade(price, quickShares, parsedSpend)
+  }
+
+  const handleLimitBuy = () => {
+    if (!limitValid) return
+    executeTrade(lPrice, lShares, lPrice * lShares)
+  }
+
   return (
+    <>
+    {tradeResult && (
+      <TradeConfirmModal
+        event={event}
+        result={tradeResult}
+        hedgeHints={event.hedgeHints}
+        onClose={() => {
+          setTradeResult(null)
+          resetFields()
+        }}
+      />
+    )}
     <div className="bg-[#161622] border border-[#252536] rounded-xl p-4">
       {/* Header */}
       <div className="mb-4">
@@ -254,6 +528,7 @@ export default function TradePanel({ event }: TradePanelProps) {
             fullWidth
             size="lg"
             disabled={isDisabled || parsedSpend <= 0}
+            onClick={handleQuickBuy}
           >
             {isDisabled
               ? 'Trading Unavailable'
@@ -393,6 +668,7 @@ export default function TradePanel({ event }: TradePanelProps) {
             fullWidth
             size="lg"
             disabled={isDisabled || !limitValid}
+            onClick={handleLimitBuy}
           >
             {isDisabled
               ? 'Trading Unavailable'
@@ -408,5 +684,6 @@ export default function TradePanel({ event }: TradePanelProps) {
         </Button>
       </div>
     </div>
+    </>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
+import { useForecastStore } from '../stores/forecastStore'
 import type { PredictionEvent, Contract, EventStatusInfo } from '../types'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -8,6 +9,7 @@ import SideDrawer from '../components/ui/SideDrawer'
 import TradePanel from '../components/TradePanel'
 import DisputePanel from '../components/DisputePanel'
 import RefundBanner from '../components/RefundBanner'
+import ShareButton from '../components/ShareButton'
 
 function formatVolume(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -88,21 +90,40 @@ function actionLabel(action: string): string {
 // ── RulesSummaryCard ────────────────────────────────────────────
 
 function RulesSummaryCard({ event }: { event: PredictionEvent }) {
+  const closeLabel = `Closes ${formatDate(event.timeline.closeDate)}${event.timeline.expectedSettleWindow ? ` / Settles within ${event.timeline.expectedSettleWindow}` : ''}`
+
   return (
     <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
       <h3 className="text-sm font-semibold text-white mb-3">Rules Summary</h3>
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <span className="text-xs text-[#8A8A9A] shrink-0 w-24">Measurement</span>
-          <span className="text-xs text-white">{event.rulesMeasurement}</span>
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <svg className="w-4 h-4 text-[#2DD4BF] shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
+            <path d="M2 14V2h12M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div>
+            <span className="text-xs font-semibold text-[#2DD4BF]">What</span>
+            <p className="text-xs text-white mt-0.5">{event.rulesMeasurement}</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <span className="text-xs text-[#8A8A9A] shrink-0 w-24">Closing</span>
-          <span className="text-xs text-white">{event.rulesClosing}</span>
+        <div className="flex items-start gap-3">
+          <svg className="w-4 h-4 text-[#2DD4BF] shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M8 4v4l3 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div>
+            <span className="text-xs font-semibold text-[#2DD4BF]">When</span>
+            <p className="text-xs text-white mt-0.5">{closeLabel}</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <span className="text-xs text-[#8A8A9A] shrink-0 w-24">Source</span>
-          <span className="text-xs text-white">{event.resolutionSource}</span>
+        <div className="flex items-start gap-3">
+          <svg className="w-4 h-4 text-[#2DD4BF] shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+          <div>
+            <span className="text-xs font-semibold text-[#2DD4BF]">How</span>
+            <p className="text-xs text-white mt-0.5">{event.resolutionSource}</p>
+          </div>
         </div>
       </div>
       {event.rulesDetail && (
@@ -164,6 +185,63 @@ function TimelinePayoutCard({ event }: { event: PredictionEvent }) {
           <span className="text-[#E85A7E] font-medium">0 USDC per share</span>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── EventSummaryCard ────────────────────────────────────────────
+
+function EventSummaryCard({ event }: { event: PredictionEvent }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!event.summary && !event.keyPoints?.length) return null
+
+  return (
+    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <h3 className="text-sm font-semibold text-white">Summary & Key Points</h3>
+        <svg
+          className={`w-4 h-4 text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
+          viewBox="0 0 16 16" fill="none"
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {expanded && (
+        <div className="mt-3 space-y-3">
+          {event.summary && (
+            <p className="text-xs text-[#C0C0D0] leading-relaxed">{event.summary}</p>
+          )}
+          {event.keyPoints && event.keyPoints.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-[#2DD4BF] mb-1.5">Key Points</p>
+              <ul className="space-y-1.5">
+                {event.keyPoints.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-[#C0C0D0]">
+                    <span className="w-1 h-1 rounded-full bg-[#2DD4BF] mt-1.5 shrink-0" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {event.hedgeHints && event.hedgeHints.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-[#F59E0B] mb-1.5">Hedge Ideas</p>
+              <div className="space-y-1.5">
+                {event.hedgeHints.map((hint, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-[#0B0B0F] rounded-lg px-3 py-2">
+                    <span className="text-xs font-medium text-white">{hint.label}</span>
+                    <span className="text-[10px] text-[#8A8A9A]">{hint.action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -276,6 +354,143 @@ function SpreadNote({ event }: { event: PredictionEvent }) {
   )
 }
 
+// ── RequestSettlePanel ──────────────────────────────────────────
+
+function RequestSettlePanel({ event }: { event: PredictionEvent }) {
+  const [type, setType] = useState<'settle' | 'issue'>('settle')
+  const [submitted, setSubmitted] = useState(false)
+  const [details, setDetails] = useState('')
+
+  const canRequestSettle = ['CLOSED', 'RESOLVING'].includes(event.status)
+  if (!canRequestSettle) return null
+
+  if (submitted) {
+    return (
+      <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <svg className="w-5 h-5 text-[#2DD4BF]" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M6.5 10l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-sm font-semibold text-white">
+            {type === 'settle' ? 'Settlement Request Submitted' : 'Issue Report Submitted'}
+          </span>
+        </div>
+        <p className="text-xs text-[#8A8A9A]">
+          Your {type === 'settle' ? 'settlement request' : 'issue report'} has been recorded.
+          Our team will review it and update the event status accordingly.
+          Expected response time: 24-48 hours.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+      <h3 className="text-sm font-semibold text-white mb-3">Request Action</h3>
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setType('settle')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            type === 'settle'
+              ? 'bg-[#2DD4BF]/20 text-[#2DD4BF] border border-[#2DD4BF]/40'
+              : 'bg-[#252536] text-[#8A8A9A] hover:text-white'
+          }`}
+        >
+          Request Settlement
+        </button>
+        <button
+          onClick={() => setType('issue')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            type === 'issue'
+              ? 'bg-[#E85A7E]/20 text-[#E85A7E] border border-[#E85A7E]/40'
+              : 'bg-[#252536] text-[#8A8A9A] hover:text-white'
+          }`}
+        >
+          Report Issue
+        </button>
+      </div>
+      <p className="text-xs text-[#8A8A9A] mb-3">
+        {type === 'settle'
+          ? 'If you believe this event has a clear outcome, you can request settlement. Provide evidence or a reference link below.'
+          : 'Report an issue with this event (e.g., incorrect resolution source, delayed data, rule discrepancy).'}
+      </p>
+      <textarea
+        className="w-full bg-[#0D0D19] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
+        rows={3}
+        placeholder={type === 'settle' ? 'Provide evidence or reference link...' : 'Describe the issue...'}
+        value={details}
+        onChange={(e) => setDetails(e.target.value)}
+      />
+      <div className="flex items-center justify-between mt-3">
+        <span className="text-[10px] text-[#8A8A9A]">
+          Event status: {event.status} / {event.statusInfo.subStatus}
+        </span>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setSubmitted(true)}
+        >
+          Submit
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── YourForecastsSection ────────────────────────────────────────
+
+function YourForecastsSection({ eventId }: { eventId: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const getForecasts = useForecastStore((s) => s.getForecasts)
+  const forecasts = getForecasts(eventId)
+
+  if (forecasts.length === 0) return null
+
+  return (
+    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-white">Your Forecasts</h3>
+          <span className="text-[10px] bg-[#2DD4BF]/10 text-[#2DD4BF] px-1.5 py-0.5 rounded">{forecasts.length}</span>
+        </div>
+        <svg
+          className={`w-4 h-4 text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
+          viewBox="0 0 16 16" fill="none"
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {expanded && (
+        <div className="mt-3 space-y-2">
+          {forecasts.map((fc) => (
+            <div key={fc.id} className="bg-[#0B0B0F] rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  fc.side === 'YES' ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]' : 'bg-[#E85A7E]/20 text-[#E85A7E]'
+                }`}>
+                  {fc.side}
+                </span>
+                <span className="text-xs text-white">{fc.contractLabel}</span>
+                <span className="text-xs text-[#8A8A9A] font-mono">{fc.price.toFixed(2)} USDC</span>
+              </div>
+              {fc.comment && (
+                <p className="text-xs text-[#C0C0D0] italic">"{fc.comment}"</p>
+              )}
+              <span className="text-[10px] text-[#8A8A9A] mt-1 block">
+                {new Date(fc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Page ───────────────────────────────────────────────────
 
 export default function EventDetailPage() {
@@ -339,7 +554,10 @@ export default function EventDetailPage() {
           </svg>
         </button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-white">{event.title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-white">{event.title}</h1>
+            <ShareButton event={event} size="md" />
+          </div>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
               {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status}
@@ -365,6 +583,9 @@ export default function EventDetailPage() {
 
           {/* Rules summary */}
           <RulesSummaryCard event={event} />
+
+          {/* Event summary & key points */}
+          <EventSummaryCard event={event} />
 
           {/* Timeline & Payout */}
           <TimelinePayoutCard event={event} />
@@ -396,16 +617,19 @@ export default function EventDetailPage() {
             <SpreadNote event={event} />
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-2 mb-6">
-            <Button variant="ghost" size="sm">Request Settlement</Button>
-            <Button variant="ghost" size="sm">Report Issue</Button>
-            {hasDispute && (
+          {/* Your forecasts on this event */}
+          <YourForecastsSection eventId={event.id} />
+
+          {/* Request settle / report issue panel */}
+          <RequestSettlePanel event={event} />
+
+          {hasDispute && (
+            <div className="mb-6">
               <Button variant="secondary" size="sm" onClick={() => setDisputeDrawerOpen(true)}>
                 View Dispute Details
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Right trade panel — desktop only */}

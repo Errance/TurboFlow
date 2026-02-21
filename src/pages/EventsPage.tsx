@@ -826,7 +826,7 @@ export default function EventsPage() {
             <div className="fixed inset-0 bg-black/60" onClick={closeTradePanel} />
             <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#161622] rounded-t-xl border-t border-[#252536] max-h-[85vh] overflow-y-auto animate-[slide-in-from-bottom_0.25s_ease-out]">
               <div className="w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2 mb-3" />
-              <div className="px-4 pb-6"><TradePanel event={selected.event} /></div>
+              <div className="px-4 pb-6"><TradePanel event={selected.event} context="list" /></div>
             </div>
           </div>
         )

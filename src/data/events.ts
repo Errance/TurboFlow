@@ -84,6 +84,17 @@ Edge cases:
       type: 'volume_bonus',
       label: 'This Week: +20% Volume Reward',
     },
+    summary: 'Markets are pricing in a ~65% chance of at least one Fed rate cut before mid-2026, driven by cooling inflation and softening labor data. The March contract is the most volatile, reflecting uncertainty around the first FOMC decision window.',
+    keyPoints: [
+      'CPI trending down to 2.4% — approaching Fed\'s 2% target',
+      'Labor market showing signs of softening (unemployment at 4.1%)',
+      'Fed dot plot suggests 2 cuts in 2026, but timing remains uncertain',
+      'Emergency cuts historically happen during financial stress events',
+    ],
+    hedgeHints: [
+      { label: 'Long TLT (Treasury ETF)', asset: 'TLT', action: 'Rate cuts boost bond prices' },
+      { label: 'Short USD/JPY', asset: 'USDJPY', action: 'Dollar weakens on dovish pivot' },
+    ],
   },
 
   {
@@ -156,6 +167,17 @@ A single tick above the threshold counts. Flash wicks rolled back by an exchange
     ],
     totalVolume: 410000,
     featured: true,
+    summary: 'Bitcoin is trading near $97K with strong institutional inflows via spot ETFs. The $100K by March contract is the most actively traded, with the halving supply squeeze narrative supporting upside momentum.',
+    keyPoints: [
+      'Spot BTC ETF cumulative inflows exceeded $40B in January 2026',
+      'Post-halving supply reduction is historically bullish for 12-18 months',
+      'Macro backdrop improving: potential Fed cuts support risk assets',
+      '$150K by EOY requires sustained new ATH breakouts — high uncertainty',
+    ],
+    hedgeHints: [
+      { label: 'Short BTC futures', asset: 'BTC-PERP', action: 'Delta-neutral hedge against directional exposure' },
+      { label: 'Long BTC Put Options', asset: 'BTC-PUT', action: 'Downside protection with capped cost' },
+    ],
   },
 
   // ===================================================================
@@ -258,6 +280,13 @@ If the ceremony is postponed, contracts remain open until the rescheduled date. 
       },
     ],
     totalVolume: 94000,
+    summary: 'The Brutalist has emerged as the clear frontrunner after sweeping major critics\' awards. This is a mutually-exclusive market — exactly one film wins.',
+    keyPoints: [
+      'The Brutalist won PGA, SAG ensemble, and multiple critics\' circle awards',
+      'Conclave has strong Academy voter appeal but lost momentum',
+      'Voting closes February 25 — late swing is possible but rare',
+      'Mutually exclusive: buying YES on one film implies NO on all others',
+    ],
   },
 
   {
@@ -343,6 +372,13 @@ Mutually exclusive: exactly one contract resolves YES. If the convention is cont
     ],
     totalVolume: 120000,
     featured: true,
+    summary: 'The 2028 Democratic primary is wide open with no clear frontrunner. Newsom leads polling thanks to California name recognition, but the "Other" bucket at 30% reflects deep uncertainty this far out.',
+    keyPoints: [
+      'Primary season is over 2 years away — expect high volatility',
+      'Newsom has been making early campaign-style moves in key states',
+      'Harris\'s 2024 loss complicates a second run narrative',
+      'Buttigieg has strong fundraising infrastructure from 2020',
+    ],
   },
 
   // ===================================================================
@@ -2332,6 +2368,17 @@ Total: Resolves YES if the combined final score is over the line. Push = NO.`,
       },
     ],
     totalVolume: 285000,
+    summary: 'This event is under active dispute. The initial resolution of YES is contested due to ambiguity about whether the strike occurred on Iranian sovereign territory.',
+    keyPoints: [
+      'US military operation occurred near the Iran-Iraq border on March 15',
+      'Initial resolution was YES, but location evidence is contested',
+      'Key question: does the border region qualify as "Iranian territory"?',
+      'Dispute review expected to take 48 hours from filing',
+    ],
+    hedgeHints: [
+      { label: 'Long Gold (safe haven)', asset: 'GOLD', action: 'Geopolitical risk drives gold demand' },
+      { label: 'Long Oil Futures', asset: 'CL', action: 'Middle East conflict premium on crude' },
+    ],
   },
 
   {
@@ -4210,16 +4257,16 @@ function instantTime(offsetMinutes: number): string {
 }
 
 const instantMarkets: PredictionEvent[] = [
-  mkInstant('evt-inst-btc', 'BTC', '₿', 'crypto', 97382, 98000, 'UP', 52, 48200, -2, 3),
-  mkInstant('evt-inst-eth', 'ETH', 'Ξ', 'crypto', 3785, 3800, 'UP', 45, 31600, -1, 4),
-  mkInstant('evt-inst-aapl', 'AAPL', '🍎', 'stocks', 242.5, 245, 'UP', 40, 35800, -2, 3),
-  mkInstant('evt-inst-nvda', 'NVDA', '📈', 'stocks', 138.2, 140, 'UP', 42, 52100, 0, 5),
-  mkInstant('evt-inst-tsla', 'TSLA', '⚡', 'stocks', 352.8, 355, 'UP', 38, 45300, -1, 4),
-  mkInstant('evt-inst-goog', 'GOOGLE', '🔍', 'stocks', 178.6, 180, 'UP', 44, 29400, -2, 3),
-  mkInstant('evt-inst-gold', 'GOLD', '🥇', 'commodities', 2935, 2950, 'UP', 36, 19500, 0, 5),
-  mkInstant('evt-inst-oil', 'OIL', '🛢️', 'commodities', 78.4, 80, 'UP', 30, 14200, -1, 4),
-  mkInstant('evt-inst-silver', 'SILVER', '🪙', 'commodities', 32.8, 33, 'UP', 34, 11800, -3, 2),
-  mkInstant('evt-inst-usd', 'USD (DXY)', '💵', 'forex', 104.2, 105, 'UP', 46, 16900, -2, 3),
+  mkInstant('evt-inst-btc', 'BTC', 'BTC', 'crypto', 97382, 98000, 'UP', 52, 48200, -2, 3),
+  mkInstant('evt-inst-eth', 'ETH', 'ETH', 'crypto', 3785, 3800, 'UP', 45, 31600, -1, 4),
+  mkInstant('evt-inst-aapl', 'AAPL', 'AAPL', 'stocks', 242.5, 245, 'UP', 40, 35800, -2, 3),
+  mkInstant('evt-inst-nvda', 'NVDA', 'NVDA', 'stocks', 138.2, 140, 'UP', 42, 52100, 0, 5),
+  mkInstant('evt-inst-tsla', 'TSLA', 'TSLA', 'stocks', 352.8, 355, 'UP', 38, 45300, -1, 4),
+  mkInstant('evt-inst-goog', 'GOOGLE', 'GOOG', 'stocks', 178.6, 180, 'UP', 44, 29400, -2, 3),
+  mkInstant('evt-inst-gold', 'GOLD', 'XAU', 'commodities', 2935, 2950, 'UP', 36, 19500, 0, 5),
+  mkInstant('evt-inst-oil', 'OIL', 'WTI', 'commodities', 78.4, 80, 'UP', 30, 14200, -1, 4),
+  mkInstant('evt-inst-silver', 'SILVER', 'XAG', 'commodities', 32.8, 33, 'UP', 34, 11800, -3, 2),
+  mkInstant('evt-inst-usd', 'USD (DXY)', 'DXY', 'forex', 104.2, 105, 'UP', 46, 16900, -2, 3),
 ]
 
 function mkInstant(

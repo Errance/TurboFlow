@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePortfolioStore } from '../stores/portfolioStore'
 import { useOrderStore } from '../stores/orderStore'
 import { useToastStore } from '../stores/toastStore'
+import { useForecastStore } from '../stores/forecastStore'
 import Tabs from '../components/ui/Tabs'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -226,6 +227,64 @@ function TradeHistoryTab() {
   )
 }
 
+function ForecastsTab() {
+  const navigate = useNavigate()
+  const forecasts = useForecastStore((s) => s.forecasts)
+  const addToast = useToastStore((s) => s.addToast)
+
+  if (forecasts.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[#8A8A9A] text-sm mb-2">No forecasts yet</p>
+        <p className="text-[#8A8A9A] text-xs">Generate forecast cards after making trades on event detail pages.</p>
+      </div>
+    )
+  }
+
+  const handleCopy = async (fc: typeof forecasts[0]) => {
+    const text = `My prediction on ${fc.eventTitle}: ${fc.side} on "${fc.contractLabel}" at ${fc.price.toFixed(2)} USDC (${fc.shares.toFixed(1)} shares)\n\n${fc.comment}\n\nTrade on TurboFlow`
+    try {
+      await navigator.clipboard.writeText(text)
+      addToast({ type: 'success', message: 'Copied to clipboard' })
+    } catch {
+      addToast({ type: 'error', message: 'Failed to copy' })
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {forecasts.map((fc) => (
+        <Card key={fc.id}>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <button
+              onClick={() => navigate(`/event/${fc.eventId}`)}
+              className="text-sm font-medium text-white text-left hover:text-[#2DD4BF] transition-colors"
+            >
+              {fc.eventTitle}
+            </button>
+            <Badge variant={fc.side === 'YES' ? 'success' : 'danger'}>{fc.side}</Badge>
+          </div>
+          <p className="text-xs text-[#8A8A9A] mb-1">{fc.contractLabel} at {fc.price.toFixed(2)} USDC</p>
+          {fc.comment && (
+            <p className="text-xs text-[#C0C0D0] italic mb-2">"{fc.comment}"</p>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-[#8A8A9A]">
+              {new Date(fc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <button
+              onClick={() => handleCopy(fc)}
+              className="text-xs text-[#2DD4BF] hover:underline"
+            >
+              Copy
+            </button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
 function PositionDetailContent({ position }: { position: Position }) {
   const navigate = useNavigate()
   const allTrades = usePortfolioStore((s) => s.trades)
@@ -376,11 +435,14 @@ export default function PortfolioPage() {
     setPositionDrawerOpen(true)
   }
 
+  const forecasts = useForecastStore((s) => s.forecasts)
+
   const tabs = [
     { id: 'positions' as const, label: 'Positions', count: positions.length },
     { id: 'orders' as const, label: 'Open Orders', count: openOrders.length },
     { id: 'activity' as const, label: 'Activity' },
     { id: 'trades' as const, label: 'Trade History', count: allTrades.length },
+    { id: 'forecasts' as const, label: 'My Forecasts', count: forecasts.length || undefined },
   ]
 
   return (
@@ -436,6 +498,20 @@ export default function PortfolioPage() {
                   </div>
                   {statusBadge(pos.marketStatus)}
                 </div>
+                {pos.marketStatus === 'OPEN' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      useToastStore.getState().addToast({
+                        type: 'info',
+                        message: `Hedge suggestion: Consider an opposite position to reduce exposure on "${pos.marketTitle}"`,
+                      })
+                    }}
+                    className="mt-2 text-[10px] text-[#F59E0B] hover:underline"
+                  >
+                    View hedge suggestion
+                  </button>
+                )}
               </Card>
             ))
           )}
@@ -509,6 +585,9 @@ export default function PortfolioPage() {
 
       {/* Trade History */}
       {activeTab === 'trades' && <TradeHistoryTab />}
+
+      {/* My Forecasts */}
+      {activeTab === 'forecasts' && <ForecastsTab />}
 
       {/* Cancel All Confirmation */}
       <Modal isOpen={confirmCancelAll} onClose={() => setConfirmCancelAll(false)} title="Cancel All Orders">

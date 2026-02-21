@@ -87,6 +87,12 @@ export interface InstantMarketMeta {
   endsAt: string
 }
 
+export interface HedgeHint {
+  label: string
+  asset: string
+  action: string
+}
+
 export interface PredictionEvent {
   id: string
   type: EventType
@@ -109,6 +115,28 @@ export interface PredictionEvent {
   incentive?: IncentiveTag
   sports?: SportsMetadata
   instant?: InstantMarketMeta
+  summary?: string
+  keyPoints?: string[]
+  hedgeHints?: HedgeHint[]
+}
+
+// ============================================================
+// Forecast (user-generated prediction card)
+// ============================================================
+
+export interface Forecast {
+  id: string
+  eventId: string
+  contractId: string
+  eventTitle: string
+  contractLabel: string
+  side: 'YES' | 'NO'
+  price: number
+  shares: number
+  comment: string
+  outcomeModel: OutcomeModel
+  eventStatus: EventStatus
+  createdAt: string
 }
 
 // ============================================================
