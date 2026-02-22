@@ -4,6 +4,8 @@ import { usePortfolioStore } from '../stores/portfolioStore'
 import { useOrderStore } from '../stores/orderStore'
 import { useToastStore } from '../stores/toastStore'
 import { useForecastStore } from '../stores/forecastStore'
+import { useStrategyStore } from '../stores/strategyStore'
+import { evaluateStrategy } from '../lib/strategyMath'
 import Tabs from '../components/ui/Tabs'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -285,6 +287,98 @@ function ForecastsTab() {
   )
 }
 
+function CopiedStrategiesTab() {
+  const navigate = useNavigate()
+  const instances = useStrategyStore((s) => s.instances)
+  const templates = useStrategyStore((s) => s.templates)
+
+  const myInstances = useMemo(
+    () =>
+      instances
+        .filter((instance) => instance.userName === 'You')
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [instances],
+  )
+
+  const templateMap = useMemo(() => {
+    const map: Record<string, (typeof templates)[number]> = {}
+    templates.forEach((template) => {
+      map[template.id] = template
+    })
+    return map
+  }, [templates])
+
+  if (myInstances.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[#8A8A9A] text-sm mb-3">No copied strategies yet</p>
+        <Button size="sm" variant="primary" onClick={() => navigate('/strategies')}>
+          Browse Strategies
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {myInstances.map((instance) => {
+        const template = templateMap[instance.templateId]
+        const valuation = evaluateStrategy(instance.legs, instance.notional)
+        const pnlColor = valuation.pnl >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'
+        return (
+          <Card key={instance.id}>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <button
+                onClick={() => navigate(`/strategy/${instance.templateId}`)}
+                className="text-sm font-medium text-white text-left hover:text-[#2DD4BF] transition-colors"
+              >
+                {template?.title ?? 'Unknown Strategy'}
+              </button>
+              <Badge variant="info">{instance.legs.length} legs</Badge>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono tabular-nums mb-2">
+              <div>
+                <p className="text-[#8A8A9A]">Notional</p>
+                <p className="text-white">{instance.notional.toFixed(2)} USDC</p>
+              </div>
+              <div>
+                <p className="text-[#8A8A9A]">Entry</p>
+                <p className="text-white">{valuation.entryCost.toFixed(2)} USDC</p>
+              </div>
+              <div>
+                <p className="text-[#8A8A9A]">Mark</p>
+                <p className="text-white">{valuation.markValue.toFixed(2)} USDC</p>
+              </div>
+              <div>
+                <p className="text-[#8A8A9A]">PnL</p>
+                <p className={pnlColor}>
+                  {valuation.pnl >= 0 ? '+' : ''}
+                  {valuation.pnl.toFixed(2)} ({valuation.pnlPercent >= 0 ? '+' : ''}
+                  {valuation.pnlPercent.toFixed(2)}%)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-[#8A8A9A]">
+                Updated {formatTime(instance.updatedAt)}
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => navigate(`/strategy/${instance.templateId}`)}
+              >
+                Manage
+              </Button>
+            </div>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
+
 function PositionDetailContent({ position }: { position: Position }) {
   const navigate = useNavigate()
   const allTrades = usePortfolioStore((s) => s.trades)
@@ -436,6 +530,11 @@ export default function PortfolioPage() {
   }
 
   const forecasts = useForecastStore((s) => s.forecasts)
+  const strategyInstances = useStrategyStore((s) => s.instances)
+  const myStrategyInstances = useMemo(
+    () => strategyInstances.filter((instance) => instance.userName === 'You'),
+    [strategyInstances],
+  )
 
   const tabs = [
     { id: 'positions' as const, label: 'Positions', count: positions.length },
@@ -443,6 +542,11 @@ export default function PortfolioPage() {
     { id: 'activity' as const, label: 'Activity' },
     { id: 'trades' as const, label: 'Trade History', count: allTrades.length },
     { id: 'forecasts' as const, label: 'My Forecasts', count: forecasts.length || undefined },
+    {
+      id: 'strategies' as const,
+      label: 'Copied Strategies',
+      count: myStrategyInstances.length || undefined,
+    },
   ]
 
   return (
@@ -588,6 +692,9 @@ export default function PortfolioPage() {
 
       {/* My Forecasts */}
       {activeTab === 'forecasts' && <ForecastsTab />}
+
+      {/* Copied Strategies */}
+      {activeTab === 'strategies' && <CopiedStrategiesTab />}
 
       {/* Cancel All Confirmation */}
       <Modal isOpen={confirmCancelAll} onClose={() => setConfirmCancelAll(false)} title="Cancel All Orders">

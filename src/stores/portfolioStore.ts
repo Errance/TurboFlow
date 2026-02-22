@@ -6,7 +6,7 @@ import { trades as fixtureTrades } from '../data/trades'
 interface PortfolioState {
   positions: Position[]
   trades: Trade[]
-  activeTab: 'positions' | 'orders' | 'activity' | 'trades' | 'forecasts'
+  activeTab: 'positions' | 'orders' | 'activity' | 'trades' | 'forecasts' | 'strategies'
 
   getPositionsByMarket: (marketId: string) => Position[]
   getTradesByMarket: (marketId: string) => Trade[]

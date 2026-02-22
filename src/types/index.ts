@@ -260,3 +260,51 @@ export interface ScenarioStep {
   rejectReason?: string
   rejectCta?: { label: string; route: string }
 }
+
+// === Strategy / Basket / Trench ===
+
+export interface StrategyLeg {
+  id: string
+  contractId: string
+  side: OrderSide
+  weight: number // relative weight, usually normalized to 0..1 and sums to 1
+  entryPrice?: number // used by copied instances to track entry reference
+  note?: string
+}
+
+export interface StrategyTemplate {
+  id: string
+  title: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  basketId: string // deterministic signature: sorted(contractId:side)
+  driverEventId?: string
+  legs: StrategyLeg[]
+  thesis?: string
+  tags: string[]
+  copyCount: number
+}
+
+export interface StrategyInstance {
+  id: string
+  templateId: string
+  basketId: string
+  userName: string
+  notional: number
+  legs: StrategyLeg[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type TrenchStance = 'support' | 'oppose' | 'adjust'
+
+export interface TrenchMessage {
+  id: string
+  basketId: string
+  author: string
+  body: string
+  stance: TrenchStance
+  votes: number
+  createdAt: string
+}

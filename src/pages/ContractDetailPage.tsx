@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useEventStore } from '../stores/eventStore'
 import { useOrderbookStore } from '../stores/orderbookStore'
 import { usePortfolioStore } from '../stores/portfolioStore'
 import { getContractById } from '../data/events'

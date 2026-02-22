@@ -21,6 +21,7 @@ interface EventState {
   getSelectedContract: () => { event: PredictionEvent; contract: Contract } | undefined
   setSelectedCategory: (category: EventCategory) => void
   setSearchQuery: (query: string) => void
+  setTradeSelection: (contractId: string, side: 'YES' | 'NO') => void
   openTradePanel: (contractId: string, side: 'YES' | 'NO') => void
   closeTradePanel: () => void
 }
@@ -73,6 +74,8 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setSearchQuery: (query) => set({ searchQuery: query }),
+  setTradeSelection: (contractId, side) =>
+    set({ selectedContractId: contractId, selectedSide: side }),
 
   openTradePanel: (contractId, side) =>
     set({ selectedContractId: contractId, selectedSide: side, tradePanelOpen: true }),

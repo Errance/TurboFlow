@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
 import { useForecastStore } from '../stores/forecastStore'
+import { useStrategyStore } from '../stores/strategyStore'
 import type { PredictionEvent, Contract, EventStatusInfo } from '../types'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -439,6 +440,84 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
   )
 }
 
+// ── RelatedStrategiesSection ────────────────────────────────────
+
+function RelatedStrategiesSection({ event }: { event: PredictionEvent }) {
+  const navigate = useNavigate()
+  const templates = useStrategyStore((s) => s.templates)
+
+  const contractSet = useMemo(() => new Set(event.contracts.map((contract) => contract.id)), [event.contracts])
+
+  const related = useMemo(
+    () =>
+      templates
+        .filter((template) => template.legs.some((leg) => contractSet.has(leg.contractId)))
+        .sort((a, b) => b.copyCount - a.copyCount),
+    [contractSet, templates],
+  )
+  const preview = related.slice(0, 5)
+
+  return (
+    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-sm font-semibold text-white">Related Strategy Baskets</h3>
+          <p className="text-[11px] text-[#8A8A9A] mt-0.5">
+            {related.length} strategy baskets include this event
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => navigate(`/strategies?eventId=${event.id}`)}
+        >
+          Explore
+        </Button>
+      </div>
+
+      {related.length === 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-[#8A8A9A]">No strategy basket references this event yet.</p>
+          <Button size="sm" variant="secondary" onClick={() => navigate('/strategy/new')}>
+            Create Basket
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {preview.map((template) => {
+            const matchedLegCount = template.legs.filter((leg) => contractSet.has(leg.contractId)).length
+            return (
+              <button
+                key={template.id}
+                onClick={() => navigate(`/strategy/${template.id}`)}
+                className="w-full text-left bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 hover:border-[#2DD4BF]/40 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-xs text-white font-medium truncate">{template.title}</p>
+                  <Badge variant="info">{matchedLegCount} linked legs</Badge>
+                </div>
+                <p className="text-[11px] text-[#8A8A9A]">
+                  {template.copyCount} copies · by {template.createdBy}
+                </p>
+              </button>
+            )
+          })}
+          {related.length > preview.length && (
+            <Button
+              size="sm"
+              variant="secondary"
+              fullWidth
+              onClick={() => navigate(`/strategies?eventId=${event.id}`)}
+            >
+              View all {related.length} related strategies
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── YourForecastsSection ────────────────────────────────────────
 
 function YourForecastsSection({ eventId }: { eventId: string }) {
@@ -499,8 +578,10 @@ export default function EventDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const getEvent = useEventStore((s) => s.getEvent)
+  const setTradeSelection = useEventStore((s) => s.setTradeSelection)
   const openTradePanel = useEventStore((s) => s.openTradePanel)
   const selectedContractId = useEventStore((s) => s.selectedContractId)
+  const selectedSide = useEventStore((s) => s.selectedSide)
   const tradePanelOpen = useEventStore((s) => s.tradePanelOpen)
   const closeTradePanel = useEventStore((s) => s.closeTradePanel)
 
@@ -516,6 +597,15 @@ export default function EventDetailPage() {
       setSearchParams({}, { replace: true })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!event || event.contracts.length === 0) return
+    const inThisEvent =
+      selectedContractId != null && event.contracts.some((contract) => contract.id === selectedContractId)
+    if (!inThisEvent) {
+      setTradeSelection(event.contracts[0].id, 'YES')
+    }
+  }, [event, selectedContractId, setTradeSelection])
 
   if (!event) {
     return (
@@ -533,7 +623,11 @@ export default function EventDetailPage() {
   const isRefundable = event.status === 'CANCELLED' || event.status === 'VOIDED'
 
   const handleSelectContract = (contractId: string, side: 'YES' | 'NO') => {
-    openTradePanel(contractId, side)
+    if (window.innerWidth < 768) {
+      openTradePanel(contractId, side)
+      return
+    }
+    setTradeSelection(contractId, side)
   }
 
   const handleStatusAction = (action: string) => {
@@ -582,30 +676,10 @@ export default function EventDetailPage() {
             <RefundBanner statusInfo={event.statusInfo} totalVolume={event.totalVolume} />
           )}
 
-          {/* Rules summary */}
-          <RulesSummaryCard event={event} />
-
-          {/* Event summary & key points */}
-          <EventSummaryCard event={event} />
-
-          {/* Timeline & Payout */}
-          <TimelinePayoutCard event={event} />
-
-          {/* Probability chart */}
-          {event.contracts.length > 0 && (
-            <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-              <h3 className="text-sm font-semibold text-white mb-2">Probability History</h3>
-              <PriceChart
-                marketId={selectedContractId || event.contracts[0].id}
-                className=""
-              />
-            </div>
-          )}
-
           {/* Outcome model hint */}
           <OutcomeModelHint event={event} />
 
-          {/* Contract table */}
+          {/* Contract table - primary action first */}
           <div className="bg-[#161622] border border-[#252536] rounded-xl p-3 mb-4">
             <div className="flex items-center justify-between mb-2 px-1">
               <h3 className="text-sm font-semibold text-white">Contracts</h3>
@@ -614,6 +688,19 @@ export default function EventDetailPage() {
                 <span className="text-xs text-[#8A8A9A]">{event.contracts.length} total</span>
               </div>
             </div>
+            {!isDisabled && event.contracts.length > 0 && (
+              <div className="flex items-center justify-between px-1 mb-2">
+                <p className="text-[11px] text-[#8A8A9A]">Tap Yes/No to place quick orders</p>
+                <button
+                  onClick={() =>
+                    openTradePanel(selectedContractId || event.contracts[0].id, selectedSide ?? 'YES')
+                  }
+                  className="md:hidden text-[11px] text-[#2DD4BF] hover:underline"
+                >
+                  Open Quick Order
+                </button>
+              </div>
+            )}
             <div className="space-y-1">
               {event.contracts.map((contract) => (
                 <ContractTableRow
@@ -629,6 +716,20 @@ export default function EventDetailPage() {
             <SpreadNote event={event} />
           </div>
 
+          {/* Probability chart */}
+          {event.contracts.length > 0 && (
+            <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Probability History</h3>
+              <PriceChart
+                marketId={selectedContractId || event.contracts[0].id}
+                className=""
+              />
+            </div>
+          )}
+
+          {/* Related strategies */}
+          <RelatedStrategiesSection event={event} />
+
           {/* Your forecasts on this event */}
           <YourForecastsSection eventId={event.id} />
 
@@ -642,6 +743,14 @@ export default function EventDetailPage() {
               </Button>
             </div>
           )}
+
+          {/* Market context below trading actions */}
+          <div className="mt-2">
+            <p className="text-[10px] text-[#8A8A9A] uppercase tracking-wider mb-2">Market Context</p>
+            <RulesSummaryCard event={event} />
+            <TimelinePayoutCard event={event} />
+            <EventSummaryCard event={event} />
+          </div>
         </div>
 
         {/* Right trade panel — desktop only */}

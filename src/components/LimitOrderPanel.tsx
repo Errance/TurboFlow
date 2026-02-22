@@ -40,7 +40,6 @@ export default function LimitOrderPanel({
 
   const priceNum = parseFloat(price) || 0
   const sharesNum = parseFloat(shares) || 0
-  const totalNum = parseFloat(total) || 0
   const isValid = priceNum > 0 && priceNum <= 0.99 && sharesNum > 0
 
   const handlePriceChange = (val: string) => {

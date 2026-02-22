@@ -3,6 +3,7 @@ import { ToastContainer } from '../components/ui/Toast'
 
 const navItems = [
   { to: '/', label: 'Explore' },
+  { to: '/strategies', label: 'Strategies' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/leaderboard', label: 'Leaderboard' },
 ]
@@ -91,6 +92,14 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
         <rect x="3" y="3" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
         <rect x="3" y="11" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
         <rect x="11" y="3" width="6" height="14" rx="1" stroke={color} strokeWidth="1.5" />
+      </svg>
+    )
+  }
+  if (name === 'Strategies') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M4 5.5h12M4 10h12M4 14.5h7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="14.5" cy="14.5" r="1.5" stroke={color} strokeWidth="1.5" />
       </svg>
     )
   }

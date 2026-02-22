@@ -37,6 +37,10 @@ export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerPr
           <span className="text-[#8A8A9A]">Estimated completion</span>
           <span className="text-white">Within 24 hours</span>
         </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-[#8A8A9A]">Affected volume</span>
+          <span className="text-white">${Math.round(totalVolume).toLocaleString('en-US')}</span>
+        </div>
       </div>
 
       {statusInfo.reasonDetail && (

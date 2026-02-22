@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useEventStore, CATEGORIES, type EventCategory } from '../stores/eventStore'
+import { useEventStore, CATEGORIES } from '../stores/eventStore'
 import type { PredictionEvent, Contract } from '../types'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -404,7 +404,6 @@ export default function EventsPage() {
   const tradePanelOpen = useEventStore((s) => s.tradePanelOpen)
   const closeTradePanel = useEventStore((s) => s.closeTradePanel)
   const getSelectedContract = useEventStore((s) => s.getSelectedContract)
-  const navigate = useNavigate()
 
   const isLanding = selectedCategory === 'All'
   const isSports = selectedCategory === 'Sports'

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
 import { useToastStore } from '../stores/toastStore'
 import { useForecastStore } from '../stores/forecastStore'
@@ -34,6 +35,7 @@ function TradeConfirmModal({
   hedgeHints?: HedgeHint[]
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const addForecast = useForecastStore((s) => s.addForecast)
   const addToast = useToastStore((s) => s.addToast)
   const [phase, setPhase] = useState<'receipt' | 'forecast-input' | 'share'>('receipt')
@@ -79,7 +81,13 @@ function TradeConfirmModal({
   }
 
   const handleHedge = (hint: HedgeHint) => {
-    addToast({ type: 'info', message: `Hedge: ${hint.label} — ${hint.action}` })
+    const targetContract = event.contracts[0]
+    if (!targetContract) {
+      addToast({ type: 'info', message: `Hedge: ${hint.label} — ${hint.action}` })
+      return
+    }
+    onClose()
+    navigate(`/contract/${targetContract.id}`)
   }
 
   return (
@@ -295,7 +303,6 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
   // Limit Order calculations
   const lPrice = parseFloat(limitPrice) || 0
   const lShares = parseFloat(limitShares) || 0
-  const lTotal = parseFloat(limitTotal) || 0
   const limitValid = lPrice > 0 && lPrice <= 0.99 && lShares > 0
   const limitPayout = lShares * contract.payoutPerShare
   const limitProfit = limitPayout - lPrice * lShares

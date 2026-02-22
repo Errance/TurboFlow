@@ -145,6 +145,7 @@ export default function InstantMarketCard({ event }: Props) {
             No {contract.noPrice.toFixed(2)}
           </button>
         </div>
+
       </div>
     </div>
   )
