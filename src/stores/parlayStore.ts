@@ -46,25 +46,33 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
   placedParlays: [],
 
   addLeg: (leg) => {
-    const existing = get().slip.find((l) => l.contractId === leg.contractId)
-    if (existing) {
-      set({
-        slip: get().slip.map((l) =>
-          l.contractId === leg.contractId ? leg : l,
-        ),
-      })
-      useToastStore.getState().addToast({
-        type: 'success',
-        message: `Updated: ${leg.contractLabel} → ${leg.side}`,
-      })
-    } else {
-      const newSlip = [...get().slip, leg]
-      set({ slip: newSlip })
-      useToastStore.getState().addToast({
-        type: 'success',
-        message: `Added to Parlay: ${leg.contractLabel} ${leg.side} (${newSlip.length} leg${newSlip.length > 1 ? 's' : ''})`,
+    const { slip } = get()
+    const toast = useToastStore.getState().addToast
+
+    const sameContract = slip.find((l) => l.contractId === leg.contractId)
+    if (sameContract && sameContract.side !== leg.side) {
+      toast({ type: 'error', message: `Cannot bet both YES and NO on "${leg.contractLabel}"` })
+      return
+    }
+    if (sameContract && sameContract.side === leg.side) {
+      toast({ type: 'info', message: `"${leg.contractLabel} ${leg.side}" is already in your parlay` })
+      return
+    }
+
+    const sameEventLeg = slip.find((l) => l.eventId === leg.eventId && l.contractId !== leg.contractId)
+    if (sameEventLeg) {
+      toast({
+        type: 'info',
+        message: `Note: "${leg.contractLabel}" is in the same event as "${sameEventLeg.contractLabel}". These may be correlated.`,
       })
     }
+
+    const newSlip = [...slip, leg]
+    set({ slip: newSlip })
+    toast({
+      type: 'success',
+      message: `Added to Parlay: ${leg.contractLabel} ${leg.side} (${newSlip.length} leg${newSlip.length > 1 ? 's' : ''})`,
+    })
   },
 
   removeLeg: (contractId) => {
