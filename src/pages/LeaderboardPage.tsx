@@ -1,11 +1,8 @@
 import { useState, useMemo } from 'react'
 import { leaderboardData } from '../data/leaderboard'
-import { useFollowStore } from '../stores/followStore'
 import Card from '../components/ui/Card'
-import Button from '../components/ui/Button'
 
 type TimeFilter = 'monthly' | 'all-time'
-type LeaderboardTab = 'rankings' | 'forecasters' | 'following'
 
 function formatVolume(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -25,46 +22,8 @@ function RankBadge({ rank }: { rank: number }) {
   return <span className="text-sm text-[#8A8A9A] w-6 text-center">{rank}</span>
 }
 
-function ForecasterCard({ forecaster, isFollowing, onToggle }: {
-  forecaster: ReturnType<typeof useFollowStore.getState>['forecasters'][0]
-  isFollowing: boolean
-  onToggle: () => void
-}) {
-  return (
-    <Card className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-full bg-[#252536] flex items-center justify-center text-sm font-bold text-[#2DD4BF] shrink-0">
-        {forecaster.username[0]}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-sm font-medium text-white truncate">{forecaster.username}</span>
-          <Button
-            variant={isFollowing ? 'secondary' : 'primary'}
-            size="sm"
-            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onToggle() }}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </Button>
-        </div>
-        <p className="text-xs text-[#8A8A9A] mb-2 line-clamp-1">{forecaster.bio}</p>
-        <div className="flex gap-3 text-xs font-mono tabular-nums">
-          <span className="text-[#2DD4BF]">{forecaster.accuracy}% acc</span>
-          <span className="text-[#8A8A9A]">{forecaster.totalForecasts} forecasts</span>
-          <span className={forecaster.pnl >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}>
-            {forecaster.pnl >= 0 ? '+' : ''}{formatVolume(forecaster.pnl)}
-          </span>
-        </div>
-      </div>
-    </Card>
-  )
-}
-
 export default function LeaderboardPage() {
-  const [tab, setTab] = useState<LeaderboardTab>('rankings')
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all-time')
-  const forecasters = useFollowStore((s) => s.forecasters)
-  const following = useFollowStore((s) => s.following)
-  const toggleFollow = useFollowStore((s) => s.toggleFollow)
 
   const data = useMemo(() => {
     if (timeFilter === 'monthly') {
@@ -77,38 +36,10 @@ export default function LeaderboardPage() {
     return leaderboardData
   }, [timeFilter])
 
-  const followedForecasters = useMemo(
-    () => forecasters.filter((f) => following.has(f.id)),
-    [forecasters, following],
-  )
-
   return (
     <div className="px-4 md:px-6 py-6 max-w-4xl mx-auto">
       <h1 className="text-xl font-bold mb-4">Leaderboard</h1>
 
-      {/* Tab selector */}
-      <div className="flex gap-1 mb-4 bg-[#0B0B0F] rounded-lg p-0.5 w-fit">
-        {([
-          { id: 'rankings' as const, label: 'Rankings' },
-          { id: 'forecasters' as const, label: 'Top Forecasters' },
-          { id: 'following' as const, label: `Following${following.size > 0 ? ` (${following.size})` : ''}` },
-        ]).map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
-              tab === t.id
-                ? 'bg-[#252536] text-white'
-                : 'text-[#8A8A9A] hover:text-white'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'rankings' && (
-        <>
       {/* Time filter */}
       <div className="flex gap-1 mb-5">
         {(['monthly', 'all-time'] as TimeFilter[]).map((f) => (
@@ -225,44 +156,6 @@ export default function LeaderboardPage() {
           </div>
         </Card>
       </div>
-        </>
-      )}
-
-      {tab === 'forecasters' && (
-        <div className="space-y-3">
-          {forecasters.map((f) => (
-            <ForecasterCard
-              key={f.id}
-              forecaster={f}
-              isFollowing={following.has(f.id)}
-              onToggle={() => toggleFollow(f.id)}
-            />
-          ))}
-        </div>
-      )}
-
-      {tab === 'following' && (
-        <div className="space-y-3">
-          {followedForecasters.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-[#8A8A9A] text-sm mb-2">Not following anyone yet</p>
-              <p className="text-[#8A8A9A] text-xs">Browse Top Forecasters to find people worth following.</p>
-              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setTab('forecasters')}>
-                Browse Forecasters
-              </Button>
-            </div>
-          ) : (
-            followedForecasters.map((f) => (
-              <ForecasterCard
-                key={f.id}
-                forecaster={f}
-                isFollowing={true}
-                onToggle={() => toggleFollow(f.id)}
-              />
-            ))
-          )}
-        </div>
-      )}
     </div>
   )
 }

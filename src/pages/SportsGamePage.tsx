@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
-import type { Contract } from '../types'
+import { useParlayStore } from '../stores/parlayStore'
+import type { Contract, PredictionEvent } from '../types'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import TradePanel from '../components/TradePanel'
+import ParlayAddPopover from '../components/ParlayAddPopover'
 
 function formatVolume(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -14,17 +16,33 @@ function formatVolume(v: number): string {
 function BettingLineRow({
   label,
   contracts,
+  event,
   onSelect,
   selectedContractId,
   disabled,
 }: {
   label: string
   contracts: Contract[]
+  event: PredictionEvent
   onSelect: (contractId: string, side: 'YES' | 'NO') => void
   selectedContractId: string | null
   disabled: boolean
 }) {
+  const addLeg = useParlayStore((s) => s.addLeg)
+  const hasLeg = useParlayStore((s) => s.hasLeg)
+
   if (contracts.length === 0) return null
+
+  const handleAddParlay = (c: Contract, side: 'YES' | 'NO') => {
+    addLeg({
+      contractId: c.id,
+      eventId: event.id,
+      side,
+      price: side === 'YES' ? c.yesPrice : c.noPrice,
+      eventTitle: event.title,
+      contractLabel: c.label,
+    })
+  }
 
   return (
     <div className="bg-[#161622] border border-[#252536] rounded-xl p-4">
@@ -33,12 +51,13 @@ function BettingLineRow({
         {contracts.map((c) => {
           const noProb = Math.round((1 - c.yesPrice) * 100)
           const isSelected = selectedContractId === c.id
+          const inParlay = hasLeg(c.id)
           return (
             <div
               key={c.id}
               className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg min-h-[48px] transition-colors ${
-                isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[#252536]'
-              }`}
+                inParlay ? 'border-l-2 border-l-[#2DD4BF]' : ''
+              } ${isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[#252536]'}`}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white">{c.label}</p>
@@ -67,6 +86,15 @@ function BettingLineRow({
                 >
                   No {noProb}%
                 </button>
+                {!disabled && (
+                  <ParlayAddPopover
+                    yesPrice={c.yesPrice}
+                    noPrice={c.noPrice}
+                    probability={c.probability}
+                    inParlay={inParlay}
+                    onAdd={(side) => handleAddParlay(c, side)}
+                  />
+                )}
               </div>
             </div>
           )
@@ -115,7 +143,7 @@ export default function SportsGamePage() {
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
       {/* Full-width back button */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/?category=Sports')}
         className="flex items-center gap-1 text-[#8A8A9A] hover:text-white text-sm mb-4 min-h-[44px] transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -187,7 +215,14 @@ export default function SportsGamePage() {
               <p className="text-sm text-[#8A8A9A] font-medium mb-1">Game Cancelled</p>
               <p className="text-xs text-[#8A8A9A]">{event.statusInfo.reason}</p>
               {event.statusInfo.actionAvailable?.includes('view_refund') && (
-                <Button variant="ghost" size="sm" className="mt-2">View Refund</Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => navigate(`/event/${event.id}`)}
+                >
+                  View Refund
+                </Button>
               )}
             </div>
           )}
@@ -201,11 +236,11 @@ export default function SportsGamePage() {
 
           {/* Betting lines */}
           <div className="space-y-3">
-            <BettingLineRow label="Moneyline" contracts={moneyline} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
-            <BettingLineRow label="Spread" contracts={spread} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
-            <BettingLineRow label="Total" contracts={total} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="Moneyline" contracts={moneyline} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="Spread" contracts={spread} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="Total" contracts={total} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             {other.length > 0 && (
-              <BettingLineRow label="Other Props" contracts={other} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+              <BettingLineRow label="Other Props" contracts={other} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             )}
           </div>
 

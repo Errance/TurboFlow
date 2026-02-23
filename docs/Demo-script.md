@@ -1,4 +1,4 @@
-# Demo 演示脚本（V4 — Differentiated Prediction Market）
+# Demo 演示脚本（MVP — Prediction Market）
 
 > **定位说明**：本文档为回归参考和演示备忘，不作为行为准则。实现决策以用户裁决为准，本文档随之同步。
 
@@ -6,12 +6,12 @@
 
 ## 演示目标（5 分钟）
 - 让观众理解：这是一个 **Event-centric 预测市场**，用 USDC 统一结算
-- 看到信息架构：Event → Contracts → Trade（渐进披露）
+- 看到信息架构：Event → Contracts → Trade（渐进披露，交易优先布局）
 - 看到预测市场核心：Rules Summary（What/When/How）/ Timeline & Payout / 概率 % + USDC
-- 看到差异化能力：事件摘要 / 观点卡片 / 分享流程 / 对冲建议
+- 看到 **Parlay 串关**：多事件组合下注
 - 看到 Live 即时预测市场（5 分钟价格预测）
 - 看到 Sports 独立 UI、CLOB 高级交易作为深层分叉
-- 看到异常场景处理：争议/取消/暂停的状态 Banner + Request Settlement
+- 看到异常场景处理：争议/取消/暂停的状态 Banner + Request Settlement + Appeal
 - Quick Buy = marketable limit order（对齐 Polymarket 语义）
 
 ---
@@ -33,8 +33,11 @@
 13. TradePanel 显示：事件名 + 合约名（自解释）+ Yes/No 切换 + Quick Buy/Limit 说明
 14. Quick Buy 即 marketable limit order（按当前最优价格撮合）
 15. 输入金额 → 看到估算（份数/均价/潜在收益/Payout说明）→ 确认
-16. 详情页成交后弹出 Modal：成交回执 + 对冲建议 + 生成观点卡片入口
+16. 详情页成交后弹出 Modal：成交回执 + Buy More / Done 双按钮
 17. 列表页快速交易后仅展示 Toast 通知（不打断浏览流）
+18. 合约行右侧有"+"按钮可添加到 Parlay 串关（弹出方向 Popover 选择 YES/NO）
+19. 已在串关中的合约行左侧显示绿色竖线标记
+20. TradePanel 市场价格旁显示 24h 变化百分比
 
 ---
 
@@ -95,23 +98,27 @@
 
 ---
 
-## 7) 观点卡片与分享（差异化）
+## 7) Parlay 串关（差异化）
 
-1. 在 EventDetailPage 成交后弹出 Modal
-2. 点"生成观点卡片" → 输入观点文字 → 生成带预测信息的 Forecast Card
-3. 进入分享视图：看到卡片预览 + QR 占位 + 分享按钮（复制文本 / 保存图片 / 分享到 X）
-4. "复制文本"按钮使用 navigator.clipboard 真实复制
-5. 其余分享按钮为 mock（Toast 提示）
-6. 事件详情标题区域有 ShareButton 快捷入口
-7. Live 即时市场卡片列表也有 ShareButton 入口
+1. 在 EventDetail 或 SportsGame 页面，点击合约行右侧"+"按钮 → 弹出方向选择 Popover（YES/NO + 概率 + 价格）
+2. 选择方向后 → Toast 反馈 "Added to Parlay: [合约名] YES (N legs)"
+3. 已在串关中的合约行左侧显示绿色竖线标记，"+"按钮变为勾号
+4. 底部出现 **Persistent Parlay Bar**：显示 leg 数量 + 组合赔率 + "View Slip"
+   - 移动端：Bar 固定在 Tab Bar 上方，全宽
+   - 桌面端：Bar 固定在右下角，卡片式
+5. 点击 Bar → 展开 Parlay Panel → 看到已选 leg 列表（事件名 + 合约名 + YES/NO + 价格）
+6. 可删除单个 leg，可清空全部
+7. 输入 stake 金额（快捷金额按钮 $10/$25/$50/$100，增大触控区）→ 看到组合赔率 + 潜在收益
+8. 点击 "Place Parlay" → 下注成功 Toast + 写入 parlayStore + portfolioStore
+9. 至少需要 2 个 leg 才能下注
 
 ---
 
 ## 8) Portfolio & Leaderboard
 
-1. 切换到 Portfolio tab → 看到持仓（USDC 计价）/ Open Orders / Activity / Trade History / My Forecasts
-2. My Forecasts tab 展示用户生成的观点卡片列表
-3. 持仓卡片内显示对冲建议（Toast 提示入口）
+1. 切换到 Portfolio tab → 看到持仓（USDC 计价）/ Open Orders / **Parlays** / Activity / Trade History
+2. 交易完成后 Portfolio 自动更新（executeTrade 写入 portfolioStore）
+3. Parlays Tab 展示已下注的串关列表（状态 Badge + leg 数 + stake + 潜在收益），可展开查看 leg 明细
 4. 切换到 Leaderboard tab → 看到排行榜 + Volume/Liquidity Incentives 卡片
 
 ---
@@ -134,19 +141,29 @@
 
 ### C) 交互反馈
 - [ ] TradePanel 自解释（显示事件名+合约名）
+- [ ] TradePanel 市场价格旁显示 24h 变化（正/负色区分）
 - [ ] Quick Buy = marketable limit（有文案说明）
-- [ ] 详情页成交 → Modal 确认（含对冲建议 + 观点卡片入口）
+- [ ] 详情页成交 → Modal 确认（成交回执 + **Buy More** + Done 双按钮）
+- [ ] Buy More 点击后关闭 Modal 回到空白 TradePanel 继续交易
 - [ ] 列表页成交 → Toast 通知（不打断浏览）
-- [ ] 异常状态 StatusBanner 正确显示 + 操作按钮可用
+- [ ] 成交后 portfolioStore 自动写入持仓和交易记录
+- [ ] 异常状态 StatusBanner 正确显示 + 所有操作按钮可用（appeal/view_refund/request_settle/report_issue）
 - [ ] CLOSED/RESOLVING 状态可见 RequestSettlePanel
 - [ ] DisputePanel / RefundBanner 可从 StatusBanner 打开
+- [ ] Submit Evidence 按钮有 mock 表单流程
+- [ ] Appeal 按钮打开 mock 申诉抽屉
 
-### D) 差异化功能
-- [ ] 事件摘要（Summary + Key Points）在详情页可见
-- [ ] 观点卡片生成 + 分享视图完整
-- [ ] ShareButton 在事件详情和 Live 卡片可用
-- [ ] "复制文本"真实可用（navigator.clipboard）
-- [ ] Portfolio My Forecasts tab 可见
+### D) Parlay 串关
+- [ ] EventDetail/SportsGame 合约行有"+"按钮 → 弹出方向 Popover（YES/NO）
+- [ ] 添加 leg 后 Toast 反馈（显示合约名 + 方向 + 当前 leg 数）
+- [ ] 已在串关中的合约行左侧显示绿色竖线标记
+- [ ] 底部显示 **Persistent Parlay Bar**（leg 数量 + 组合赔率 + View Slip）
+- [ ] 移动端 Bar 在 Tab Bar 上方，桌面端右下角卡片式
+- [ ] 点击 Bar → 展开 Parlay Panel，可收起/清空/删除单个 leg
+- [ ] 快捷金额按钮触控区 >= 36px
+- [ ] 输入 stake 后显示组合赔率和潜在收益
+- [ ] Place Parlay 成功后写入 parlayStore + portfolioStore
+- [ ] Portfolio Parlays Tab 显示已下注串关列表，可展开查看 leg 明细
 
 ### E) 桌面端 + 移动端
 - [ ] TradePanel 桌面固定右侧 / 移动 BottomSheet 完全一致
@@ -160,10 +177,13 @@
 
 ---
 
-## 待讨论需求（暂不实现）
+## MVP 已移除功能
 
-### Parlay / 串关组合下单
-类似体育博彩的 parlay bet：用户可以从不同事件中挑选多个合约，组合成一个 package 下单。赔率相乘，潜在收益翻倍。需要组合定价逻辑和关联结算机制。待与 GPT 详细讨论产品方案。
-
-### 跟单 / Copy Trade
-参考 GMGN 的跟单机制：看到某个 Top Forecaster 的交易后，一键复制同样的仓位。当前已实现 Follow + Top Forecasters 基础层，但真正的跟单需要更深的仓位同步逻辑。待讨论是否符合产品方向。
+以下功能在 MVP 中已移除（全量版本存档在 `main` 分支）：
+- Forecast 观点卡片（forecastStore + TradeConfirmModal 中的 forecast 流程）
+- 分享系统（ShareButton + 分享视图）
+- Strategy Basket（已替换为 Parlay 串关）
+- Trench 讨论
+- Follow 系统（Top Forecasters / Following tabs）
+- 对冲建议（Hedge Ideas / Hedge Suggestions）
+- Portfolio My Forecasts tab / Copied Strategies tab

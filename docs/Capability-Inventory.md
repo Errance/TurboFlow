@@ -1,4 +1,4 @@
-# 能力地图与覆盖矩阵（V2 — Capability Inventory）
+# 能力地图与覆盖矩阵（MVP — Capability Inventory）
 
 > 遍历 "Event-based Prediction Market V2" 所有需要覆盖的能力域和功能项。每轮对照此文档防漏项。
 
@@ -71,10 +71,13 @@
 | TradePanel 桌面固定右侧 | T | 点击合约 Yes/No 切换 |
 | TradePanel 移动端 BottomSheet | T | Explore 卡片/EventDetail 行均唤起 |
 | 自解释头部（事件名+合约名）| T | 始终可见 |
+| 24h 变化指标 | T | 市场价格旁显示 change24h（正绿负红） |
 | Quick Buy（即时成交 + 文案说明）| T | 默认模式 |
 | Limit Order（自定价格 + 文案说明）| B | 切换到限价模式 |
 | Payout 说明 | T | 始终可见："赢=1 USDC/份, 输=0" |
 | 估算（份数/均价/潜在收益）| T | 输入金额后计算 |
+| TradeConfirmModal Buy More | T | 确认后可直接继续交易同一合约 |
+| 快捷金额按钮增大触控区 | T | min-h 36px，提升移动端易用性 |
 
 ### 域 4: Sports 独立 UI
 
@@ -119,21 +122,54 @@
 |--------|------|------|
 | Positions 列表（USDC 计价）| T | 事件名 + 合约名 + 浮盈浮亏 |
 | Open Orders | T | 当前挂单 |
+| **Parlays Tab** | T | 已下注串关列表，可展开查看 leg 明细 |
 | Activity / Trade History | B | 成交历史 |
+| executeTrade → portfolioStore 写入 | T | 交易自动记录到持仓和交易历史 |
 
 ### 域 9: Leaderboard & Incentives
 
 | 功能项 | 层级 | 说明 |
 |--------|------|------|
 | 排行榜表格（Mock 数据）| T | 用户名 / PnL / 准确率 / 成交量 |
+| 时间过滤（This Month / All Time）| T | 数据按时间范围筛选 |
 | Volume Incentives 说明卡片 | T | 激励机制概念展示 |
 | Liquidity Incentives 说明卡片 | T | 激励机制概念展示 |
 | IncentiveTag 在 EventCard/Banner | T | 运营融入主干 |
 
-### 域 10: 平台机制（占位）
+### 域 10: Parlay 串关
+
+| 功能项 | 层级 | 说明 |
+|--------|------|------|
+| "+"按钮 → 方向选择 Popover | T | EventDetail/SportsGame 合约行，弹出 YES/NO 选择 |
+| 添加 leg Toast 反馈 | T | 显示合约名 + 方向 + 当前 leg 数 |
+| 已在串关合约绿色竖线标记 | T | 合约行左侧 border-l-2 绿色标识 |
+| **Persistent Parlay Bar** | T | 移动端 Tab Bar 上方全宽 / 桌面端右下角卡片式 |
+| Parlay Panel（展开面板）| T | 查看/编辑 legs + 输入 stake + 查看赔率 |
+| Place Parlay 下注 | T | 组合赔率计算 + 写入 parlayStore + portfolioStore |
+| Portfolio Parlays Tab | T | 查看已下注串关 + 展开 leg 明细 |
+| parlayStore 状态管理 | — | 管理 slip legs + 已下注 parlays |
+
+### 域 11: 平台机制
 
 | 功能项 | 层级 | 说明 |
 |--------|------|------|
 | Request to Settle 按钮 | B | RESOLVING 状态可触发 |
 | Report Issue 按钮 | B | 主干可见，触发反馈流程 |
-| Responsible Trading Hub | L | 概念展示 |
+| Appeal 申诉 | B | SETTLED 后可提交申诉（mock 表单） |
+| View Full Rules 展开 | B | 折叠/展开完整规则文本 |
+| Submit Evidence（争议中）| B | DisputePanel 中 mock 提交表单 |
+
+### MVP 已移除功能
+
+| 功能项 | 原状态 | 原因 |
+|--------|--------|------|
+| Forecast 观点卡片 | 已删除 | 非 MVP 核心 |
+| ShareButton / 分享系统 | 保留文件但从页面移除 | 后续 Parlay 分享可复用 |
+| Strategy Basket | 已删除，替换为 Parlay | 简化为串关 |
+| Trench 讨论 | 已删除 | 非 MVP 核心 |
+| Follow 系统 | 已删除 | 非 MVP 核心 |
+| Hedge Ideas / 对冲建议 | 已删除 | 非 MVP 核心 |
+| Portfolio My Forecasts tab | 已删除 | 随 Forecast 删除 |
+| Portfolio Copied Strategies tab | 已删除 | 随 Strategy 删除 |
+| Leaderboard Top Forecasters tab | 已删除 | 随 Follow 删除 |
+| Leaderboard Following tab | 已删除 | 随 Follow 删除 |

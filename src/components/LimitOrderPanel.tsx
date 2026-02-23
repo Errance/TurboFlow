@@ -223,7 +223,11 @@ export default function LimitOrderPanel({
           <div className="bg-[#0B0B0F] rounded-lg p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-[#8A8A9A]">Est. payout</span>
-              <span className="text-[#2DD4BF] font-mono">{fmt(sharesNum)} USDC</span>
+              <span className="text-[#2DD4BF] font-mono">{fmt(sharesNum * 1)} USDC</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[#8A8A9A]">Total cost</span>
+              <span className="text-white font-mono">{fmt(priceNum * sharesNum)} USDC</span>
             </div>
             <div className="flex justify-between text-xs border-t border-[#252536] pt-1.5">
               <span className="text-[#8A8A9A]">Est. profit</span>

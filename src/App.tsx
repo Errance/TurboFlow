@@ -6,9 +6,6 @@ import PortfolioPage from './pages/PortfolioPage'
 import SportsGamePage from './pages/SportsGamePage'
 import ContractDetailPage from './pages/ContractDetailPage'
 import LeaderboardPage from './pages/LeaderboardPage'
-import StrategiesPage from './pages/StrategiesPage'
-import StrategyDetailPage from './pages/StrategyDetailPage'
-import CreateStrategyPage from './pages/CreateStrategyPage'
 
 export default function App() {
   return (
@@ -21,9 +18,6 @@ export default function App() {
           <Route path="/contract/:contractId" element={<ContractDetailPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/strategies" element={<StrategiesPage />} />
-          <Route path="/strategy/new" element={<CreateStrategyPage />} />
-          <Route path="/strategy/:strategyId" element={<StrategyDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

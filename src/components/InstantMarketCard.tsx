@@ -48,13 +48,17 @@ export default function InstantMarketCard({ event }: Props) {
 
   const handleTrade = (side: 'YES' | 'NO') => {
     openTradePanel(contract.id, side)
-    if (window.innerWidth >= 768) {
-      navigate(`/event/${event.id}`)
-    }
+  }
+
+  const handleCardClick = () => {
+    navigate(`/event/${event.id}`)
   }
 
   return (
-    <div className="glow-card bg-[#161622] border border-[#252536] rounded-xl overflow-hidden min-w-[260px] flex-shrink-0 snap-start">
+    <div
+      onClick={handleCardClick}
+      className="glow-card bg-[#161622] border border-[#252536] rounded-xl overflow-hidden min-w-[260px] flex-shrink-0 snap-start cursor-pointer hover:border-[#2DD4BF]/30 transition-colors"
+    >
       {/* Progress bar */}
       <div className="h-1 bg-[#0B0B0F] relative">
         <div
@@ -131,14 +135,14 @@ export default function InstantMarketCard({ event }: Props) {
         {/* Action buttons */}
         <div className="flex gap-2">
           <button
-            onClick={() => handleTrade('YES')}
+            onClick={(e) => { e.stopPropagation(); handleTrade('YES') }}
             disabled={isExpired}
             className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-colors bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Yes {contract.yesPrice.toFixed(2)}
           </button>
           <button
-            onClick={() => handleTrade('NO')}
+            onClick={(e) => { e.stopPropagation(); handleTrade('NO') }}
             disabled={isExpired}
             className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-colors bg-[#E85A7E]/15 text-[#E85A7E] hover:bg-[#E85A7E]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { EventStatusInfo } from '../types'
 import Badge from './ui/Badge'
 import Button from './ui/Button'
@@ -8,6 +9,7 @@ interface RefundBannerProps {
 }
 
 export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerProps) {
+  const [showDetails, setShowDetails] = useState(false)
   const isCancelled = statusInfo.status === 'CANCELLED'
   const isVoided = statusInfo.status === 'VOIDED'
 
@@ -47,9 +49,25 @@ export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerPr
         <p className="text-xs text-[#8A8A9A] mb-3">{statusInfo.reasonDetail}</p>
       )}
 
-      <Button variant="ghost" size="sm">
-        View Refund Details
+      <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)}>
+        {showDetails ? 'Hide Refund Details' : 'View Refund Details'}
       </Button>
+      {showDetails && (
+        <div className="mt-3 bg-[#0B0B0F] rounded-lg p-3 space-y-2">
+          <p className="text-xs text-[#C0C0D0]">
+            Refunds are processed automatically and credited to your USDC balance.
+            All open orders on this market have been cancelled.
+          </p>
+          <div className="flex justify-between text-xs">
+            <span className="text-[#8A8A9A]">Transaction ID</span>
+            <span className="text-white font-mono text-[10px]">RF-{Date.now().toString(36).toUpperCase()}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-[#8A8A9A]">Processing started</span>
+            <span className="text-white">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

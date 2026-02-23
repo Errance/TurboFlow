@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePortfolioStore } from '../stores/portfolioStore'
 import { useOrderStore } from '../stores/orderStore'
 import { useToastStore } from '../stores/toastStore'
-import { useForecastStore } from '../stores/forecastStore'
-import { useStrategyStore } from '../stores/strategyStore'
-import { evaluateStrategy } from '../lib/strategyMath'
+import { useParlayStore, type Parlay } from '../stores/parlayStore'
 import Tabs from '../components/ui/Tabs'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -229,153 +227,82 @@ function TradeHistoryTab() {
   )
 }
 
-function ForecastsTab() {
-  const navigate = useNavigate()
-  const forecasts = useForecastStore((s) => s.forecasts)
-  const addToast = useToastStore((s) => s.addToast)
+function ParlaysTab() {
+  const placedParlays = useParlayStore((s) => s.placedParlays)
 
-  if (forecasts.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-[#8A8A9A] text-sm mb-2">No forecasts yet</p>
-        <p className="text-[#8A8A9A] text-xs">Generate forecast cards after making trades on event detail pages.</p>
-      </div>
-    )
-  }
-
-  const handleCopy = async (fc: typeof forecasts[0]) => {
-    const text = `My prediction on ${fc.eventTitle}: ${fc.side} on "${fc.contractLabel}" at ${fc.price.toFixed(2)} USDC (${fc.shares.toFixed(1)} shares)\n\n${fc.comment}\n\nTrade on TurboFlow`
-    try {
-      await navigator.clipboard.writeText(text)
-      addToast({ type: 'success', message: 'Copied to clipboard' })
-    } catch {
-      addToast({ type: 'error', message: 'Failed to copy' })
-    }
+  if (placedParlays.length === 0) {
+    return <p className="text-[#8A8A9A] text-sm text-center py-12">No parlays placed yet</p>
   }
 
   return (
     <div className="space-y-3">
-      {forecasts.map((fc) => (
-        <Card key={fc.id}>
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <button
-              onClick={() => navigate(`/event/${fc.eventId}`)}
-              className="text-sm font-medium text-white text-left hover:text-[#2DD4BF] transition-colors"
-            >
-              {fc.eventTitle}
-            </button>
-            <Badge variant={fc.side === 'YES' ? 'success' : 'danger'}>{fc.side}</Badge>
-          </div>
-          <p className="text-xs text-[#8A8A9A] mb-1">{fc.contractLabel} at {fc.price.toFixed(2)} USDC</p>
-          {fc.comment && (
-            <p className="text-xs text-[#C0C0D0] italic mb-2">"{fc.comment}"</p>
-          )}
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#8A8A9A]">
-              {new Date(fc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <button
-              onClick={() => handleCopy(fc)}
-              className="text-xs text-[#2DD4BF] hover:underline"
-            >
-              Copy
-            </button>
-          </div>
-        </Card>
+      {placedParlays.map((p) => (
+        <ParlayCard key={p.id} parlay={p} />
       ))}
     </div>
   )
 }
 
-function CopiedStrategiesTab() {
-  const navigate = useNavigate()
-  const instances = useStrategyStore((s) => s.instances)
-  const templates = useStrategyStore((s) => s.templates)
+function ParlayCard({ parlay }: { parlay: Parlay }) {
+  const [expanded, setExpanded] = useState(false)
 
-  const myInstances = useMemo(
-    () =>
-      instances
-        .filter((instance) => instance.userName === 'You')
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-    [instances],
-  )
-
-  const templateMap = useMemo(() => {
-    const map: Record<string, (typeof templates)[number]> = {}
-    templates.forEach((template) => {
-      map[template.id] = template
-    })
-    return map
-  }, [templates])
-
-  if (myInstances.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-[#8A8A9A] text-sm mb-3">No copied strategies yet</p>
-        <Button size="sm" variant="primary" onClick={() => navigate('/strategies')}>
-          Browse Strategies
-        </Button>
-      </div>
-    )
+  const statusConfig: Record<Parlay['status'], { variant: 'success' | 'warning' | 'neutral'; label: string }> = {
+    pending: { variant: 'warning', label: 'Pending' },
+    placed: { variant: 'success', label: 'Active' },
+    settled: { variant: 'neutral', label: 'Settled' },
   }
+  const sc = statusConfig[parlay.status]
 
   return (
-    <div className="space-y-3">
-      {myInstances.map((instance) => {
-        const template = templateMap[instance.templateId]
-        const valuation = evaluateStrategy(instance.legs, instance.notional)
-        const pnlColor = valuation.pnl >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'
-        return (
-          <Card key={instance.id}>
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <button
-                onClick={() => navigate(`/strategy/${instance.templateId}`)}
-                className="text-sm font-medium text-white text-left hover:text-[#2DD4BF] transition-colors"
-              >
-                {template?.title ?? 'Unknown Strategy'}
-              </button>
-              <Badge variant="info">{instance.legs.length} legs</Badge>
-            </div>
+    <Card>
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2">
+          <Badge variant={sc.variant}>{sc.label}</Badge>
+          <span className="text-sm font-medium text-white">{parlay.legs.length}-Leg Parlay</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-xs text-[#8A8A9A] font-mono">${parlay.stake.toFixed(2)} stake</p>
+            <p className="text-xs text-[#2DD4BF] font-mono">→ ${parlay.potentialPayout.toFixed(2)}</p>
+          </div>
+          <svg
+            width="14" height="14" viewBox="0 0 14 14" fill="none"
+            className={`text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
+          >
+            <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono tabular-nums mb-2">
-              <div>
-                <p className="text-[#8A8A9A]">Notional</p>
-                <p className="text-white">{instance.notional.toFixed(2)} USDC</p>
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-[#252536] space-y-2">
+          {parlay.legs.map((leg) => (
+            <div key={leg.contractId} className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className={`px-1.5 py-0.5 rounded font-bold text-[10px] ${
+                  leg.side === 'YES' ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]' : 'bg-[#E85A7E]/20 text-[#E85A7E]'
+                }`}>
+                  {leg.side}
+                </span>
+                <span className="text-white truncate">{leg.contractLabel}</span>
               </div>
-              <div>
-                <p className="text-[#8A8A9A]">Entry</p>
-                <p className="text-white">{valuation.entryCost.toFixed(2)} USDC</p>
-              </div>
-              <div>
-                <p className="text-[#8A8A9A]">Mark</p>
-                <p className="text-white">{valuation.markValue.toFixed(2)} USDC</p>
-              </div>
-              <div>
-                <p className="text-[#8A8A9A]">PnL</p>
-                <p className={pnlColor}>
-                  {valuation.pnl >= 0 ? '+' : ''}
-                  {valuation.pnl.toFixed(2)} ({valuation.pnlPercent >= 0 ? '+' : ''}
-                  {valuation.pnlPercent.toFixed(2)}%)
-                </p>
-              </div>
+              <span className="text-[#8A8A9A] font-mono shrink-0">{leg.price.toFixed(2)}</span>
             </div>
-
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-[#8A8A9A]">
-                Updated {formatTime(instance.updatedAt)}
-              </p>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => navigate(`/strategy/${instance.templateId}`)}
-              >
-                Manage
-              </Button>
-            </div>
-          </Card>
-        )
-      })}
-    </div>
+          ))}
+          <div className="flex justify-between text-xs pt-2 border-t border-[#252536]">
+            <span className="text-[#8A8A9A]">Combined odds</span>
+            <span className="text-white font-mono font-medium">{parlay.combinedOdds.toFixed(2)}x</span>
+          </div>
+          <p className="text-[10px] text-[#8A8A9A]">
+            Placed {new Date(parlay.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{' '}
+            {new Date(parlay.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      )}
+    </Card>
   )
 }
 
@@ -500,7 +427,7 @@ function PositionDetailContent({ position }: { position: Position }) {
       <Button
         variant="secondary"
         fullWidth
-        onClick={() => navigate(`/contract/${position.marketId}`)}
+        onClick={() => navigate(`/contract/${position.contractId ?? position.marketId}`)}
       >
         View Contract
       </Button>
@@ -529,24 +456,14 @@ export default function PortfolioPage() {
     setPositionDrawerOpen(true)
   }
 
-  const forecasts = useForecastStore((s) => s.forecasts)
-  const strategyInstances = useStrategyStore((s) => s.instances)
-  const myStrategyInstances = useMemo(
-    () => strategyInstances.filter((instance) => instance.userName === 'You'),
-    [strategyInstances],
-  )
+  const placedParlays = useParlayStore((s) => s.placedParlays)
 
   const tabs = [
     { id: 'positions' as const, label: 'Positions', count: positions.length },
     { id: 'orders' as const, label: 'Open Orders', count: openOrders.length },
+    { id: 'parlays' as const, label: 'Parlays', count: placedParlays.length },
     { id: 'activity' as const, label: 'Activity' },
     { id: 'trades' as const, label: 'Trade History', count: allTrades.length },
-    { id: 'forecasts' as const, label: 'My Forecasts', count: forecasts.length || undefined },
-    {
-      id: 'strategies' as const,
-      label: 'Copied Strategies',
-      count: myStrategyInstances.length || undefined,
-    },
   ]
 
   return (
@@ -602,20 +519,6 @@ export default function PortfolioPage() {
                   </div>
                   {statusBadge(pos.marketStatus)}
                 </div>
-                {pos.marketStatus === 'OPEN' && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      useToastStore.getState().addToast({
-                        type: 'info',
-                        message: `Hedge suggestion: Consider an opposite position to reduce exposure on "${pos.marketTitle}"`,
-                      })
-                    }}
-                    className="mt-2 text-[10px] text-[#F59E0B] hover:underline"
-                  >
-                    View hedge suggestion
-                  </button>
-                )}
               </Card>
             ))
           )}
@@ -666,7 +569,7 @@ export default function PortfolioPage() {
                       useToastStore.getState().addToast({
                         type: 'success',
                         message: 'Order cancelled',
-                        cta: { label: 'Place New Order', route: `/contract/${order.marketId}` },
+                        cta: { label: 'Place New Order', route: `/contract/${order.contractId ?? order.marketId}` },
                       })
                     }}
                   >
@@ -684,17 +587,14 @@ export default function PortfolioPage() {
         </div>
       )}
 
+      {/* Parlays */}
+      {activeTab === 'parlays' && <ParlaysTab />}
+
       {/* Activity */}
       {activeTab === 'activity' && <ActivityTab />}
 
       {/* Trade History */}
       {activeTab === 'trades' && <TradeHistoryTab />}
-
-      {/* My Forecasts */}
-      {activeTab === 'forecasts' && <ForecastsTab />}
-
-      {/* Copied Strategies */}
-      {activeTab === 'strategies' && <CopiedStrategiesTab />}
 
       {/* Cancel All Confirmation */}
       <Modal isOpen={confirmCancelAll} onClose={() => setConfirmCancelAll(false)} title="Cancel All Orders">

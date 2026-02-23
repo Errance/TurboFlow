@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { EventStatusInfo } from '../types'
 import Badge from './ui/Badge'
 import Button from './ui/Button'
@@ -15,6 +16,10 @@ const MOCK_DISPUTE_TIMELINE = [
 ]
 
 export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps) {
+  const [evidenceSubmitted, setEvidenceSubmitted] = useState(false)
+  const [evidenceText, setEvidenceText] = useState('')
+  const [showEvidenceForm, setShowEvidenceForm] = useState(false)
+
   return (
     <div className="space-y-5">
       {/* Status */}
@@ -66,14 +71,51 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <Button variant="secondary" fullWidth size="sm">
-          Submit Evidence
-        </Button>
-        <Button variant="ghost" fullWidth size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
+      {evidenceSubmitted ? (
+        <div className="bg-[#2DD4BF]/10 border border-[#2DD4BF]/30 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <svg className="w-4 h-4 text-[#2DD4BF]" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M5.5 8l2 2 3.5-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-xs font-medium text-[#2DD4BF]">Evidence Submitted</span>
+          </div>
+          <p className="text-xs text-[#8A8A9A]">Your evidence has been recorded and will be reviewed during the community review phase.</p>
+        </div>
+      ) : showEvidenceForm ? (
+        <div className="space-y-3">
+          <textarea
+            className="w-full bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
+            rows={3}
+            placeholder="Provide your evidence or reference links..."
+            value={evidenceText}
+            onChange={(e) => setEvidenceText(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button variant="ghost" fullWidth size="sm" onClick={() => setShowEvidenceForm(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              size="sm"
+              disabled={!evidenceText.trim()}
+              onClick={() => setEvidenceSubmitted(true)}
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button variant="secondary" fullWidth size="sm" onClick={() => setShowEvidenceForm(true)}>
+            Submit Evidence
+          </Button>
+          <Button variant="ghost" fullWidth size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

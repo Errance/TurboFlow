@@ -59,9 +59,9 @@ PredictionEvent
 
 ## 4. 主干与分叉的"短进短出"规则
 
-### 4.1 主干规则
+### 4.1 主干规则（交易优先）
 - 主干 3 步完成交易：Explore → EventDetail → Trade
-- RulesSummary + TimelinePayout 前置在 EventDetail 主干（Kalshi 核心说服力）
+- EventDetail 布局：**Contracts 前置**（合约表 + TradePanel），RulesSummary / Timeline / EventSummary 后置在"Market Context"区域
 - TradePanel 始终显示 Payout 说明："赢 = 1 USDC/份，输 = 0 USDC/份"
 
 ### 4.2 分叉规则
@@ -75,7 +75,8 @@ PredictionEvent
 
 三个一级 Tab：`Explore | Portfolio | Leaderboard`
 
-Sports 是二级入口（Explore 的分类 Tab + Featured 运营位），点击后进入独立 Sports UI。
+- Sports 是二级入口（Explore 的分类 Tab + Featured 运营位），点击后进入独立 Sports UI。
+- Parlay 串关通过全局浮动 Slip 入口使用（购物车模式），无独立 Tab。用户可在 EventDetail/SportsGame 的合约行点击"+"添加到 Parlay Slip。
 
 ---
 
@@ -147,9 +148,10 @@ TradePanel 是单一组件，在桌面（固定右侧面板）和移动（Bottom
 
 每次迭代必须回答：
 - [ ] Explore → EventDetail → Trade 主干是否 3 步可达？
-- [ ] RulesSummary + TimelinePayout 是否前置在主干？
+- [ ] EventDetail 布局是否"交易优先"（Contracts 前置，Rules/Timeline/Summary 后置）？
 - [ ] TradePanel 桌面/移动一致？自解释？Payout 说明可见？
 - [ ] CLOB 只在分叉中出现？可发现但不抢主干？
-- [ ] 异常状态 Banner 正确显示？操作可用？
+- [ ] 异常状态 Banner 正确显示？操作按钮全部可用（含 appeal/view_refund/request_settle/report_issue）？
+- [ ] Parlay Slip 可从 EventDetail/SportsGame 添加 leg，浮动购物车可用？
 - [ ] 全站 USDC 无 ¢ 残留？
 - [ ] 所有可点击元素触控区 >= 44x44px？

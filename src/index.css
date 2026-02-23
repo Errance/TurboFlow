@@ -12,6 +12,17 @@
   }
 }
 
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes slide-in-from-left {
   from {
     opacity: 0;

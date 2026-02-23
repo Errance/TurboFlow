@@ -21,7 +21,7 @@ function ToastItem({ toast }: { toast: ToastType }) {
         "bg-[#161622] border border-[#252536] rounded-lg px-4 py-3 shadow-lg",
         "flex items-start gap-3 border-l-4",
         borderColor,
-        "animate-[slide-in-from-bottom_0.25s_ease-out]",
+        "animate-[slide-in-from-top_0.25s_ease-out]",
       ].join(" ")}
     >
       <p className="text-sm text-white flex-1 min-w-0">
@@ -75,8 +75,8 @@ export function ToastContainer() {
     <div
       className={[
         "fixed z-50 flex flex-col gap-2",
-        "bottom-4 left-4 right-4",
-        "md:bottom-4 md:left-auto md:right-4 md:w-auto md:max-w-sm",
+        "top-4 left-4 right-4",
+        "md:top-4 md:left-auto md:right-4 md:w-auto md:max-w-sm",
       ].join(" ")}
     >
       {toasts.map((toast) => (

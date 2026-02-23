@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
-import { useForecastStore } from '../stores/forecastStore'
-import { useStrategyStore } from '../stores/strategyStore'
+import { useToastStore } from '../stores/toastStore'
+import { useParlayStore } from '../stores/parlayStore'
 import type { PredictionEvent, Contract, EventStatusInfo } from '../types'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -10,8 +10,8 @@ import SideDrawer from '../components/ui/SideDrawer'
 import TradePanel from '../components/TradePanel'
 import DisputePanel from '../components/DisputePanel'
 import RefundBanner from '../components/RefundBanner'
-import ShareButton from '../components/ShareButton'
 import PriceChart from '../components/PriceChart'
+import ParlayAddPopover from '../components/ParlayAddPopover'
 
 function formatVolume(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
@@ -92,6 +92,7 @@ function actionLabel(action: string): string {
 // ── RulesSummaryCard ────────────────────────────────────────────
 
 function RulesSummaryCard({ event }: { event: PredictionEvent }) {
+  const [showFull, setShowFull] = useState(false)
   const closeLabel = `Closes ${formatDate(event.timeline.closeDate)}${event.timeline.expectedSettleWindow ? ` / Settles within ${event.timeline.expectedSettleWindow}` : ''}`
 
   return (
@@ -129,9 +130,19 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
         </div>
       </div>
       {event.rulesDetail && (
-        <button className="text-xs text-[#2DD4BF] mt-3 hover:underline">
-          View Full Rules →
-        </button>
+        <>
+          <button
+            onClick={() => setShowFull(!showFull)}
+            className="text-xs text-[#2DD4BF] mt-3 hover:underline"
+          >
+            {showFull ? 'Hide Full Rules ↑' : 'View Full Rules →'}
+          </button>
+          {showFull && (
+            <div className="mt-3 bg-[#0B0B0F] rounded-lg p-3">
+              <p className="text-xs text-[#C0C0D0] whitespace-pre-line leading-relaxed">{event.rulesDetail}</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -229,19 +240,6 @@ function EventSummaryCard({ event }: { event: PredictionEvent }) {
               </ul>
             </div>
           )}
-          {event.hedgeHints && event.hedgeHints.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-[#F59E0B] mb-1.5">Hedge Ideas</p>
-              <div className="space-y-1.5">
-                {event.hedgeHints.map((hint, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-[#0B0B0F] rounded-lg px-3 py-2">
-                    <span className="text-xs font-medium text-white">{hint.label}</span>
-                    <span className="text-[10px] text-[#8A8A9A]">{hint.action}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -267,25 +265,41 @@ function OutcomeModelHint({ event }: { event: PredictionEvent }) {
 
 function ContractTableRow({
   contract,
+  event,
   isSelected,
   onSelect,
   disabled,
   isMutuallyExclusive,
 }: {
   contract: Contract
+  event: PredictionEvent
   isSelected: boolean
   onSelect: (contractId: string, side: 'YES' | 'NO') => void
   disabled: boolean
   isMutuallyExclusive?: boolean
 }) {
   const navigate = useNavigate()
+  const addLeg = useParlayStore((s) => s.addLeg)
+  const hasLeg = useParlayStore((s) => s.hasLeg)
+  const inParlay = hasLeg(contract.id)
   const noProb = Math.round((1 - contract.yesPrice) * 100)
+
+  const handleAddParlay = (side: 'YES' | 'NO') => {
+    addLeg({
+      contractId: contract.id,
+      eventId: event.id,
+      side,
+      price: side === 'YES' ? contract.yesPrice : contract.noPrice,
+      eventTitle: event.title,
+      contractLabel: contract.label,
+    })
+  }
 
   return (
     <div
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[48px] transition-colors ${
-        isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[#252536]'
-      }`}
+        inParlay ? 'border-l-2 border-l-[#2DD4BF]' : ''
+      } ${isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[#252536]'}`}
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm text-white truncate">{contract.label}</p>
@@ -327,7 +341,17 @@ function ContractTableRow({
         >
           No {noProb}%
         </button>
-        {/* CLOB icon for discoverability */}
+        {/* Add to Parlay */}
+        {!disabled && (
+          <ParlayAddPopover
+            yesPrice={contract.yesPrice}
+            noPrice={contract.noPrice}
+            probability={contract.probability}
+            inParlay={inParlay}
+            onAdd={handleAddParlay}
+          />
+        )}
+        {/* CLOB icon */}
         <button
           onClick={() => navigate(`/contract/${contract.id}`)}
           className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[#8A8A9A] hover:text-[#2DD4BF] rounded-lg hover:bg-[#252536] transition-colors"
@@ -440,137 +464,6 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
   )
 }
 
-// ── RelatedStrategiesSection ────────────────────────────────────
-
-function RelatedStrategiesSection({ event }: { event: PredictionEvent }) {
-  const navigate = useNavigate()
-  const templates = useStrategyStore((s) => s.templates)
-
-  const contractSet = useMemo(() => new Set(event.contracts.map((contract) => contract.id)), [event.contracts])
-
-  const related = useMemo(
-    () =>
-      templates
-        .filter((template) => template.legs.some((leg) => contractSet.has(leg.contractId)))
-        .sort((a, b) => b.copyCount - a.copyCount),
-    [contractSet, templates],
-  )
-  const preview = related.slice(0, 5)
-
-  return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-sm font-semibold text-white">Related Strategy Baskets</h3>
-          <p className="text-[11px] text-[#8A8A9A] mt-0.5">
-            {related.length} strategy baskets include this event
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => navigate(`/strategies?eventId=${event.id}`)}
-        >
-          Explore
-        </Button>
-      </div>
-
-      {related.length === 0 ? (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-[#8A8A9A]">No strategy basket references this event yet.</p>
-          <Button size="sm" variant="secondary" onClick={() => navigate('/strategy/new')}>
-            Create Basket
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {preview.map((template) => {
-            const matchedLegCount = template.legs.filter((leg) => contractSet.has(leg.contractId)).length
-            return (
-              <button
-                key={template.id}
-                onClick={() => navigate(`/strategy/${template.id}`)}
-                className="w-full text-left bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 hover:border-[#2DD4BF]/40 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="text-xs text-white font-medium truncate">{template.title}</p>
-                  <Badge variant="info">{matchedLegCount} linked legs</Badge>
-                </div>
-                <p className="text-[11px] text-[#8A8A9A]">
-                  {template.copyCount} copies · by {template.createdBy}
-                </p>
-              </button>
-            )
-          })}
-          {related.length > preview.length && (
-            <Button
-              size="sm"
-              variant="secondary"
-              fullWidth
-              onClick={() => navigate(`/strategies?eventId=${event.id}`)}
-            >
-              View all {related.length} related strategies
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── YourForecastsSection ────────────────────────────────────────
-
-function YourForecastsSection({ eventId }: { eventId: string }) {
-  const [expanded, setExpanded] = useState(false)
-  const getForecasts = useForecastStore((s) => s.getForecasts)
-  const forecasts = getForecasts(eventId)
-
-  if (forecasts.length === 0) return null
-
-  return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between w-full text-left"
-      >
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-white">Your Forecasts</h3>
-          <span className="text-[10px] bg-[#2DD4BF]/10 text-[#2DD4BF] px-1.5 py-0.5 rounded">{forecasts.length}</span>
-        </div>
-        <svg
-          className={`w-4 h-4 text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
-          viewBox="0 0 16 16" fill="none"
-        >
-          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {expanded && (
-        <div className="mt-3 space-y-2">
-          {forecasts.map((fc) => (
-            <div key={fc.id} className="bg-[#0B0B0F] rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  fc.side === 'YES' ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]' : 'bg-[#E85A7E]/20 text-[#E85A7E]'
-                }`}>
-                  {fc.side}
-                </span>
-                <span className="text-xs text-white">{fc.contractLabel}</span>
-                <span className="text-xs text-[#8A8A9A] font-mono">{fc.price.toFixed(2)} USDC</span>
-              </div>
-              {fc.comment && (
-                <p className="text-xs text-[#C0C0D0] italic">"{fc.comment}"</p>
-              )}
-              <span className="text-[10px] text-[#8A8A9A] mt-1 block">
-                {new Date(fc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main Page ───────────────────────────────────────────────────
 
 export default function EventDetailPage() {
@@ -586,6 +479,10 @@ export default function EventDetailPage() {
   const closeTradePanel = useEventStore((s) => s.closeTradePanel)
 
   const [disputeDrawerOpen, setDisputeDrawerOpen] = useState(false)
+  const [appealDrawerOpen, setAppealDrawerOpen] = useState(false)
+  const [appealSubmitted, setAppealSubmitted] = useState(false)
+  const [appealText, setAppealText] = useState('')
+  const addToast = useToastStore((s) => s.addToast)
 
   const event = getEvent(eventId ?? '')
 
@@ -633,6 +530,17 @@ export default function EventDetailPage() {
   const handleStatusAction = (action: string) => {
     if (action === 'view_dispute' || action === 'view_evidence') {
       setDisputeDrawerOpen(true)
+    } else if (action === 'appeal') {
+      setAppealDrawerOpen(true)
+    } else if (action === 'view_refund') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      addToast({ type: 'info', message: 'Refund details shown above in the Refund Banner' })
+    } else if (action === 'request_settle') {
+      const settleSection = document.querySelector('[data-section="request-settle"]')
+      settleSection?.scrollIntoView({ behavior: 'smooth' })
+    } else if (action === 'report_issue') {
+      const settleSection = document.querySelector('[data-section="request-settle"]')
+      settleSection?.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -651,7 +559,6 @@ export default function EventDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-white">{event.title}</h1>
-            <ShareButton event={event} size="md" />
           </div>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
@@ -706,6 +613,7 @@ export default function EventDetailPage() {
                 <ContractTableRow
                   key={contract.id}
                   contract={contract}
+                  event={event}
                   isSelected={selectedContractId === contract.id}
                   onSelect={handleSelectContract}
                   disabled={isDisabled}
@@ -727,14 +635,10 @@ export default function EventDetailPage() {
             </div>
           )}
 
-          {/* Related strategies */}
-          <RelatedStrategiesSection event={event} />
-
-          {/* Your forecasts on this event */}
-          <YourForecastsSection eventId={event.id} />
-
           {/* Request settle / report issue panel */}
-          <RequestSettlePanel event={event} />
+          <div data-section="request-settle">
+            <RequestSettlePanel event={event} />
+          </div>
 
           {hasDispute && (
             <div className="mb-6">
@@ -779,6 +683,69 @@ export default function EventDetailPage() {
         title="Dispute Details"
       >
         <DisputePanel statusInfo={event.statusInfo} onClose={() => setDisputeDrawerOpen(false)} />
+      </SideDrawer>
+
+      {/* Appeal Drawer */}
+      <SideDrawer
+        isOpen={appealDrawerOpen}
+        onClose={() => setAppealDrawerOpen(false)}
+        title="Submit Appeal"
+      >
+        <div className="space-y-4">
+          {appealSubmitted ? (
+            <div className="bg-[#2DD4BF]/10 border border-[#2DD4BF]/30 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-[#2DD4BF]" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M6.5 10l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-sm font-semibold text-[#2DD4BF]">Appeal Submitted</span>
+              </div>
+              <p className="text-xs text-[#8A8A9A]">
+                Your appeal has been recorded. The review team will evaluate your submission
+                and respond within 24-48 hours.
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-[#8A8A9A]">
+                If you believe the settlement result is incorrect, provide your reasoning and
+                any supporting evidence below.
+              </p>
+              <div className="bg-[#0B0B0F] rounded-lg p-3">
+                <p className="text-xs text-[#8A8A9A] mb-1">Current status</p>
+                <p className="text-sm text-white">{event.statusInfo.status} — {event.statusInfo.subStatus}</p>
+                {event.statusInfo.reason && (
+                  <p className="text-xs text-[#8A8A9A] mt-1">{event.statusInfo.reason}</p>
+                )}
+              </div>
+              <textarea
+                className="w-full bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
+                rows={4}
+                placeholder="Describe your appeal and provide evidence..."
+                value={appealText}
+                onChange={(e) => setAppealText(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button variant="ghost" fullWidth size="sm" onClick={() => setAppealDrawerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  fullWidth
+                  size="sm"
+                  disabled={!appealText.trim()}
+                  onClick={() => {
+                    setAppealSubmitted(true)
+                    addToast({ type: 'success', message: 'Appeal submitted successfully' })
+                  }}
+                >
+                  Submit Appeal
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </SideDrawer>
     </div>
   )

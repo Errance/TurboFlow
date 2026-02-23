@@ -1,15 +1,17 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { ToastContainer } from '../components/ui/Toast'
+import { useParlayStore } from '../stores/parlayStore'
+import ParlaySlip from '../components/ParlaySlip'
 
 const navItems = [
   { to: '/', label: 'Explore' },
-  { to: '/strategies', label: 'Strategies' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/leaderboard', label: 'Leaderboard' },
 ]
 
 export default function AppShell() {
   const location = useLocation()
+  const hasLegs = useParlayStore((s) => s.slip.length > 0)
 
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white flex flex-col">
@@ -44,8 +46,8 @@ export default function AppShell() {
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 pb-20 md:pb-0">
+      {/* Main content — extra bottom padding when ParlayBar visible on mobile */}
+      <main className={`flex-1 md:pb-0 ${hasLegs ? 'pb-[96px]' : 'pb-20'}`}>
         <Outlet />
       </main>
 
@@ -71,6 +73,7 @@ export default function AppShell() {
         })}
       </nav>
 
+      <ParlaySlip />
       <ToastContainer />
     </div>
   )
@@ -92,14 +95,6 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
         <rect x="3" y="3" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
         <rect x="3" y="11" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
         <rect x="11" y="3" width="6" height="14" rx="1" stroke={color} strokeWidth="1.5" />
-      </svg>
-    )
-  }
-  if (name === 'Strategies') {
-    return (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M4 5.5h12M4 10h12M4 14.5h7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="14.5" cy="14.5" r="1.5" stroke={color} strokeWidth="1.5" />
       </svg>
     )
   }
