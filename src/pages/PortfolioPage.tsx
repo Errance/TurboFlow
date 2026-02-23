@@ -311,13 +311,14 @@ function PositionDetailContent({ position }: { position: Position }) {
   const allTrades = usePortfolioStore((s) => s.trades)
   const allOrders = useOrderStore((s) => s.orders)
 
+  const posKey = position.contractId ?? position.marketId
   const relatedTrades = useMemo(
-    () => allTrades.filter((t) => t.marketId === position.marketId),
-    [allTrades, position.marketId],
+    () => allTrades.filter((t) => (t.contractId ?? t.marketId) === posKey || t.marketId === posKey),
+    [allTrades, posKey],
   )
   const relatedOrders = useMemo(
-    () => allOrders.filter((o) => o.marketId === position.marketId),
-    [allOrders, position.marketId],
+    () => allOrders.filter((o) => (o.contractId ?? o.marketId) === posKey || o.marketId === posKey),
+    [allOrders, posKey],
   )
 
   return (

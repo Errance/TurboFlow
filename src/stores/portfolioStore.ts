@@ -39,8 +39,9 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   addPosition: (position) => {
+    const matchKey = position.contractId ?? position.marketId
     const existing = get().positions.find(
-      (p) => p.marketId === position.marketId && p.side === position.side,
+      (p) => (p.contractId ?? p.marketId) === matchKey && p.side === position.side,
     )
     if (existing) {
       const totalQty = existing.quantity + position.quantity

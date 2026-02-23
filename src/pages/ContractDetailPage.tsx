@@ -53,8 +53,8 @@ export default function ContractDetailPage() {
 
   const allTrades = usePortfolioStore((s) => s.trades)
   const relevantTrades = useMemo(
-    () => allTrades.filter((t) => t.marketId === (legacyMarket?.id ?? '')),
-    [allTrades, legacyMarket?.id],
+    () => allTrades.filter((t) => t.contractId === contractId || t.marketId === contractId),
+    [allTrades, contractId],
   )
   const recentTrades = useMemo(() => relevantTrades.slice(0, 5), [relevantTrades])
 
