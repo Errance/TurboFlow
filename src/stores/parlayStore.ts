@@ -98,15 +98,16 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
       status: 'placed',
     }
 
-    const sharesPerLeg = Math.round(stake / slip.length / slip[0].price)
+    const stakePerLeg = stake / slip.length
 
     slip.forEach((leg) => {
+      const shares = Math.round(stakePerLeg / leg.price)
       usePortfolioStore.getState().executeTrade({
         contractId: leg.contractId,
         marketTitle: `${leg.eventTitle} — ${leg.contractLabel}`,
         side: leg.side,
         price: leg.price,
-        quantity: sharesPerLeg,
+        quantity: shares,
       })
     })
 

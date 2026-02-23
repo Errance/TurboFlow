@@ -188,6 +188,20 @@ function ParlayPanel({
 
           {parsedStake > 0 && (
             <div className="bg-[#0B0B0F] rounded-lg p-3 space-y-1.5">
+              {slip.length >= 2 && (
+                <div className="space-y-1 mb-1.5 pb-1.5 border-b border-[#252536]">
+                  {slip.map((leg) => {
+                    const legStake = parsedStake / slip.length
+                    const legShares = Math.round(legStake / leg.price)
+                    return (
+                      <div key={leg.contractId} className="flex justify-between text-[10px]">
+                        <span className="text-[#8A8A9A] truncate max-w-[60%]">{leg.contractLabel}</span>
+                        <span className="text-[#8A8A9A] font-mono">${formatUsdc(legStake)} → {legShares} shares</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
               <div className="flex justify-between text-xs">
                 <span className="text-[#8A8A9A]">Potential payout</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(potentialPayout)} USDC</span>
