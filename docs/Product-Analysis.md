@@ -1,3 +1,7 @@
+> ⚠️ **V4 概念版历史文档，仅供参考。**
+> 本文档反映的是 main 分支 V4.2 全量版本的产品设计，包含 Strategy Basket、Forecast、Share 等已不在 MVP 范围内的功能。
+> **MVP 当前能力请查阅 [MVP-Baseline.md](./MVP-Baseline.md)**
+
 # TurboFlow 产品分析
 
 ---
