@@ -182,6 +182,7 @@ export interface Order {
   marketTitle: string
   side: OrderSide
   type: OrderType
+  /** USDC decimal, e.g. 0.65 */
   price: number
   quantity: number
   filledQuantity: number
@@ -201,7 +202,9 @@ export interface Position {
   marketTitle: string
   side: OrderSide
   quantity: number
+  /** USDC decimal, e.g. 0.63 */
   avgPrice: number
+  /** USDC decimal, e.g. 0.65 */
   currentPrice: number
   unrealizedPnl: number
   unrealizedPnlPercent: number
@@ -217,6 +220,7 @@ export interface Trade {
   marketId: string
   marketTitle: string
   side: OrderSide
+  /** USDC decimal, e.g. 0.64 */
   price: number
   quantity: number
   timestamp: string

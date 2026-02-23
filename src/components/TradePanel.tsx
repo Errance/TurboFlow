@@ -200,7 +200,6 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       contractLabel: contract!.label,
     }
 
-    const priceInCents = Math.round(tradePrice * 100)
     const { addPosition, addTrade } = usePortfolioStore.getState()
 
     addTrade({
@@ -208,7 +207,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       marketId: contract!.id,
       marketTitle: `${event.title} — ${contract!.label}`,
       side: selectedSide!,
-      price: priceInCents,
+      price: tradePrice,
       quantity: Math.round(tradeShares),
       timestamp: new Date().toISOString(),
     })
@@ -220,8 +219,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       marketTitle: `${event.title} — ${contract!.label}`,
       side: selectedSide!,
       quantity: Math.round(tradeShares),
-      avgPrice: priceInCents,
-      currentPrice: priceInCents,
+      avgPrice: tradePrice,
+      currentPrice: tradePrice,
       unrealizedPnl: 0,
       unrealizedPnlPercent: 0,
       marketStatus: 'OPEN',

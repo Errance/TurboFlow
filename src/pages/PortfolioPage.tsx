@@ -22,8 +22,8 @@ function statusBadge(status: MarketStatus) {
   return <Badge variant={m[status].v}>{m[status].l}</Badge>
 }
 
-function centsToUsdc(cents: number): string {
-  return (cents / 100).toFixed(2)
+function fmtUsdc(v: number): string {
+  return v.toFixed(2)
 }
 
 function PnlText({ value, percent }: { value: number; percent?: number }) {
@@ -31,7 +31,7 @@ function PnlText({ value, percent }: { value: number; percent?: number }) {
   const sign = value >= 0 ? '+' : ''
   return (
     <span className={`${color} font-mono tabular-nums`}>
-      {sign}{centsToUsdc(value)} USDC
+      {sign}{fmtUsdc(value)} USDC
       {percent != null && <span className="text-xs ml-1">({sign}{percent.toFixed(2)}%)</span>}
     </span>
   )
@@ -62,14 +62,14 @@ function buildActivityEvents(orders: Order[], trades: Trade[]): ActivityEvent[] 
     events.push({
       id: `evt-${o.id}-place`,
       type: 'order_placed',
-      description: `${o.side} ${o.quantity} @ $${centsToUsdc(o.price)} — ${o.marketTitle}`,
+      description: `${o.side} ${o.quantity} @ $${fmtUsdc(o.price)} — ${o.marketTitle}`,
       timestamp: o.createdAt,
     })
     if (o.status === 'Cancelled') {
       events.push({
         id: `evt-${o.id}-cancel`,
         type: 'order_cancelled',
-        description: `${o.side} ${o.quantity} @ $${centsToUsdc(o.price)} — ${o.marketTitle}`,
+        description: `${o.side} ${o.quantity} @ $${fmtUsdc(o.price)} — ${o.marketTitle}`,
         timestamp: o.updatedAt,
       })
     }
@@ -77,7 +77,7 @@ function buildActivityEvents(orders: Order[], trades: Trade[]): ActivityEvent[] 
       events.push({
         id: `evt-${o.id}-fill`,
         type: 'trade_filled',
-        description: `${o.side} ${o.filledQuantity}/${o.quantity} @ $${centsToUsdc(o.price)} — ${o.marketTitle}`,
+        description: `${o.side} ${o.filledQuantity}/${o.quantity} @ $${fmtUsdc(o.price)} — ${o.marketTitle}`,
         timestamp: o.updatedAt,
       })
     }
@@ -87,7 +87,7 @@ function buildActivityEvents(orders: Order[], trades: Trade[]): ActivityEvent[] 
     events.push({
       id: `evt-${t.id}`,
       type: 'trade_filled',
-      description: `${t.side} ${t.quantity} @ $${centsToUsdc(t.price)} — ${t.marketTitle}`,
+      description: `${t.side} ${t.quantity} @ $${fmtUsdc(t.price)} — ${t.marketTitle}`,
       timestamp: t.timestamp,
     })
   })
@@ -214,7 +214,7 @@ function TradeHistoryTab() {
                     <span className={`font-medium text-xs ${t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                       {t.side}
                     </span>
-                    <span className="text-right font-mono tabular-nums text-[#8A8A9A] text-xs">${centsToUsdc(t.price)}</span>
+                    <span className="text-right font-mono tabular-nums text-[#8A8A9A] text-xs">${fmtUsdc(t.price)}</span>
                     <span className="text-right font-mono tabular-nums text-white text-xs">{t.quantity}</span>
                   </div>
                 ))}
@@ -335,11 +335,11 @@ function PositionDetailContent({ position }: { position: Position }) {
           </div>
           <div>
             <span className="text-xs text-[#8A8A9A] block">Avg Price</span>
-            <span className="text-sm font-mono tabular-nums text-white">${centsToUsdc(position.avgPrice)}</span>
+            <span className="text-sm font-mono tabular-nums text-white">${fmtUsdc(position.avgPrice)}</span>
           </div>
           <div>
             <span className="text-xs text-[#8A8A9A] block">Current Price</span>
-            <span className="text-sm font-mono tabular-nums text-white">${centsToUsdc(position.currentPrice)}</span>
+            <span className="text-sm font-mono tabular-nums text-white">${fmtUsdc(position.currentPrice)}</span>
           </div>
           <div>
             <span className="text-xs text-[#8A8A9A] block">
@@ -375,7 +375,7 @@ function PositionDetailContent({ position }: { position: Position }) {
                     {t.side}
                   </span>
                   <span className="font-mono tabular-nums text-white text-xs">
-                    {t.quantity} @ ${centsToUsdc(t.price)}
+                    {t.quantity} @ ${fmtUsdc(t.price)}
                   </span>
                 </div>
                 <span className="text-xs text-[#8A8A9A]">
@@ -413,7 +413,7 @@ function PositionDetailContent({ position }: { position: Position }) {
                     <span className="text-xs text-[#8A8A9A]">{formatTime(o.createdAt)}</span>
                   </div>
                   <div className="text-xs font-mono tabular-nums text-[#8A8A9A]">
-                    {o.type === 'limit' ? 'Limit' : 'Market'} &middot; {o.quantity} @ ${centsToUsdc(o.price)}
+                    {o.type === 'limit' ? 'Limit' : 'Market'} &middot; {o.quantity} @ ${fmtUsdc(o.price)}
                     {o.filledQuantity > 0 && ` (filled ${o.filledQuantity})`}
                   </div>
                 </div>
@@ -498,8 +498,8 @@ export default function PortfolioPage() {
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[#8A8A9A] mb-2">
                   <span>Qty: {pos.quantity}</span>
-                  <span>Avg: ${centsToUsdc(pos.avgPrice)}</span>
-                  <span>Current: ${centsToUsdc(pos.currentPrice)}</span>
+                  <span>Avg: ${fmtUsdc(pos.avgPrice)}</span>
+                  <span>Current: ${fmtUsdc(pos.currentPrice)}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -552,7 +552,7 @@ export default function PortfolioPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[#8A8A9A] mb-2">
-                  <span>Price: ${centsToUsdc(order.price)}</span>
+                  <span>Price: ${fmtUsdc(order.price)}</span>
                   <span>Qty: {order.quantity}</span>
                   <span>Filled: {order.filledQuantity}/{order.quantity}</span>
                 </div>

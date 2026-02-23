@@ -37,7 +37,7 @@ function useLegacyMarket(contractId: string): Market | null {
     resolutionSource: event.resolutionSource,
     expiresAt: contract.expiresAt,
     status: contract.status === 'CANCELLED' || contract.status === 'VOIDED' ? 'SETTLED' : contract.status as 'OPEN' | 'CLOSED' | 'RESOLVING' | 'SETTLED',
-    lastPrice: Math.round(contract.yesPrice * 100),
+    lastPrice: contract.yesPrice,
     volume: contract.volume,
     settlementResult: contract.settlementResult,
     rules: event.rulesDetail,
@@ -178,7 +178,7 @@ export default function ContractDetailPage() {
                       {t.side}
                     </span>
                     <span className="font-mono text-[#8A8A9A] tabular-nums">
-                      {t.quantity} @ ${(t.price / 100).toFixed(2)}
+                      {t.quantity} @ ${t.price.toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -283,7 +283,7 @@ export default function ContractDetailPage() {
                   {t.side}
                 </span>
                 <span className="font-mono text-white tabular-nums">
-                  {t.quantity} @ ${(t.price / 100).toFixed(2)}
+                  {t.quantity} @ ${t.price.toFixed(2)}
                 </span>
               </div>
               <span className="text-xs text-[#8A8A9A]">

@@ -183,10 +183,10 @@ export default function QuickOrderPanel({ market, className, onLimitClick }: Pro
           <div className="space-y-2 text-sm">
             {[
               ['Side', side, side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
-              ['Amount', `${(Number(amount) / 100).toFixed(2)} USDC`, 'text-white'],
-              ['Est. Avg Price', `${(scenario.estimatedAvgPrice / 100).toFixed(2)} USDC`, 'text-white'],
+              ['Amount', `${Number(amount).toFixed(2)} USDC`, 'text-white'],
+              ['Est. Avg Price', `${scenario.estimatedAvgPrice.toFixed(2)} USDC`, 'text-white'],
               ['Est. Levels', String(scenario.estimatedLevels), 'text-white'],
-              ['Est. Fee', `${(scenario.estimatedFee / 100).toFixed(2)} USDC`, 'text-white'],
+              ['Est. Fee', `${scenario.estimatedFee.toFixed(2)} USDC`, 'text-white'],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between">
                 <span className="text-[#8A8A9A]">{label}</span>

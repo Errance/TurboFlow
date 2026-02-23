@@ -9,8 +9,8 @@ interface Props {
   onPriceClick?: (price: number, side: OrderSide) => void
 }
 
-function centsToUsdc(cents: number): string {
-  return (cents / 100).toFixed(2)
+function fmtUsdc(v: number): string {
+  return v.toFixed(2)
 }
 
 export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
@@ -92,7 +92,7 @@ export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
                 style={{ width: `${(level.quantity / maxQty) * 100}%` }}
               />
               <span className="relative text-xs text-[#8A8A9A] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono text-[#2DD4BF] tabular-nums">{centsToUsdc(level.price)} USDC</span>
+              <span className="relative text-sm font-mono text-[#2DD4BF] tabular-nums">{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 

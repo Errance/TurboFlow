@@ -242,7 +242,7 @@ export default function DepthChart({ className }: { className?: string }) {
             fontSize={10}
             fontFamily="Inter, system-ui, sans-serif"
           >
-            {(tick / 100).toFixed(2)}
+            {tick.toFixed(2)}
           </text>
         ))}
       </svg>

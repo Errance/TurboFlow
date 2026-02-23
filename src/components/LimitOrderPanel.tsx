@@ -101,7 +101,7 @@ export default function LimitOrderPanel({
     onOrderPlaced?.()
   }, [market, side, priceNum, sharesNum, onOrderPlaced])
 
-  const lastPriceUsdc = (market.lastPrice ?? 50) / 100
+  const lastPriceUsdc = market.lastPrice ?? 0.50
   const marketPrice = side === 'YES'
     ? lastPriceUsdc
     : (1 - lastPriceUsdc)

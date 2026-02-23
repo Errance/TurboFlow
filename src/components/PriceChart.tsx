@@ -47,14 +47,14 @@ export default function PriceChart({ marketId, className }: Props) {
       color: '#2DD4BF',
       lineWidth: 2,
       title: 'YES',
-      priceFormat: { type: 'custom', formatter: (p: number) => `${(p / 100).toFixed(2)}` },
+      priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(2)}` },
     })
 
     const noSeries = chart.addSeries(LineSeries, {
       color: '#E85A7E',
       lineWidth: 2,
       title: 'NO',
-      priceFormat: { type: 'custom', formatter: (p: number) => `${(p / 100).toFixed(2)}` },
+      priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(2)}` },
     })
 
     const history = getPriceHistory(marketId)

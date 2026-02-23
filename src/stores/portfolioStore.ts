@@ -35,8 +35,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     if (existing) {
       const totalQty = existing.quantity + position.quantity
       const newAvg = Math.round(
-        (existing.avgPrice * existing.quantity + position.avgPrice * position.quantity) / totalQty,
-      )
+        ((existing.avgPrice * existing.quantity + position.avgPrice * position.quantity) / totalQty) * 100,
+      ) / 100
       set({
         positions: get().positions.map((p) =>
           p.id === existing.id

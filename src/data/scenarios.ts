@@ -5,9 +5,9 @@ export const quickOrderScenarios: QuickOrderScenario[] = [
     id: 'scenario-filled',
     marketId: 'mkt-btc-100k',
     outcome: 'filled',
-    estimatedAvgPrice: 65.2,
+    estimatedAvgPrice: 0.652,
     estimatedLevels: 1,
-    estimatedFee: 0.5,
+    estimatedFee: 0.005,
     steps: [
       { delay: 800, status: 'Pending' },
       { delay: 1500, status: 'Filled', filledQuantity: 100 },
@@ -17,9 +17,9 @@ export const quickOrderScenarios: QuickOrderScenario[] = [
     id: 'scenario-partial',
     marketId: 'mkt-btc-100k',
     outcome: 'partial_then_filled',
-    estimatedAvgPrice: 65.5,
+    estimatedAvgPrice: 0.655,
     estimatedLevels: 3,
-    estimatedFee: 0.75,
+    estimatedFee: 0.0075,
     steps: [
       { delay: 800, status: 'Pending' },
       { delay: 1200, status: 'PartialFill', filledQuantity: 60 },
@@ -30,7 +30,7 @@ export const quickOrderScenarios: QuickOrderScenario[] = [
     id: 'scenario-rejected',
     marketId: 'mkt-eth-merge',
     outcome: 'rejected',
-    estimatedAvgPrice: 78,
+    estimatedAvgPrice: 0.78,
     estimatedLevels: 0,
     estimatedFee: 0,
     steps: [
