@@ -99,7 +99,6 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
     }
 
     const { addTrade, addPosition } = usePortfolioStore.getState()
-    const priceInCents = Math.round((stake / slip.length / 1) * 100)
     const sharesPerLeg = Math.round(stake / slip.length / slip[0].price)
 
     slip.forEach((leg) => {
