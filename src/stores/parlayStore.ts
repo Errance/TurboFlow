@@ -98,32 +98,15 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
       status: 'placed',
     }
 
-    const { addTrade, addPosition } = usePortfolioStore.getState()
     const sharesPerLeg = Math.round(stake / slip.length / slip[0].price)
 
     slip.forEach((leg) => {
-      addTrade({
-        id: `trade-parlay-${Date.now()}-${leg.contractId}`,
-        marketId: leg.contractId,
+      usePortfolioStore.getState().executeTrade({
+        contractId: leg.contractId,
         marketTitle: `${leg.eventTitle} — ${leg.contractLabel}`,
         side: leg.side,
         price: leg.price,
         quantity: sharesPerLeg,
-        timestamp: new Date().toISOString(),
-      })
-
-      addPosition({
-        id: `pos-parlay-${Date.now()}-${leg.contractId}`,
-        marketId: leg.contractId,
-        contractId: leg.contractId,
-        marketTitle: `${leg.eventTitle} — ${leg.contractLabel}`,
-        side: leg.side,
-        quantity: sharesPerLeg,
-        avgPrice: leg.price,
-        currentPrice: leg.price,
-        unrealizedPnl: 0,
-        unrealizedPnlPercent: 0,
-        marketStatus: 'OPEN',
       })
     })
 

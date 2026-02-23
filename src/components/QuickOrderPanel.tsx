@@ -12,11 +12,12 @@ import type { Market, OrderSide } from '../types'
 
 interface Props {
   market: Market
+  contractId?: string
   className?: string
   onLimitClick?: () => void
 }
 
-export default function QuickOrderPanel({ market, className, onLimitClick }: Props) {
+export default function QuickOrderPanel({ market, contractId, className, onLimitClick }: Props) {
   const navigate = useNavigate()
   const [orderMode, setOrderMode] = useState<'Market' | 'Limit'>('Market')
   const [side, setSide] = useState<OrderSide>('YES')
@@ -44,7 +45,7 @@ export default function QuickOrderPanel({ market, className, onLimitClick }: Pro
     setShowConfirm(false)
 
     const before = useOrderStore.getState().orders
-    useOrderStore.getState().placeQuickOrder(market.id, market.title, side, qty)
+    useOrderStore.getState().placeQuickOrder(market.id, market.title, side, qty, contractId)
     const after = useOrderStore.getState().orders
     const created = after.find((o) => !before.some((b) => b.id === o.id))
     if (created) setTrackingId(created.id)

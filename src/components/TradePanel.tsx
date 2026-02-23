@@ -200,30 +200,12 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       contractLabel: contract!.label,
     }
 
-    const { addPosition, addTrade } = usePortfolioStore.getState()
-
-    addTrade({
-      id: `trade-${Date.now()}`,
-      marketId: contract!.id,
+    usePortfolioStore.getState().executeTrade({
+      contractId: contract!.id,
       marketTitle: `${event.title} — ${contract!.label}`,
       side: selectedSide!,
       price: tradePrice,
       quantity: Math.round(tradeShares),
-      timestamp: new Date().toISOString(),
-    })
-
-    addPosition({
-      id: `pos-${Date.now()}`,
-      marketId: contract!.id,
-      contractId: contract!.id,
-      marketTitle: `${event.title} — ${contract!.label}`,
-      side: selectedSide!,
-      quantity: Math.round(tradeShares),
-      avgPrice: tradePrice,
-      currentPrice: tradePrice,
-      unrealizedPnl: 0,
-      unrealizedPnlPercent: 0,
-      marketStatus: 'OPEN',
     })
 
     if (context === 'list') {

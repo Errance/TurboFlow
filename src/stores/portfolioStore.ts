@@ -1,7 +1,16 @@
 import { create } from 'zustand'
-import type { Position, Trade } from '../types'
+import type { OrderSide, Position, Trade } from '../types'
 import { positions as fixturePositions } from '../data/positions'
 import { trades as fixtureTrades } from '../data/trades'
+
+interface ExecuteTradeParams {
+  contractId: string
+  marketTitle: string
+  side: OrderSide
+  /** USDC decimal */
+  price: number
+  quantity: number
+}
 
 interface PortfolioState {
   positions: Position[]
@@ -13,6 +22,7 @@ interface PortfolioState {
   setActiveTab: (tab: PortfolioState['activeTab']) => void
   addPosition: (position: Position) => void
   addTrade: (trade: Trade) => void
+  executeTrade: (params: ExecuteTradeParams) => void
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
@@ -50,4 +60,33 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   },
 
   addTrade: (trade) => set({ trades: [trade, ...get().trades] }),
+
+  executeTrade: ({ contractId, marketTitle, side, price, quantity }) => {
+    const tradeId = `trade-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+
+    get().addTrade({
+      id: tradeId,
+      marketId: contractId,
+      contractId,
+      marketTitle,
+      side,
+      price,
+      quantity,
+      timestamp: new Date().toISOString(),
+    })
+
+    get().addPosition({
+      id: `pos-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      marketId: contractId,
+      contractId,
+      marketTitle,
+      side,
+      quantity,
+      avgPrice: price,
+      currentPrice: price,
+      unrealizedPnl: 0,
+      unrealizedPnlPercent: 0,
+      marketStatus: 'OPEN',
+    })
+  },
 }))

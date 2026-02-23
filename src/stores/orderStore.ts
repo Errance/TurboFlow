@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { Order, OrderSide, QuickOrderScenario, ScenarioStep } from '../types'
 import { orders as fixtureOrders } from '../data/orders'
 import { quickOrderScenarios } from '../data/scenarios'
+import { usePortfolioStore } from './portfolioStore'
 
 interface OrderState {
   orders: Order[]
@@ -17,6 +18,7 @@ interface OrderState {
     marketTitle: string,
     side: OrderSide,
     quantity: number,
+    contractId?: string,
     scenarioId?: string,
   ) => void
   placeLimitOrder: (
@@ -25,6 +27,7 @@ interface OrderState {
     side: OrderSide,
     price: number,
     quantity: number,
+    contractId?: string,
   ) => void
   cancelOrder: (orderId: string) => void
   cancelAllOrders: (marketId?: string) => void
@@ -48,7 +51,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
 
-  placeQuickOrder: (marketId, marketTitle, side, quantity, scenarioId) => {
+  placeQuickOrder: (marketId, marketTitle, side, quantity, contractId, scenarioId) => {
     clearScenarioTimers()
 
     const scenario =
@@ -62,6 +65,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const newOrder: Order = {
       id: orderId,
       marketId,
+      contractId: contractId ?? marketId,
       marketTitle,
       side,
       type: 'market',
@@ -98,18 +102,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           ),
           scenarioStepIndex: i + 1,
         }))
+
+        if (step.status === 'Filled') {
+          usePortfolioStore.getState().executeTrade({
+            contractId: contractId ?? marketId,
+            marketTitle,
+            side,
+            price: scenario.estimatedAvgPrice,
+            quantity: step.filledQuantity ?? quantity,
+          })
+        }
       }, cumulativeDelay)
       scenarioTimers.push(timer)
     })
   },
 
-  placeLimitOrder: (marketId, marketTitle, side, price, quantity) => {
+  placeLimitOrder: (marketId, marketTitle, side, price, quantity, contractId) => {
     const orderId = `ord-${Date.now()}`
     const now = new Date().toISOString()
 
     const newOrder: Order = {
       id: orderId,
       marketId,
+      contractId: contractId ?? marketId,
       marketTitle,
       side,
       type: 'limit',
@@ -124,6 +139,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     set((state) => ({
       orders: [newOrder, ...state.orders],
     }))
+
+    const fillDelay = 3000 + Math.random() * 4000
+    const fillTimer = setTimeout(() => {
+      const order = get().orders.find((o) => o.id === orderId)
+      if (!order || order.status !== 'Open') return
+
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === orderId
+            ? { ...o, status: 'Filled' as const, filledQuantity: quantity, updatedAt: new Date().toISOString() }
+            : o,
+        ),
+      }))
+
+      usePortfolioStore.getState().executeTrade({
+        contractId: contractId ?? marketId,
+        marketTitle,
+        side,
+        price,
+        quantity,
+      })
+    }, fillDelay)
+    scenarioTimers.push(fillTimer)
   },
 
   cancelOrder: (orderId) => {

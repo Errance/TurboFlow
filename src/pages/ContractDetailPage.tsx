@@ -194,11 +194,13 @@ export default function ContractDetailPage() {
             {orderTab === 'market' ? (
               <QuickOrderPanel
                 market={legacyMarket}
+                contractId={contractId}
                 className="border-0 bg-transparent p-0"
               />
             ) : (
               <LimitOrderPanel
                 market={legacyMarket}
+                contractId={contractId}
                 prefillPrice={prefillPrice}
                 prefillSide={prefillSide}
                 onOrderPlaced={handleLimitOrderPlaced}
@@ -230,11 +232,13 @@ export default function ContractDetailPage() {
         {orderTab === 'market' ? (
           <QuickOrderPanel
             market={legacyMarket}
+            contractId={contractId}
             className="border-0 bg-transparent p-0"
           />
         ) : (
           <LimitOrderPanel
             market={legacyMarket}
+            contractId={contractId}
             prefillPrice={prefillPrice}
             prefillSide={prefillSide}
             onOrderPlaced={() => {

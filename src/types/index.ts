@@ -218,6 +218,7 @@ export interface Position {
 export interface Trade {
   id: string
   marketId: string
+  contractId?: string
   marketTitle: string
   side: OrderSide
   /** USDC decimal, e.g. 0.64 */

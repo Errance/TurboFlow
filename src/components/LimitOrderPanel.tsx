@@ -14,6 +14,7 @@ function fmt(v: number): string {
 
 interface Props {
   market: Market
+  contractId?: string
   prefillPrice?: number
   prefillSide?: OrderSide
   onOrderPlaced?: () => void
@@ -21,6 +22,7 @@ interface Props {
 
 export default function LimitOrderPanel({
   market,
+  contractId,
   prefillPrice,
   prefillSide,
   onOrderPlaced,
@@ -90,6 +92,7 @@ export default function LimitOrderPanel({
       side,
       priceNum,
       Math.round(sharesNum),
+      contractId,
     )
     useToastStore.getState().addToast({
       type: 'success',
