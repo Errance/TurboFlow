@@ -94,7 +94,6 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
 
   const handleTrade = (contractId: string, side: 'YES' | 'NO') => {
     openTradePanel(contractId, side)
-    navigate(`/game/${event.id}`)
   }
 
   return (
