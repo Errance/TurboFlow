@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { PredictionEvent } from '../types'
 import { useEventStore } from '../stores/eventStore'
-import ShareButton from './ShareButton'
 
 interface Props {
   event: PredictionEvent
@@ -126,10 +125,7 @@ export default function InstantMarketCard({ event }: Props) {
         {/* Volume + Share */}
         <div className="flex items-center justify-between text-xs text-[#8A8A9A] mb-3">
           <span>Volume</span>
-          <div className="flex items-center gap-1">
-            <span className="font-mono">${event.totalVolume.toLocaleString()} USDC</span>
-            <ShareButton event={event} size="sm" />
-          </div>
+          <span className="font-mono">${event.totalVolume.toLocaleString()} USDC</span>
         </div>
 
         {/* Action buttons */}
