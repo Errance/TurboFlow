@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore, CATEGORIES } from '../stores/eventStore'
+import type { EventCategory } from '../stores/eventStore'
 import type { PredictionEvent, Contract } from '../types'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
@@ -188,7 +189,7 @@ function FeaturedBanner({ events }: { events: PredictionEvent[] }) {
         </div>
       ) : (
         <div className="bg-gradient-to-r from-[#6366F1]/10 to-[#161622] border border-[#6366F1]/20 rounded-xl p-4 md:p-6 cursor-pointer hover:border-[#6366F1]/40 transition-colors"
-          onClick={() => { useEventStore.getState().setSelectedCategory('Sports') }} role="button">
+          onClick={() => { useEventStore.getState().setSelectedCategory('Sports'); window.history.replaceState(null, '', '/?category=Sports') }} role="button">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="info">Sports</Badge>
             {liveCount > 0 && <Badge variant="danger">{liveCount} LIVE</Badge>}
@@ -404,6 +405,24 @@ export default function EventsPage() {
   const tradePanelOpen = useEventStore((s) => s.tradePanelOpen)
   const closeTradePanel = useEventStore((s) => s.closeTradePanel)
   const getSelectedContract = useEventStore((s) => s.getSelectedContract)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    const urlCat = searchParams.get('category')
+    if (urlCat && (CATEGORIES as readonly string[]).includes(urlCat) && urlCat !== selectedCategory) {
+      setSelectedCategory(urlCat as EventCategory)
+    }
+  }, [])
+
+  const handleCategoryChange = useCallback((cat: EventCategory) => {
+    setSelectedCategory(cat)
+    if (cat === 'All') {
+      setSearchParams({}, { replace: true })
+    } else {
+      setSearchParams({ category: cat }, { replace: true })
+    }
+  }, [setSelectedCategory, setSearchParams])
 
   const isLanding = selectedCategory === 'All'
   const isSports = selectedCategory === 'Sports'
@@ -731,7 +750,7 @@ export default function EventsPage() {
       {/* Category tabs */}
       <div className="flex gap-1 mb-5 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         {CATEGORIES.map((cat) => (
-          <button key={cat} onClick={() => setSelectedCategory(cat)}
+          <button key={cat} onClick={() => handleCategoryChange(cat)}
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 whitespace-nowrap flex items-center gap-1.5 ${
               selectedCategory === cat ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
             }`}>
@@ -753,7 +772,7 @@ export default function EventsPage() {
                 <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white">
                   <span className="w-2 h-2 rounded-full bg-[#E85A7E] animate-pulse" />Live Predictions
                 </span>
-                <button onClick={() => setSelectedCategory('Live')} className="text-xs text-[#2DD4BF] hover:underline">
+                <button onClick={() => handleCategoryChange('Live')} className="text-xs text-[#2DD4BF] hover:underline">
                   View all live →
                 </button>
               </div>
