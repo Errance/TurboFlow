@@ -40,10 +40,26 @@ function computeCombinedOdds(legs: ParlayLeg[]): number {
   return legs.reduce((acc, leg) => acc / leg.price, 1)
 }
 
+const fixtureParlays: Parlay[] = [
+  {
+    id: 'parlay-fixture-1',
+    legs: [
+      { contractId: 'ctr-btc-100k-mar', eventId: 'mkt-btc-100k', side: 'YES', price: 0.65, eventTitle: 'Will BTC exceed $100K by March 2026?', contractLabel: 'BTC > $100K' },
+      { contractId: 'ctr-eth-5k', eventId: 'mkt-eth-5k', side: 'YES', price: 0.40, eventTitle: 'Will ETH reach $5K by June 2026?', contractLabel: 'ETH > $5K' },
+      { contractId: 'ctr-fed-q2', eventId: 'mkt-fed-rates', side: 'YES', price: 0.50, eventTitle: 'Will the Fed cut rates in Q2 2026?', contractLabel: 'Fed Rate Cut Q2' },
+    ],
+    stake: 150,
+    combinedOdds: 1 / (0.65 * 0.40 * 0.50),
+    potentialPayout: 150 * (1 / (0.65 * 0.40 * 0.50)),
+    createdAt: '2026-02-20T14:30:00.000Z',
+    status: 'placed',
+  },
+]
+
 export const useParlayStore = create<ParlayState>((set, get) => ({
   slip: [],
   slipOpen: false,
-  placedParlays: [],
+  placedParlays: [...fixtureParlays],
 
   addLeg: (leg) => {
     const { slip } = get()
@@ -116,6 +132,7 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
         side: leg.side,
         price: leg.price,
         quantity: shares,
+        parlayId: parlay.id,
       })
     })
 

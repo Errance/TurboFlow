@@ -4,6 +4,7 @@ export const orders: Order[] = [
   {
     id: 'ord-001',
     marketId: 'mkt-btc-100k',
+    contractId: 'ctr-btc-100k-mar',
     marketTitle: 'Will BTC exceed $100K by March 2026?',
     side: 'YES',
     type: 'limit',
@@ -17,6 +18,7 @@ export const orders: Order[] = [
   {
     id: 'ord-002',
     marketId: 'mkt-btc-100k',
+    contractId: 'ctr-btc-100k-mar',
     marketTitle: 'Will BTC exceed $100K by March 2026?',
     side: 'YES',
     type: 'limit',
@@ -30,6 +32,7 @@ export const orders: Order[] = [
   {
     id: 'ord-003',
     marketId: 'mkt-fed-rates',
+    contractId: 'ctr-fed-q1',
     marketTitle: 'Will the Fed cut rates in Q1 2026?',
     side: 'NO',
     type: 'market',
@@ -43,6 +46,7 @@ export const orders: Order[] = [
   {
     id: 'ord-004',
     marketId: 'mkt-btc-100k',
+    contractId: 'ctr-btc-100k-mar',
     marketTitle: 'Will BTC exceed $100K by March 2026?',
     side: 'NO',
     type: 'limit',
@@ -56,6 +60,7 @@ export const orders: Order[] = [
   {
     id: 'ord-005',
     marketId: 'mkt-eth-merge',
+    contractId: 'ctr-eth-merge',
     marketTitle: 'Will ETH 2.0 merge complete by Feb 2026?',
     side: 'YES',
     type: 'limit',
@@ -71,6 +76,7 @@ export const orders: Order[] = [
   {
     id: 'ord-006',
     marketId: 'mkt-fed-rates',
+    contractId: 'ctr-fed-q1',
     marketTitle: 'Will the Fed cut rates in Q1 2026?',
     side: 'YES',
     type: 'limit',
@@ -84,6 +90,7 @@ export const orders: Order[] = [
   {
     id: 'ord-007',
     marketId: 'mkt-btc-100k',
+    contractId: 'ctr-btc-100k-mar',
     marketTitle: 'Will BTC exceed $100K by March 2026?',
     side: 'YES',
     type: 'limit',

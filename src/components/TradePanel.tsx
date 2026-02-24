@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useEventStore } from '../stores/eventStore'
 import { useToastStore } from '../stores/toastStore'
-import { usePortfolioStore } from '../stores/portfolioStore'
+import { useOrderStore } from '../stores/orderStore'
 import type { PredictionEvent } from '../types'
 import Button from './ui/Button'
 
@@ -187,9 +187,22 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     }
   }
 
-  const executeTrade = (tradePrice: number, tradeShares: number, tradeTotal: number) => {
+  const handleQuickBuy = () => {
+    if (parsedSpend <= 0) return
+    const tradeShares = quickShares
+    const tradePrice = price
+    const tradeTotal = parsedSpend
     const payout = tradeShares * contract!.payoutPerShare
     const profit = payout - tradeTotal
+
+    useOrderStore.getState().placeMarketOrder({
+      contractId: contract!.id,
+      marketTitle: `${event.title} — ${contract!.label}`,
+      side: selectedSide!,
+      price: tradePrice,
+      quantity: Math.round(tradeShares),
+    })
+
     const result: TradeResult = {
       side: selectedSide!,
       price: tradePrice,
@@ -199,14 +212,6 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       profit,
       contractLabel: contract!.label,
     }
-
-    usePortfolioStore.getState().executeTrade({
-      contractId: contract!.id,
-      marketTitle: `${event.title} — ${contract!.label}`,
-      side: selectedSide!,
-      price: tradePrice,
-      quantity: Math.round(tradeShares),
-    })
 
     if (context === 'list') {
       addToast({
@@ -220,14 +225,32 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     }
   }
 
-  const handleQuickBuy = () => {
-    if (parsedSpend <= 0) return
-    executeTrade(price, quickShares, parsedSpend)
-  }
-
   const handleLimitBuy = () => {
     if (!limitValid) return
-    executeTrade(lPrice, lShares, lPrice * lShares)
+
+    useOrderStore.getState().placeLimitOrder(
+      contract!.id,
+      `${event.title} — ${contract!.label}`,
+      selectedSide!,
+      lPrice,
+      lShares,
+      contract!.id,
+    )
+
+    if (context === 'list') {
+      addToast({
+        type: 'success',
+        message: `Limit order placed — ${selectedSide} ${lShares} shares at ${formatUsdc(lPrice)} USDC`,
+      })
+      resetFields()
+      closeTradePanel()
+    } else {
+      addToast({
+        type: 'success',
+        message: `Limit order placed — view in Portfolio`,
+      })
+      resetFields()
+    }
   }
 
   return (

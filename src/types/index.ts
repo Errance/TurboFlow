@@ -211,6 +211,7 @@ export interface Position {
   marketStatus: MarketStatus
   settlementResult?: 'YES' | 'NO'
   finalPnl?: number
+  parlayId?: string
 }
 
 // === Trade ===

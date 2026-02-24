@@ -10,12 +10,13 @@ interface ExecuteTradeParams {
   /** USDC decimal */
   price: number
   quantity: number
+  parlayId?: string
 }
 
 interface PortfolioState {
   positions: Position[]
   trades: Trade[]
-  activeTab: 'positions' | 'orders' | 'activity' | 'trades' | 'parlays'
+  activeTab: 'positions' | 'orders' | 'history'
 
   getPositionsByMarket: (marketId: string) => Position[]
   getTradesByMarket: (marketId: string) => Trade[]
@@ -23,6 +24,7 @@ interface PortfolioState {
   addPosition: (position: Position) => void
   addTrade: (trade: Trade) => void
   executeTrade: (params: ExecuteTradeParams) => void
+  closePosition: (positionId: string) => void
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
@@ -41,7 +43,10 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   addPosition: (position) => {
     const matchKey = position.contractId ?? position.marketId
     const existing = get().positions.find(
-      (p) => (p.contractId ?? p.marketId) === matchKey && p.side === position.side,
+      (p) =>
+        (p.contractId ?? p.marketId) === matchKey &&
+        p.side === position.side &&
+        p.parlayId === position.parlayId,
     )
     if (existing) {
       const totalQty = existing.quantity + position.quantity
@@ -62,7 +67,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
 
   addTrade: (trade) => set({ trades: [trade, ...get().trades] }),
 
-  executeTrade: ({ contractId, marketTitle, side, price, quantity }) => {
+  executeTrade: ({ contractId, marketTitle, side, price, quantity, parlayId }) => {
     const tradeId = `trade-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
     get().addTrade({
@@ -88,6 +93,11 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
       unrealizedPnl: 0,
       unrealizedPnlPercent: 0,
       marketStatus: 'OPEN',
+      ...(parlayId ? { parlayId } : {}),
     })
+  },
+
+  closePosition: (positionId) => {
+    set({ positions: get().positions.filter((p) => p.id !== positionId) })
   },
 }))
