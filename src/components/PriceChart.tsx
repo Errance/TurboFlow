@@ -1,40 +1,53 @@
 import { useEffect, useRef } from 'react'
 import { createChart, LineSeries, type IChartApi, type Time } from 'lightweight-charts'
 import { getPriceHistory } from '../data/priceHistory'
+import { useThemeStore } from '../stores/themeStore'
 
 interface Props {
   marketId: string
   className?: string
 }
 
+function getThemeColors() {
+  const s = getComputedStyle(document.documentElement)
+  const v = (name: string) => s.getPropertyValue(name).trim()
+  return {
+    bgCard: v('--bg-card'),
+    textSecondary: v('--text-secondary'),
+    border: v('--border'),
+  }
+}
+
 export default function PriceChart({ marketId, className }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
+  const theme = useThemeStore((s) => s.theme)
 
   useEffect(() => {
     if (!containerRef.current) return
 
+    const tc = getThemeColors()
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { color: '#161622' },
-        textColor: '#8A8A9A',
+        background: { color: tc.bgCard },
+        textColor: tc.textSecondary,
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: '#252536' },
-        horzLines: { color: '#252536' },
+        vertLines: { color: tc.border },
+        horzLines: { color: tc.border },
       },
       rightPriceScale: {
-        borderColor: '#252536',
+        borderColor: tc.border,
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
       timeScale: {
-        borderColor: '#252536',
+        borderColor: tc.border,
         timeVisible: false,
       },
       crosshair: {
-        vertLine: { color: '#8A8A9A', width: 1, style: 3 },
-        horzLine: { color: '#8A8A9A', width: 1, style: 3 },
+        vertLine: { color: tc.textSecondary, width: 1, style: 3 },
+        horzLine: { color: tc.textSecondary, width: 1, style: 3 },
       },
       handleScroll: true,
       handleScale: true,
@@ -77,7 +90,7 @@ export default function PriceChart({ marketId, className }: Props) {
       chart.remove()
       chartRef.current = null
     }
-  }, [marketId])
+  }, [marketId, theme])
 
   return (
     <div className={className}>

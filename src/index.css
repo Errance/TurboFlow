@@ -56,10 +56,34 @@
   }
 }
 
+:root {
+  --bg-base: #0B0B0F;
+  --bg-card: #161622;
+  --bg-control: #1C1C28;
+  --border: #252536;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8A8A9A;
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] {
+  --bg-base: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --bg-control: #EEEEF2;
+  --border: #DDDDE5;
+  --text-primary: #1A1A2E;
+  --text-secondary: #6B6B80;
+  --overlay-bg: rgba(0, 0, 0, 0.25);
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #0B0B0F;
-  color: #FFFFFF;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -67,7 +91,7 @@ body {
 
 .glow-card {
   position: relative;
-  background: #161622;
+  background: var(--bg-card);
   border-radius: 12px;
   border: 2px solid rgba(45, 212, 191, 0.25);
   transition: border-color 0.2s ease;
@@ -75,6 +99,14 @@ body {
 
 .glow-card:hover {
   border-color: rgba(45, 212, 191, 0.65);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 [class*="apply-common-tooltip"],

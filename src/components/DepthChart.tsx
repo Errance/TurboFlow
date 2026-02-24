@@ -8,10 +8,10 @@ const COLORS = {
   bidFill: 'rgba(45, 212, 191, 0.15)',
   ask: '#E85A7E',
   askFill: 'rgba(232, 90, 126, 0.15)',
-  axis: '#8A8A9A',
-  grid: '#252536',
-  bg: '#161622',
-  spread: '#0B0B0F',
+  axis: 'var(--text-secondary)',
+  grid: 'var(--border)',
+  bg: 'var(--bg-card)',
+  spread: 'var(--bg-base)',
 }
 
 interface CumulativePoint {
@@ -163,7 +163,7 @@ export default function DepthChart({ className }: { className?: string }) {
 
   if (bids.length === 0 && asks.length === 0) {
     return (
-      <div className={`flex items-center justify-center h-[200px] text-sm text-[#8A8A9A] ${className ?? ''}`}>
+      <div className={`flex items-center justify-center h-[200px] text-sm text-[var(--text-secondary)] ${className ?? ''}`}>
         No depth data
       </div>
     )

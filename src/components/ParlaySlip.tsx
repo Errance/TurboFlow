@@ -14,7 +14,7 @@ function ParlayBar({ legCount, odds, onOpen }: { legCount: number; odds: number;
       {/* Mobile: above tab bar */}
       <div
         onClick={onOpen}
-        className="md:hidden fixed bottom-[56px] left-0 right-0 z-31 bg-[#161622] border-t border-[#2DD4BF]/20 px-4 flex items-center justify-between cursor-pointer min-h-[40px] hover:bg-[#1C1C28] transition-colors"
+        className="md:hidden fixed bottom-[56px] left-0 right-0 z-31 bg-[var(--bg-card)] border-t border-[#2DD4BF]/20 px-4 flex items-center justify-between cursor-pointer min-h-[40px] hover:bg-[var(--bg-control)] transition-colors"
       >
         <div className="flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-[#2DD4BF]">
@@ -22,11 +22,11 @@ function ParlayBar({ legCount, odds, onOpen }: { legCount: number; odds: number;
             <circle cx="7" cy="14" r="1" fill="currentColor" />
             <circle cx="12" cy="14" r="1" fill="currentColor" />
           </svg>
-          <span className="text-xs font-medium text-white">Parlay</span>
+          <span className="text-xs font-medium text-[var(--text-primary)]">Parlay</span>
           <span className="text-[10px] bg-[#2DD4BF]/10 text-[#2DD4BF] px-1.5 py-0.5 rounded font-bold">
             {legCount}
           </span>
-          <span className="text-[10px] text-[#8A8A9A] font-mono">{odds.toFixed(2)}x</span>
+          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{odds.toFixed(2)}x</span>
         </div>
         <span className="text-xs text-[#2DD4BF] font-medium">View Slip</span>
       </div>
@@ -34,7 +34,7 @@ function ParlayBar({ legCount, odds, onOpen }: { legCount: number; odds: number;
       {/* Desktop: sticky bottom-right card */}
       <div
         onClick={onOpen}
-        className="hidden md:flex fixed bottom-4 right-4 z-40 bg-[#161622] border border-[#2DD4BF]/20 rounded-xl px-4 py-3 items-center gap-3 cursor-pointer shadow-lg shadow-[#2DD4BF]/10 hover:border-[#2DD4BF]/40 transition-colors min-w-[240px]"
+        className="hidden md:flex fixed bottom-4 right-4 z-40 bg-[var(--bg-card)] border border-[#2DD4BF]/20 rounded-xl px-4 py-3 items-center gap-3 cursor-pointer shadow-lg shadow-[#2DD4BF]/10 hover:border-[#2DD4BF]/40 transition-colors min-w-[240px]"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#2DD4BF] shrink-0">
           <path d="M2 3h2l2 8h6l2-6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -43,14 +43,14 @@ function ParlayBar({ legCount, odds, onOpen }: { legCount: number; odds: number;
         </svg>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white">Parlay Slip</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">Parlay Slip</span>
             <span className="text-[10px] bg-[#2DD4BF]/10 text-[#2DD4BF] px-1.5 py-0.5 rounded font-bold">
               {legCount} legs
             </span>
           </div>
-          <span className="text-xs text-[#8A8A9A] font-mono">Combined: {odds.toFixed(2)}x</span>
+          <span className="text-xs text-[var(--text-secondary)] font-mono">Combined: {odds.toFixed(2)}x</span>
         </div>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#8A8A9A] shrink-0">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--text-secondary)] shrink-0">
           <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
@@ -90,23 +90,23 @@ function ParlayPanel({
   return (
     <>
       {/* Backdrop on mobile */}
-      <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="md:hidden fixed inset-0 bg-[var(--overlay-bg)] z-40" onClick={onClose} />
 
-      <div className="fixed bottom-0 left-0 right-0 md:bottom-4 md:right-4 md:left-auto md:w-[380px] z-50 bg-[#161622] border-t md:border border-[#252536] md:rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
+      <div className="fixed bottom-0 left-0 right-0 md:bottom-4 md:right-4 md:left-auto md:w-[380px] z-50 bg-[var(--bg-card)] border-t md:border border-[var(--border)] md:rounded-xl shadow-2xl max-h-[80vh] flex flex-col">
         {/* Handle + Header */}
-        <div className="md:hidden w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2" />
-        <div className="flex items-center justify-between p-4 border-b border-[#252536]">
+        <div className="md:hidden w-10 h-1 bg-[var(--border)] rounded-full mx-auto mt-2" />
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-white">Parlay Slip</h3>
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">Parlay Slip</h3>
             <span className="text-[10px] bg-[#2DD4BF]/10 text-[#2DD4BF] px-1.5 py-0.5 rounded font-medium">
               {slip.length} legs
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onClear} className="text-xs text-[#8A8A9A] hover:text-[#E85A7E] transition-colors">
+            <button onClick={onClear} className="text-xs text-[var(--text-secondary)] hover:text-[#E85A7E] transition-colors">
               Clear All
             </button>
-            <button onClick={onClose} className="text-[#8A8A9A] hover:text-white transition-colors p-1">
+            <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
@@ -119,23 +119,23 @@ function ParlayPanel({
           {slip.map((leg) => (
             <div
               key={leg.contractId}
-              className="bg-[#0B0B0F] rounded-lg p-3 flex items-start justify-between gap-2"
+              className="bg-[var(--bg-base)] rounded-lg p-3 flex items-start justify-between gap-2"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-[#8A8A9A] truncate">{leg.eventTitle}</p>
+                <p className="text-xs text-[var(--text-secondary)] truncate">{leg.eventTitle}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                     leg.side === 'YES' ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]' : 'bg-[#E85A7E]/20 text-[#E85A7E]'
                   }`}>
                     {leg.side}
                   </span>
-                  <span className="text-xs text-white truncate">{leg.contractLabel}</span>
-                  <span className="text-xs text-[#8A8A9A] font-mono">{formatUsdc(leg.price)}</span>
+                  <span className="text-xs text-[var(--text-primary)] truncate">{leg.contractLabel}</span>
+                  <span className="text-xs text-[var(--text-secondary)] font-mono">{formatUsdc(leg.price)}</span>
                 </div>
               </div>
               <button
                 onClick={() => onRemoveLeg(leg.contractId)}
-                className="text-[#8A8A9A] hover:text-[#E85A7E] transition-colors p-0.5 shrink-0"
+                className="text-[var(--text-secondary)] hover:text-[#E85A7E] transition-colors p-0.5 shrink-0"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -152,33 +152,38 @@ function ParlayPanel({
         </div>
 
         {/* Stake + Summary (pinned bottom) */}
-        <div className="p-4 border-t border-[#252536] space-y-3">
-          <div className="flex justify-between text-xs">
-            <span className="text-[#8A8A9A]">Combined odds</span>
-            <span className="text-white font-mono font-medium">{combinedOdds.toFixed(2)}x</span>
+        <div className="p-4 border-t border-[var(--border)] space-y-3">
+          <div>
+            <div className="flex justify-between text-xs">
+              <span className="text-[var(--text-secondary)]">Combined odds</span>
+              <span className="text-[var(--text-primary)] font-mono font-medium">{combinedOdds.toFixed(2)}x</span>
+            </div>
+            <p className="text-[10px] text-[var(--text-secondary)]/70 font-mono mt-1 overflow-x-auto scrollbar-hide whitespace-nowrap">
+              1 ÷ ({slip.map((l) => l.price.toFixed(2)).join(' × ')}) = {combinedOdds.toFixed(2)}x
+            </p>
           </div>
 
           <div>
-            <label className="text-xs text-[#8A8A9A] mb-1 block">Stake (USDC)</label>
-            <div className="flex items-center gap-2 bg-[#0B0B0F] border border-[#252536] rounded-lg px-3 py-2">
-              <span className="text-sm text-[#8A8A9A]">$</span>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Stake (USDC)</label>
+            <div className="flex items-center gap-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-lg px-3 py-2">
+              <span className="text-sm text-[var(--text-secondary)]">$</span>
               <input
                 type="number"
                 value={stake}
                 onChange={(e) => setStake(e.target.value)}
                 placeholder="0.00"
-                className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+                className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
                 min="0"
                 step="0.01"
               />
-              <span className="text-xs text-[#8A8A9A]">USDC</span>
+              <span className="text-xs text-[var(--text-secondary)]">USDC</span>
             </div>
             <div className="flex gap-1.5 mt-2">
               {[10, 25, 50, 100].map((v) => (
                 <button
                   key={v}
                   onClick={() => setStake(String(v))}
-                  className="flex-1 py-2 text-xs font-medium text-[#8A8A9A] bg-[#0B0B0F] rounded hover:bg-[#252536] hover:text-white transition-colors"
+                  className="flex-1 py-2 text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   ${v}
                 </button>
@@ -187,27 +192,27 @@ function ParlayPanel({
           </div>
 
           {parsedStake > 0 && (
-            <div className="bg-[#0B0B0F] rounded-lg p-3 space-y-1.5">
+            <div className="bg-[var(--bg-base)] rounded-lg p-3 space-y-1.5">
               {slip.length >= 2 && (
-                <div className="space-y-1 mb-1.5 pb-1.5 border-b border-[#252536]">
+                <div className="space-y-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
                   {slip.map((leg) => {
                     const legStake = parsedStake / slip.length
                     const legShares = Math.round(legStake / leg.price)
                     return (
                       <div key={leg.contractId} className="flex justify-between text-[10px]">
-                        <span className="text-[#8A8A9A] truncate max-w-[60%]">{leg.contractLabel}</span>
-                        <span className="text-[#8A8A9A] font-mono">${formatUsdc(legStake)} → {legShares} shares</span>
+                        <span className="text-[var(--text-secondary)] truncate max-w-[60%]">{leg.contractLabel}</span>
+                        <span className="text-[var(--text-secondary)] font-mono">${formatUsdc(legStake)} → {legShares} shares</span>
                       </div>
                     )
                   })}
                 </div>
               )}
               <div className="flex justify-between text-xs">
-                <span className="text-[#8A8A9A]">Potential payout</span>
+                <span className="text-[var(--text-secondary)]">Potential payout</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(potentialPayout)} USDC</span>
               </div>
-              <div className="flex justify-between text-xs border-t border-[#252536] pt-1.5">
-                <span className="text-[#8A8A9A]">Potential profit</span>
+              <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
+                <span className="text-[var(--text-secondary)]">Potential profit</span>
                 <span className="text-[#2DD4BF] font-mono font-medium">
                   +{formatUsdc(potentialProfit)} USDC
                 </span>

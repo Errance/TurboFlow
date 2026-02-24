@@ -114,7 +114,7 @@ export default function LimitOrderPanel({
       <div className="space-y-3">
         {/* Direction */}
         <div>
-          <label className="block text-xs text-[#8A8A9A] mb-1.5">Direction</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Direction</label>
           <SegmentedControl
             variant="yes-no"
             options={[
@@ -128,49 +128,49 @@ export default function LimitOrderPanel({
 
         {/* Market price reference */}
         <div className="flex justify-between text-xs">
-          <span className="text-[#8A8A9A]">Market price</span>
-          <span className="text-white font-mono">{fmt(marketPrice)} USDC</span>
+          <span className="text-[var(--text-secondary)]">Market price</span>
+          <span className="text-[var(--text-primary)] font-mono">{fmt(marketPrice)} USDC</span>
         </div>
 
         {/* Price per share */}
         <div>
-          <label className="block text-xs text-[#8A8A9A] mb-1">Price per share</label>
-          <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">Price per share</label>
+          <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
             <input
               type="number"
               value={price}
               onChange={(e) => handlePriceChange(e.target.value)}
               placeholder="0.01 – 0.99"
-              className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+              className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
               min="0.01"
               max="0.99"
               step="0.01"
             />
-            <span className="text-xs text-[#8A8A9A]">USDC</span>
+            <span className="text-xs text-[var(--text-secondary)]">USDC</span>
           </div>
         </div>
 
         {/* Shares */}
         <div>
-          <label className="block text-xs text-[#8A8A9A] mb-1">Shares</label>
-          <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">Shares</label>
+          <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
             <input
               type="number"
               value={shares}
               onChange={(e) => handleSharesChange(e.target.value)}
               placeholder="0"
-              className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+              className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
               min="1"
               step="1"
             />
-            <span className="text-xs text-[#8A8A9A]">shares</span>
+            <span className="text-xs text-[var(--text-secondary)]">shares</span>
           </div>
           <div className="flex gap-1.5 mt-1.5">
             {[25, 50, 75, 100].map((pct) => (
               <button
                 key={pct}
                 onClick={() => handlePercentClick(pct)}
-                className="flex-1 py-1 text-xs text-[#8A8A9A] bg-[#0B0B0F] rounded hover:bg-[#252536] hover:text-white transition-colors"
+                className="flex-1 py-1 text-xs text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
               >
                 {pct === 100 ? 'Max' : `${pct}%`}
               </button>
@@ -180,32 +180,32 @@ export default function LimitOrderPanel({
 
         {/* Total Cost */}
         <div>
-          <label className="block text-xs text-[#8A8A9A] mb-1">Total cost</label>
-          <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
-            <span className="text-sm text-[#8A8A9A]">$</span>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">Total cost</label>
+          <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
+            <span className="text-sm text-[var(--text-secondary)]">$</span>
             <input
               type="number"
               value={total}
               onChange={(e) => handleTotalChange(e.target.value)}
               placeholder="0.00"
-              className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+              className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
               min="0"
               step="0.01"
             />
-            <span className="text-xs text-[#8A8A9A]">USDC</span>
+            <span className="text-xs text-[var(--text-secondary)]">USDC</span>
           </div>
         </div>
 
         {/* Available balance */}
         <div className="flex justify-between text-xs">
-          <span className="text-[#8A8A9A]">Available</span>
-          <span className="text-white font-mono">{fmt(MOCK_BALANCE)} USDC</span>
+          <span className="text-[var(--text-secondary)]">Available</span>
+          <span className="text-[var(--text-primary)] font-mono">{fmt(MOCK_BALANCE)} USDC</span>
         </div>
 
         {/* Advanced (TIF) */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-1 text-xs text-[#8A8A9A] hover:text-white transition-colors"
+          className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
           <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▸</span>
           Advanced: {tif}
@@ -214,7 +214,7 @@ export default function LimitOrderPanel({
           <select
             value={tif}
             onChange={(e) => setTif(e.target.value)}
-            className="w-full h-8 px-2 text-xs bg-[#1C1C28] text-white border border-[#252536] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
+            className="w-full h-8 px-2 text-xs bg-[var(--bg-control)] text-[var(--text-primary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
           >
             <option value="GTC">GTC (Good til Cancel)</option>
             <option value="IOC">IOC (Immediate or Cancel)</option>
@@ -223,17 +223,17 @@ export default function LimitOrderPanel({
 
         {/* Estimate */}
         {isValid && (
-          <div className="bg-[#0B0B0F] rounded-lg p-3 space-y-1.5">
+          <div className="bg-[var(--bg-base)] rounded-lg p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Est. payout</span>
+              <span className="text-[var(--text-secondary)]">Est. payout</span>
               <span className="text-[#2DD4BF] font-mono">{fmt(sharesNum * 1)} USDC</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Total cost</span>
-              <span className="text-white font-mono">{fmt(priceNum * sharesNum)} USDC</span>
+              <span className="text-[var(--text-secondary)]">Total cost</span>
+              <span className="text-[var(--text-primary)] font-mono">{fmt(priceNum * sharesNum)} USDC</span>
             </div>
-            <div className="flex justify-between text-xs border-t border-[#252536] pt-1.5">
-              <span className="text-[#8A8A9A]">Est. profit</span>
+            <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
+              <span className="text-[var(--text-secondary)]">Est. profit</span>
               <span className={`font-mono font-medium ${(sharesNum - priceNum * sharesNum) >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                 {(sharesNum - priceNum * sharesNum) >= 0 ? '+' : ''}{fmt(sharesNum - priceNum * sharesNum)} USDC
               </span>
@@ -258,13 +258,13 @@ export default function LimitOrderPanel({
           <div className="space-y-2 text-sm">
             {[
               ['Side', side, side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
-              ['Price', `${price} USDC`, 'text-white'],
-              ['Shares', String(Math.round(sharesNum)), 'text-white'],
-              ['Total', `${fmt(priceNum * sharesNum)} USDC`, 'text-white'],
-              ['Time in Force', tif, 'text-white'],
+              ['Price', `${price} USDC`, 'text-[var(--text-primary)]'],
+              ['Shares', String(Math.round(sharesNum)), 'text-[var(--text-primary)]'],
+              ['Total', `${fmt(priceNum * sharesNum)} USDC`, 'text-[var(--text-primary)]'],
+              ['Time in Force', tif, 'text-[var(--text-primary)]'],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between">
-                <span className="text-[#8A8A9A]">{label}</span>
+                <span className="text-[var(--text-secondary)]">{label}</span>
                 <span className={color}>{value}</span>
               </div>
             ))}

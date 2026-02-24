@@ -28,7 +28,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={className}>
         {label && (
-          <label className="block text-xs text-[#8A8A9A] mb-1">{label}</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">{label}</label>
         )}
         <div className="relative">
           <input
@@ -39,10 +39,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             placeholder={placeholder}
             disabled={disabled}
             className={[
-              "w-full h-10 px-3 rounded-lg bg-[#1C1C28] border text-white placeholder:text-[#8A8A9A]",
+              "w-full h-10 px-3 rounded-lg bg-[var(--bg-control)] border text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]",
               "focus:outline-none focus:border-[#2DD4BF] focus:ring-1 focus:ring-[#2DD4BF]",
               "transition-all duration-150",
-              error ? "border-[#E85A7E]" : "border-[#252536]",
+              error ? "border-[#E85A7E]" : "border-[var(--border)]",
               disabled && "opacity-40 cursor-not-allowed",
               suffix && "pr-16",
             ]
@@ -51,7 +51,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {suffix && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A9A] text-sm pointer-events-none">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm pointer-events-none">
               {suffix}
             </span>
           )}

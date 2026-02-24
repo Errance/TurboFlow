@@ -43,7 +43,7 @@ function PriceButton({
     <button
       onClick={(e) => { e.stopPropagation(); if (!disabled) onClick() }}
       disabled={disabled}
-      className={`${disabled ? 'bg-[#252536] text-[#8A8A9A] cursor-not-allowed' : base} px-2 py-1.5 rounded-lg text-xs font-medium font-mono tabular-nums transition-colors min-h-[36px] min-w-[48px]`}
+      className={`${disabled ? 'bg-[var(--border)] text-[var(--text-secondary)] cursor-not-allowed' : base} px-2 py-1.5 rounded-lg text-xs font-medium font-mono tabular-nums transition-colors min-h-[36px] min-w-[48px]`}
     >
       {probability}%
     </button>
@@ -64,11 +64,11 @@ function BettingLine({
   if (contracts.length === 0) return null
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-[10px] text-[#8A8A9A] w-16 shrink-0 uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-[var(--text-secondary)] w-16 shrink-0 uppercase tracking-wider">{label}</span>
       <div className="flex gap-1.5 flex-1 justify-end">
         {contracts.map((c) => (
           <div key={c.id} className="flex flex-col items-center gap-0.5">
-            <span className="text-[9px] text-[#8A8A9A] truncate max-w-[60px]">{c.label.split(' ').slice(-1)[0]}</span>
+            <span className="text-[9px] text-[var(--text-secondary)] truncate max-w-[60px]">{c.label.split(' ').slice(-1)[0]}</span>
             <PriceButton
               probability={c.probability}
               variant="yes"
@@ -99,7 +99,7 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
   return (
     <div
       className={`p-4 cursor-pointer ${
-        isCancelled ? 'bg-[#161622] border border-[#252536] rounded-xl opacity-60' : 'glow-card'
+        isCancelled ? 'bg-[var(--bg-card)] border border-[var(--border)] rounded-xl opacity-60' : 'glow-card'
       }`}
       onClick={() => navigate(`/game/${event.id}`)}
     >
@@ -107,38 +107,38 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
         <div className="flex items-center gap-2">
           {sports.status === 'live' && <Badge variant="danger">LIVE</Badge>}
           {isCancelled && <Badge variant="neutral">Cancelled</Badge>}
-          <span className="text-xs text-[#8A8A9A]">
+          <span className="text-xs text-[var(--text-secondary)]">
             {sports.status === 'scheduled' ? formatGameTime(sports.gameTime) : sports.league}
           </span>
         </div>
-        <span className="text-xs text-[#8A8A9A] font-mono">{formatVolume(event.totalVolume)}</span>
+        <span className="text-xs text-[var(--text-secondary)] font-mono">{formatVolume(event.totalVolume)}</span>
       </div>
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-sm font-medium text-white">{sports.awayTeam.name}</span>
+          <div className="flex items-center gap-2 mb-1.5 min-w-0">
+            <span className="text-sm font-medium text-[var(--text-primary)] truncate">{sports.awayTeam.name}</span>
             {sports.awayTeam.record && (
-              <span className="text-[10px] text-[#8A8A9A]">({sports.awayTeam.record})</span>
+              <span className="text-[10px] text-[var(--text-secondary)] shrink-0">({sports.awayTeam.record})</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white">{sports.homeTeam.name}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-medium text-[var(--text-primary)] truncate">{sports.homeTeam.name}</span>
             {sports.homeTeam.record && (
-              <span className="text-[10px] text-[#8A8A9A]">({sports.homeTeam.record})</span>
+              <span className="text-[10px] text-[var(--text-secondary)] shrink-0">({sports.homeTeam.record})</span>
             )}
           </div>
         </div>
         {sports.score && (
           <div className="text-right">
-            <div className="text-sm font-mono font-medium text-white mb-1.5">{sports.score.away ?? '-'}</div>
-            <div className="text-sm font-mono font-medium text-white">{sports.score.home ?? '-'}</div>
+            <div className="text-sm font-mono font-medium text-[var(--text-primary)] mb-1.5">{sports.score.away ?? '-'}</div>
+            <div className="text-sm font-mono font-medium text-[var(--text-primary)]">{sports.score.home ?? '-'}</div>
           </div>
         )}
       </div>
 
       {!isCancelled && (
-        <div className="border-t border-[#252536] pt-2 space-y-0.5">
+        <div className="border-t border-[var(--border)] pt-2 space-y-0.5">
           <BettingLine label="ML" contracts={moneyline} onTrade={handleTrade} disabled={isDisabled} />
           <BettingLine label="Spread" contracts={spread} onTrade={handleTrade} disabled={isDisabled} />
           <BettingLine label="Total" contracts={total} onTrade={handleTrade} disabled={isDisabled} />
@@ -146,8 +146,8 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
       )}
 
       {isCancelled && event.statusInfo.reason && (
-        <div className="border-t border-[#252536] pt-2">
-          <p className="text-xs text-[#8A8A9A]">{event.statusInfo.reason}</p>
+        <div className="border-t border-[var(--border)] pt-2">
+          <p className="text-xs text-[var(--text-secondary)]">{event.statusInfo.reason}</p>
         </div>
       )}
 

@@ -36,7 +36,7 @@ export default function ParlayAddPopover({ yesPrice, noPrice, probability, inPar
         className={`min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors ${
           inParlay
             ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]'
-            : 'text-[#8A8A9A] hover:text-[#2DD4BF] hover:bg-[#252536]'
+            : 'text-[var(--text-secondary)] hover:text-[#2DD4BF] hover:bg-[var(--border)]'
         }`}
         title={inParlay ? 'In Parlay — click to change' : 'Add to Parlay'}
       >
@@ -50,21 +50,21 @@ export default function ParlayAddPopover({ yesPrice, noPrice, probability, inPar
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-1 z-50 bg-[#1C1C28] border border-[#252536] rounded-lg shadow-xl p-1 min-w-[140px] animate-[fade-in_0.1s_ease-out]">
-          <p className="text-[10px] text-[#8A8A9A] px-2 py-1">Add to Parlay</p>
+        <div className="absolute bottom-full right-0 mb-1 z-50 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg shadow-xl p-1 min-w-[140px] animate-[fade-in_0.1s_ease-out]">
+          <p className="text-[10px] text-[var(--text-secondary)] px-2 py-1">Add to Parlay</p>
           <button
             onClick={() => handleAdd('YES')}
             className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs hover:bg-[#2DD4BF]/10 transition-colors"
           >
             <span className="text-[#2DD4BF] font-medium">YES</span>
-            <span className="text-[#8A8A9A] font-mono">{probability}% · {yesPrice.toFixed(2)}</span>
+            <span className="text-[var(--text-secondary)] font-mono">{probability}% · {yesPrice.toFixed(2)}</span>
           </button>
           <button
             onClick={() => handleAdd('NO')}
             className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs hover:bg-[#E85A7E]/10 transition-colors"
           >
             <span className="text-[#E85A7E] font-medium">NO</span>
-            <span className="text-[#8A8A9A] font-mono">{noProb}% · {noPrice.toFixed(2)}</span>
+            <span className="text-[var(--text-secondary)] font-mono">{noProb}% · {noPrice.toFixed(2)}</span>
           </button>
         </div>
       )}

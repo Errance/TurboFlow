@@ -14,7 +14,7 @@ export default function Card({ children, className = "", onClick, hover }: CardP
   return (
     <div
       className={[
-        showHover ? "glow-card" : "bg-[#161622] rounded-xl border border-[#252536]",
+        showHover ? "glow-card" : "bg-[var(--bg-card)] rounded-xl border border-[var(--border)]",
         "p-4",
         isClickable && "cursor-pointer",
         className,

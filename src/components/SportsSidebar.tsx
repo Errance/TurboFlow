@@ -47,7 +47,7 @@ export default function SportsSidebar({
             className={`flex-1 px-2 py-2 text-xs font-medium rounded-lg transition-colors ${
               activeTab === tab.id
                 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
             }`}
           >
             {tab.label}
@@ -55,13 +55,13 @@ export default function SportsSidebar({
         ))}
       </div>
 
-      <div className="border-t border-[#252536] pt-3 space-y-0.5">
+      <div className="border-t border-[var(--border)] pt-3 space-y-0.5">
         <button
           onClick={onSelectAll}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
             sportFilter === 'All'
               ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'
-              : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
           }`}
         >
           <span>All Sports</span>
@@ -82,8 +82,8 @@ export default function SportsSidebar({
                   isActive
                     ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'
                     : sportFilter === sport
-                      ? 'text-white'
-                      : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
+                      ? 'text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -99,18 +99,18 @@ export default function SportsSidebar({
                   {liveCount > 0 && (
                     <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} live</span>
                   )}
-                  <span className="text-[10px] text-[#8A8A9A] font-mono">{count}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] font-mono">{count}</span>
                 </div>
               </button>
 
               {isExpanded && leagues.length > 0 && (
-                <div className="ml-5 pl-2 border-l border-[#252536] space-y-0.5 mt-0.5 mb-1">
+                <div className="ml-5 pl-2 border-l border-[var(--border)] space-y-0.5 mt-0.5 mb-1">
                   <button
                     onClick={() => onLeagueSelect(sport, 'All')}
                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
                       sportFilter === sport && leagueFilter === 'All'
                         ? 'text-[#2DD4BF] font-medium'
-                        : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
                     }`}
                   >
                     All {sport}
@@ -124,7 +124,7 @@ export default function SportsSidebar({
                         className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs transition-colors ${
                           sportFilter === sport && leagueFilter === league
                             ? 'text-[#2DD4BF] font-medium bg-[#2DD4BF]/5'
-                            : 'text-[#8A8A9A] hover:text-white hover:bg-[#252536]'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
                         }`}
                       >
                         <span className="truncate">{league}</span>

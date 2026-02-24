@@ -16,9 +16,9 @@ const variantStyles: Record<ButtonVariant, string> = {
   danger:
     "bg-[#E85A7E] text-white font-semibold hover:opacity-90",
   secondary:
-    "bg-[#1C1C28] text-white border border-[#252536] hover:bg-[#252536]",
+    "bg-[var(--bg-control)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--border)]",
   ghost:
-    "bg-transparent text-[#8A8A9A] hover:bg-[#252536] hover:text-white",
+    "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--border)] hover:text-[var(--text-primary)]",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

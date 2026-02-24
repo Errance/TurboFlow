@@ -41,8 +41,8 @@ function StatusBanner({ statusInfo, onAction }: { statusInfo: EventStatusInfo; o
     'RESOLVING-delayed': { bg: 'bg-[#F59E0B]/10', border: 'border-[#F59E0B]/30', text: 'text-[#F59E0B]' },
     'SETTLED-normal':   { bg: 'bg-[#2DD4BF]/10', border: 'border-[#2DD4BF]/30', text: 'text-[#2DD4BF]' },
     'SETTLED-disputed': { bg: 'bg-[#F59E0B]/10', border: 'border-[#F59E0B]/30', text: 'text-[#F59E0B]' },
-    'CANCELLED-normal': { bg: 'bg-[#252536]', border: 'border-[#252536]', text: 'text-[#8A8A9A]' },
-    'VOIDED-normal':    { bg: 'bg-[#252536]', border: 'border-[#252536]', text: 'text-[#8A8A9A]' },
+    'CANCELLED-normal': { bg: 'bg-[var(--border)]', border: 'border-[var(--border)]', text: 'text-[var(--text-secondary)]' },
+    'VOIDED-normal':    { bg: 'bg-[var(--border)]', border: 'border-[var(--border)]', text: 'text-[var(--text-secondary)]' },
   }
 
   const key = `${status}-${subStatus}`
@@ -63,9 +63,9 @@ function StatusBanner({ statusInfo, onAction }: { statusInfo: EventStatusInfo; o
   return (
     <div className={`${style.bg} ${style.border} border rounded-xl p-4 mb-4`}>
       <p className={`${style.text} text-sm font-medium mb-1`}>{titleMap[key] ?? status}</p>
-      {reason && <p className="text-xs text-[#8A8A9A]">{reason}</p>}
+      {reason && <p className="text-xs text-[var(--text-secondary)]">{reason}</p>}
       {statusInfo.actionAvailable && statusInfo.actionAvailable.length > 0 && (
-        <div className="flex gap-2 mt-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {statusInfo.actionAvailable.map((action) => (
             <Button key={action} variant="ghost" size="sm" onClick={() => onAction?.(action)}>
               {actionLabel(action)}
@@ -96,8 +96,8 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
   const closeLabel = `Closes ${formatDate(event.timeline.closeDate)}${event.timeline.expectedSettleWindow ? ` / Settles within ${event.timeline.expectedSettleWindow}` : ''}`
 
   return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-white mb-3">Rules Summary</h3>
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Rules Summary</h3>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <svg className="w-4 h-4 text-[#2DD4BF] shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
@@ -105,7 +105,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
           </svg>
           <div>
             <span className="text-xs font-semibold text-[#2DD4BF]">What</span>
-            <p className="text-xs text-white mt-0.5">{event.rulesMeasurement}</p>
+            <p className="text-xs text-[var(--text-primary)] mt-0.5">{event.rulesMeasurement}</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
@@ -115,7 +115,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
           </svg>
           <div>
             <span className="text-xs font-semibold text-[#2DD4BF]">When</span>
-            <p className="text-xs text-white mt-0.5">{closeLabel}</p>
+            <p className="text-xs text-[var(--text-primary)] mt-0.5">{closeLabel}</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
@@ -125,7 +125,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
           </svg>
           <div>
             <span className="text-xs font-semibold text-[#2DD4BF]">How</span>
-            <p className="text-xs text-white mt-0.5">{event.resolutionSource}</p>
+            <p className="text-xs text-[var(--text-primary)] mt-0.5">{event.resolutionSource}</p>
           </div>
         </div>
       </div>
@@ -138,7 +138,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
             {showFull ? 'Hide Full Rules ↑' : 'View Full Rules →'}
           </button>
           {showFull && (
-            <div className="mt-3 bg-[#0B0B0F] rounded-lg p-3">
+            <div className="mt-3 bg-[var(--bg-base)] rounded-lg p-3">
               <p className="text-xs text-[#C0C0D0] whitespace-pre-line leading-relaxed">{event.rulesDetail}</p>
             </div>
           )}
@@ -159,22 +159,22 @@ function TimelinePayoutCard({ event }: { event: PredictionEvent }) {
   ]
 
   return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-white mb-3">Timeline & Payout</h3>
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Timeline & Payout</h3>
 
       {/* Timeline */}
       <div className="flex items-center gap-0 mb-4">
         {stages.map((stage, i) => (
           <div key={stage.label} className="flex items-center flex-1">
             <div className="flex flex-col items-center">
-              <div className={`w-3 h-3 rounded-full ${stage.done ? 'bg-[#2DD4BF]' : 'bg-[#252536] border border-[#8A8A9A]'}`} />
-              <span className="text-[10px] text-[#8A8A9A] mt-1">{stage.label}</span>
+              <div className={`w-3 h-3 rounded-full ${stage.done ? 'bg-[#2DD4BF]' : 'bg-[var(--border)] border border-[var(--text-secondary)]'}`} />
+              <span className="text-[10px] text-[var(--text-secondary)] mt-1">{stage.label}</span>
               {stage.date && (
-                <span className="text-[10px] text-white font-mono">{formatDate(stage.date)}</span>
+                <span className="text-[10px] text-[var(--text-primary)] font-mono">{formatDate(stage.date)}</span>
               )}
             </div>
             {i < stages.length - 1 && (
-              <div className={`flex-1 h-px mx-1 ${stage.done ? 'bg-[#2DD4BF]' : 'bg-[#252536]'}`} />
+              <div className={`flex-1 h-px mx-1 ${stage.done ? 'bg-[#2DD4BF]' : 'bg-[var(--border)]'}`} />
             )}
           </div>
         ))}
@@ -182,19 +182,19 @@ function TimelinePayoutCard({ event }: { event: PredictionEvent }) {
 
       {/* Settlement window */}
       {timeline.expectedSettleWindow && (
-        <p className="text-xs text-[#8A8A9A] mb-3">
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
           Expected settlement: {timeline.expectedSettleWindow}
         </p>
       )}
 
       {/* Payout explanation */}
-      <div className="bg-[#0B0B0F] rounded-lg p-3">
+      <div className="bg-[var(--bg-base)] rounded-lg p-3">
         <div className="flex justify-between text-xs">
-          <span className="text-[#8A8A9A]">If you win</span>
+          <span className="text-[var(--text-secondary)]">If you win</span>
           <span className="text-[#2DD4BF] font-medium">1 USDC per share</span>
         </div>
         <div className="flex justify-between text-xs mt-1">
-          <span className="text-[#8A8A9A]">If you lose</span>
+          <span className="text-[var(--text-secondary)]">If you lose</span>
           <span className="text-[#E85A7E] font-medium">0 USDC per share</span>
         </div>
       </div>
@@ -209,14 +209,14 @@ function EventSummaryCard({ event }: { event: PredictionEvent }) {
   if (!event.summary && !event.keyPoints?.length) return null
 
   return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full text-left"
       >
-        <h3 className="text-sm font-semibold text-white">Summary & Key Points</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Summary & Key Points</h3>
         <svg
-          className={`w-4 h-4 text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-[var(--text-secondary)] transition-transform ${expanded ? 'rotate-180' : ''}`}
           viewBox="0 0 16 16" fill="none"
         >
           <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -251,8 +251,8 @@ function EventSummaryCard({ event }: { event: PredictionEvent }) {
 function OutcomeModelHint({ event }: { event: PredictionEvent }) {
   if (event.outcomeModel !== 'mutually-exclusive') return null
   return (
-    <div className="bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2 mb-4">
-      <p className="text-xs text-[#8A8A9A]">
+    <div className="bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2 mb-4">
+      <p className="text-xs text-[var(--text-secondary)]">
         <span className="text-[#F59E0B] font-medium">Mutually exclusive: </span>
         Only one option will settle YES; all others settle NO.
         Yes probabilities may not sum to exactly 100% due to bid-ask spreads.
@@ -299,10 +299,10 @@ function ContractTableRow({
     <div
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[48px] transition-colors ${
         inParlay ? 'border-l-2 border-l-[#2DD4BF]' : ''
-      } ${isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[#252536]'}`}
+      } ${isSelected ? 'bg-[#2DD4BF]/5 border border-[#2DD4BF]/20' : 'hover:bg-[var(--border)]'}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-white truncate">{contract.label}</p>
+        <p className="text-sm text-[var(--text-primary)] truncate">{contract.label}</p>
         {contract.settlementResult && (
           <Badge variant={contract.settlementResult === 'YES' ? 'success' : 'danger'} className="mt-0.5">
             {contract.settlementResult}
@@ -310,7 +310,7 @@ function ContractTableRow({
         )}
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-[#8A8A9A] font-mono tabular-nums shrink-0">
+      <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)] font-mono tabular-nums shrink-0">
         <span className={contract.change24h > 0 ? 'text-[#2DD4BF]' : contract.change24h < 0 ? 'text-[#E85A7E]' : ''}>
           {contract.change24h > 0 ? '+' : ''}{contract.change24h.toFixed(1)}%
         </span>
@@ -323,7 +323,7 @@ function ContractTableRow({
           disabled={disabled}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] min-w-[56px] transition-colors ${
             disabled
-              ? 'bg-[#252536] text-[#8A8A9A] cursor-not-allowed'
+              ? 'bg-[var(--border)] text-[var(--text-secondary)] cursor-not-allowed'
               : 'bg-[#2DD4BF]/10 text-[#2DD4BF] hover:bg-[#2DD4BF]/20'
           }`}
         >
@@ -335,7 +335,7 @@ function ContractTableRow({
           title={isMutuallyExclusive ? `Buy NO: Betting "${contract.label}" will NOT be the final result` : undefined}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] min-w-[56px] transition-colors ${
             disabled
-              ? 'bg-[#252536] text-[#8A8A9A] cursor-not-allowed'
+              ? 'bg-[var(--border)] text-[var(--text-secondary)] cursor-not-allowed'
               : 'bg-[#E85A7E]/10 text-[#E85A7E] hover:bg-[#E85A7E]/20'
           }`}
         >
@@ -354,7 +354,7 @@ function ContractTableRow({
         {/* CLOB icon */}
         <button
           onClick={() => navigate(`/contract/${contract.id}`)}
-          className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[#8A8A9A] hover:text-[#2DD4BF] rounded-lg hover:bg-[#252536] transition-colors"
+          className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[#2DD4BF] rounded-lg hover:bg-[var(--border)] transition-colors"
           title="Advanced Trading (CLOB)"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -373,7 +373,7 @@ function SpreadNote({ event }: { event: PredictionEvent }) {
   if (event.contracts.length < 2) return null
   const totalYes = event.contracts.reduce((sum, c) => sum + c.probability, 0)
   return (
-    <p className="text-[10px] text-[#8A8A9A] px-3 mt-1">
+    <p className="text-[10px] text-[var(--text-secondary)] px-3 mt-1">
       Sum of Yes probabilities: {totalYes}%
       {totalYes !== 100 && ' — difference reflects bid-ask spread'}
     </p>
@@ -392,17 +392,17 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
 
   if (submitted) {
     return (
-      <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
         <div className="flex items-center gap-2 mb-2">
           <svg className="w-5 h-5 text-[#2DD4BF]" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
             <path d="M6.5 10l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-[var(--text-primary)]">
             {type === 'settle' ? 'Settlement Request Submitted' : 'Issue Report Submitted'}
           </span>
         </div>
-        <p className="text-xs text-[#8A8A9A]">
+        <p className="text-xs text-[var(--text-secondary)]">
           Your {type === 'settle' ? 'settlement request' : 'issue report'} has been recorded.
           Our team will review it and update the event status accordingly.
           Expected response time: 24-48 hours.
@@ -412,15 +412,15 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
   }
 
   return (
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-white mb-3">Request Action</h3>
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Request Action</h3>
       <div className="flex gap-2 mb-3">
         <button
           onClick={() => setType('settle')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             type === 'settle'
               ? 'bg-[#2DD4BF]/20 text-[#2DD4BF] border border-[#2DD4BF]/40'
-              : 'bg-[#252536] text-[#8A8A9A] hover:text-white'
+              : 'bg-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           Request Settlement
@@ -430,26 +430,26 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             type === 'issue'
               ? 'bg-[#E85A7E]/20 text-[#E85A7E] border border-[#E85A7E]/40'
-              : 'bg-[#252536] text-[#8A8A9A] hover:text-white'
+              : 'bg-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           Report Issue
         </button>
       </div>
-      <p className="text-xs text-[#8A8A9A] mb-3">
+      <p className="text-xs text-[var(--text-secondary)] mb-3">
         {type === 'settle'
           ? 'If you believe this event has a clear outcome, you can request settlement. Provide evidence or a reference link below.'
           : 'Report an issue with this event (e.g., incorrect resolution source, delayed data, rule discrepancy).'}
       </p>
       <textarea
-        className="w-full bg-[#0D0D19] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
+        className="w-full bg-[#0D0D19] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
         rows={3}
         placeholder={type === 'settle' ? 'Provide evidence or reference link...' : 'Describe the issue...'}
         value={details}
         onChange={(e) => setDetails(e.target.value)}
       />
       <div className="flex items-center justify-between mt-3">
-        <span className="text-[10px] text-[#8A8A9A]">
+        <span className="text-[10px] text-[var(--text-secondary)]">
           Event status: {event.status} / {event.statusInfo.subStatus}
         </span>
         <Button
@@ -507,7 +507,7 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
-        <p className="text-[#8A8A9A]">Event not found</p>
+        <p className="text-[var(--text-secondary)]">Event not found</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
           Back to Explore
         </Button>
@@ -550,7 +550,7 @@ export default function EventDetailPage() {
       <div className="flex items-start gap-3 mb-4">
         <button
           onClick={() => navigate('/')}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[#8A8A9A] hover:text-white rounded-lg hover:bg-[#252536] transition-colors shrink-0 -ml-2"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--border)] transition-colors shrink-0 -ml-2"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -558,14 +558,14 @@ export default function EventDetailPage() {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-white">{event.title}</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">{event.title}</h1>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex flex-wrap items-center gap-2 mt-1">
             <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
               {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status}
             </Badge>
-            <span className="text-xs text-[#8A8A9A]">{event.category}</span>
-            <span className="text-xs text-[#8A8A9A] font-mono">{formatVolume(event.totalVolume)} vol</span>
+            <span className="text-xs text-[var(--text-secondary)]">{event.category}</span>
+            <span className="text-xs text-[var(--text-secondary)] font-mono">{formatVolume(event.totalVolume)} vol</span>
           </div>
         </div>
       </div>
@@ -587,24 +587,24 @@ export default function EventDetailPage() {
           <OutcomeModelHint event={event} />
 
           {/* Contract table - primary action first */}
-          <div className="bg-[#161622] border border-[#252536] rounded-xl p-3 mb-4">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3 mb-4">
             <div className="flex items-center justify-between mb-2 px-1">
-              <h3 className="text-sm font-semibold text-white">Contracts</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded">Payout: 1 USDC/share</span>
-                <span className="text-xs text-[#8A8A9A]">{event.contracts.length} total</span>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Contracts</h3>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded"><span className="md:hidden">1 USDC/sh.</span><span className="hidden md:inline">Payout: 1 USDC/share</span></span>
+                <span className="text-xs text-[var(--text-secondary)]">{event.contracts.length} total</span>
               </div>
             </div>
             {!isDisabled && event.contracts.length > 0 && (
               <div className="flex items-center justify-between px-1 mb-2">
-                <p className="text-[11px] text-[#8A8A9A]">Tap Yes/No to place quick orders</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">Tap Yes/No to place quick orders</p>
                 <button
                   onClick={() =>
                     openTradePanel(selectedContractId || event.contracts[0].id, selectedSide ?? 'YES')
                   }
                   className="md:hidden text-[11px] text-[#2DD4BF] hover:underline"
                 >
-                  Open Quick Order
+                  Quick Order
                 </button>
               </div>
             )}
@@ -626,8 +626,8 @@ export default function EventDetailPage() {
 
           {/* Probability chart */}
           {event.contracts.length > 0 && (
-            <div className="bg-[#161622] border border-[#252536] rounded-xl p-4 mb-4">
-              <h3 className="text-sm font-semibold text-white mb-2">Probability History</h3>
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Probability History</h3>
               <PriceChart
                 marketId={selectedContractId || event.contracts[0].id}
                 className=""
@@ -650,7 +650,7 @@ export default function EventDetailPage() {
 
           {/* Market context below trading actions */}
           <div className="mt-2">
-            <p className="text-[10px] text-[#8A8A9A] uppercase tracking-wider mb-2">Market Context</p>
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Market Context</p>
             <RulesSummaryCard event={event} />
             <TimelinePayoutCard event={event} />
             <EventSummaryCard event={event} />
@@ -666,9 +666,9 @@ export default function EventDetailPage() {
       {/* Mobile trade panel — BottomSheet */}
       {tradePanelOpen && (
         <div className="md:hidden fixed inset-0 z-40">
-          <div className="fixed inset-0 bg-black/60" onClick={closeTradePanel} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#161622] rounded-t-xl border-t border-[#252536] max-h-[85vh] overflow-y-auto animate-[slide-in-from-bottom_0.25s_ease-out]">
-            <div className="w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2 mb-3" />
+          <div className="fixed inset-0 bg-[var(--overlay-bg)]" onClick={closeTradePanel} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-card)] rounded-t-xl border-t border-[var(--border)] max-h-[85vh] overflow-y-auto animate-[slide-in-from-bottom_0.25s_ease-out]">
+            <div className="w-10 h-1 bg-[var(--border)] rounded-full mx-auto mt-2 mb-3" />
             <div className="px-4 pb-6">
               <TradePanel event={event} />
             </div>
@@ -701,26 +701,26 @@ export default function EventDetailPage() {
                 </svg>
                 <span className="text-sm font-semibold text-[#2DD4BF]">Appeal Submitted</span>
               </div>
-              <p className="text-xs text-[#8A8A9A]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 Your appeal has been recorded. The review team will evaluate your submission
                 and respond within 24-48 hours.
               </p>
             </div>
           ) : (
             <>
-              <p className="text-xs text-[#8A8A9A]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 If you believe the settlement result is incorrect, provide your reasoning and
                 any supporting evidence below.
               </p>
-              <div className="bg-[#0B0B0F] rounded-lg p-3">
-                <p className="text-xs text-[#8A8A9A] mb-1">Current status</p>
-                <p className="text-sm text-white">{event.statusInfo.status} — {event.statusInfo.subStatus}</p>
+              <div className="bg-[var(--bg-base)] rounded-lg p-3">
+                <p className="text-xs text-[var(--text-secondary)] mb-1">Current status</p>
+                <p className="text-sm text-[var(--text-primary)]">{event.statusInfo.status} — {event.statusInfo.subStatus}</p>
                 {event.statusInfo.reason && (
-                  <p className="text-xs text-[#8A8A9A] mt-1">{event.statusInfo.reason}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">{event.statusInfo.reason}</p>
                 )}
               </div>
               <textarea
-                className="w-full bg-[#0B0B0F] border border-[#252536] rounded-lg p-3 text-xs text-white placeholder-[#8A8A9A] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
                 rows={4}
                 placeholder="Describe your appeal and provide evidence..."
                 value={appealText}

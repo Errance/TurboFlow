@@ -87,7 +87,7 @@ export default function ContractDetailPage() {
   if (!result || !legacyMarket || !contractId) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
-        <p className="text-[#8A8A9A]">Contract not found</p>
+        <p className="text-[var(--text-secondary)]">Contract not found</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
           Back to Explore
         </Button>
@@ -99,11 +99,11 @@ export default function ContractDetailPage() {
   const showChart = isOpen || legacyMarket.status === 'CLOSED'
 
   const OrderTabBar = ({ current, onChange }: { current: 'market' | 'limit'; onChange: (v: 'market' | 'limit') => void }) => (
-    <div className="flex gap-1 bg-[#0B0B0F] rounded-lg p-0.5 mb-3">
+    <div className="flex gap-1 bg-[var(--bg-base)] rounded-lg p-0.5 mb-3">
       <button
         onClick={() => onChange('market')}
         className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
-          current === 'market' ? 'bg-[#252536] text-white' : 'text-[#8A8A9A] hover:text-white'
+          current === 'market' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
       >
         Market
@@ -111,7 +111,7 @@ export default function ContractDetailPage() {
       <button
         onClick={() => onChange('limit')}
         className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
-          current === 'limit' ? 'bg-[#252536] text-white' : 'text-[#8A8A9A] hover:text-white'
+          current === 'limit' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
       >
         Limit
@@ -130,10 +130,10 @@ export default function ContractDetailPage() {
           ← {event.title}
         </button>
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-white">{contract.label}</h1>
+          <h1 className="text-lg font-semibold text-[var(--text-primary)]">{contract.label}</h1>
           <Badge variant="info">Advanced Trading</Badge>
         </div>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex flex-wrap items-center gap-2 mt-1">
           <span className="text-2xl font-bold font-mono text-[#2DD4BF]">{contract.probability}%</span>
           <span className={`text-sm font-mono ${contract.change24h >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
             {contract.change24h >= 0 ? '+' : ''}{contract.change24h.toFixed(1)}%
@@ -146,10 +146,10 @@ export default function ContractDetailPage() {
         {/* Left column */}
         <div className="flex-1 flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-[#8A8A9A] flex-1">{event.resolutionSource}</p>
+            <p className="text-xs text-[var(--text-secondary)] flex-1 min-w-0 truncate">{event.resolutionSource}</p>
             {event.rulesDetail && (
               <Button size="sm" variant="ghost" onClick={() => setRulesDrawerOpen(true)}>
-                View Full Rules
+                <span className="md:hidden">Rules</span><span className="hidden md:inline">View Full Rules</span>
               </Button>
             )}
           </div>
@@ -157,27 +157,27 @@ export default function ContractDetailPage() {
           {showChart && <PriceChart marketId={legacyMarket.id} />}
 
           <div>
-            <h3 className="text-sm font-medium text-white mb-2">Orderbook</h3>
+            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">Orderbook</h3>
             <Orderbook isOpen={!!isOpen} onPriceClick={isOpen ? handlePriceClick : undefined} />
           </div>
 
           {recentTrades.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-white">Recent Trades</h3>
+                <h3 className="text-sm font-medium text-[var(--text-primary)]">Recent Trades</h3>
                 {relevantTrades.length > 5 && (
                   <Button size="sm" variant="ghost" onClick={() => setTradesDrawerOpen(true)}>
                     View All ({relevantTrades.length})
                   </Button>
                 )}
               </div>
-              <div className="bg-[#161622] rounded-xl border border-[#252536] divide-y divide-[#252536]">
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] divide-y divide-[var(--border)]">
                 {recentTrades.map((t) => (
                   <div key={t.id} className="flex justify-between px-3 py-2 text-sm">
                     <span className={t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}>
                       {t.side}
                     </span>
-                    <span className="font-mono text-[#8A8A9A] tabular-nums">
+                    <span className="font-mono text-[var(--text-secondary)] tabular-nums">
                       {t.quantity} @ ${t.price.toFixed(2)}
                     </span>
                   </div>
@@ -189,7 +189,7 @@ export default function ContractDetailPage() {
 
         {/* Right column — unified Market/Limit panel */}
         <div className="hidden md:block w-80 shrink-0">
-          <div className="sticky top-24 bg-[#161622] rounded-xl border border-[#252536] p-4">
+          <div className="sticky top-24 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
             <OrderTabBar current={orderTab} onChange={setOrderTab} />
             {orderTab === 'market' ? (
               <QuickOrderPanel
@@ -212,7 +212,7 @@ export default function ContractDetailPage() {
 
       {/* Mobile: fixed bottom Trade button */}
       {isOpen && (
-        <div className="md:hidden fixed bottom-16 left-0 right-0 z-20 px-4 pb-2 bg-gradient-to-t from-[#0B0B0F] via-[#0B0B0F]/95 to-transparent pt-4">
+        <div className="md:hidden fixed bottom-16 left-0 right-0 z-20 px-4 pb-2 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/95 to-transparent pt-4">
           <button
             onClick={() => setMobileDrawerOpen(true)}
             className="w-full h-12 bg-[#2DD4BF] text-[#0B0B0F] font-semibold rounded-lg text-sm transition-opacity hover:opacity-90"
@@ -257,17 +257,17 @@ export default function ContractDetailPage() {
       >
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-white mb-1">Measurement</h4>
-            <p className="text-sm text-[#8A8A9A]">{event.rulesMeasurement}</p>
+            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Measurement</h4>
+            <p className="text-sm text-[var(--text-secondary)]">{event.rulesMeasurement}</p>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-white mb-1">Resolution Source</h4>
-            <p className="text-sm text-[#8A8A9A]">{event.resolutionSource}</p>
+            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Resolution Source</h4>
+            <p className="text-sm text-[var(--text-secondary)]">{event.resolutionSource}</p>
           </div>
           {event.rulesDetail && (
             <div>
-              <h4 className="text-sm font-medium text-white mb-1">Full Rules</h4>
-              <p className="text-sm text-[#8A8A9A] whitespace-pre-line">{event.rulesDetail}</p>
+              <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Full Rules</h4>
+              <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line">{event.rulesDetail}</p>
             </div>
           )}
         </div>
@@ -279,24 +279,24 @@ export default function ContractDetailPage() {
         onClose={() => setTradesDrawerOpen(false)}
         title="All Trades"
       >
-        <div className="divide-y divide-[#252536]">
+        <div className="divide-y divide-[var(--border)]">
           {relevantTrades.map((t) => (
             <div key={t.id} className="flex justify-between items-center py-3 text-sm">
               <div className="flex items-center gap-3">
                 <span className={`font-medium ${t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                   {t.side}
                 </span>
-                <span className="font-mono text-white tabular-nums">
+                <span className="font-mono text-[var(--text-primary)] tabular-nums">
                   {t.quantity} @ ${t.price.toFixed(2)}
                 </span>
               </div>
-              <span className="text-xs text-[#8A8A9A]">
+              <span className="text-xs text-[var(--text-secondary)]">
                 {new Date(t.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
           ))}
           {relevantTrades.length === 0 && (
-            <p className="text-sm text-[#8A8A9A] text-center py-8">No trades recorded</p>
+            <p className="text-sm text-[var(--text-secondary)] text-center py-8">No trades recorded</p>
           )}
         </div>
       </SideDrawer>

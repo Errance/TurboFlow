@@ -56,10 +56,10 @@ export default function InstantMarketCard({ event }: Props) {
   return (
     <div
       onClick={handleCardClick}
-      className="glow-card bg-[#161622] border border-[#252536] rounded-xl overflow-hidden min-w-[260px] flex-shrink-0 snap-start cursor-pointer hover:border-[#2DD4BF]/30 transition-colors"
+      className="glow-card bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden min-w-[260px] flex-shrink-0 snap-start cursor-pointer hover:border-[#2DD4BF]/30 transition-colors"
     >
       {/* Progress bar */}
-      <div className="h-1 bg-[#0B0B0F] relative">
+      <div className="h-1 bg-[var(--bg-base)] relative">
         <div
           className={`h-full transition-all duration-1000 ${isUrgent ? 'bg-[#E85A7E]' : 'bg-[#2DD4BF]'}`}
           style={{ width: `${pctElapsed}%` }}
@@ -74,21 +74,21 @@ export default function InstantMarketCard({ event }: Props) {
               <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse" />
               Live
             </span>
-            <span className="text-[10px] text-[#8A8A9A]">5 min</span>
+            <span className="text-[10px] text-[var(--text-secondary)]">5 min</span>
           </div>
-          <span className={`font-mono text-sm font-bold tabular-nums ${isUrgent ? 'text-[#E85A7E]' : isExpired ? 'text-[#8A8A9A]' : 'text-white'}`}>
+          <span className={`font-mono text-sm font-bold tabular-nums ${isUrgent ? 'text-[#E85A7E]' : isExpired ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
             {isExpired ? 'Closed' : formatCountdown(remaining)}
           </span>
         </div>
 
         {/* Asset + price */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="w-8 h-8 rounded-full bg-[#252536] flex items-center justify-center text-[10px] font-bold text-[#2DD4BF]">
+          <span className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-[10px] font-bold text-[#2DD4BF]">
             {meta.assetIcon || meta.asset[0]}
           </span>
           <div>
-            <p className="text-xs text-[#8A8A9A]">{meta.asset} Current</p>
-            <p className="text-lg font-bold text-white font-mono tabular-nums">
+            <p className="text-xs text-[var(--text-secondary)]">{meta.asset} Current</p>
+            <p className="text-lg font-bold text-[var(--text-primary)] font-mono tabular-nums">
               ${formatPrice(meta.currentPrice)}
             </p>
           </div>
@@ -103,7 +103,7 @@ export default function InstantMarketCard({ event }: Props) {
           }`}>
             {meta.direction === 'UP' ? '↑' : '↓'} Strike ${formatPrice(meta.strikePrice)}
           </div>
-          <span className="text-xs text-[#8A8A9A]">
+          <span className="text-xs text-[var(--text-secondary)]">
             {meta.direction === 'UP' ? 'Above' : 'Below'} to win
           </span>
         </div>
@@ -123,7 +123,7 @@ export default function InstantMarketCard({ event }: Props) {
         </div>
 
         {/* Volume + Share */}
-        <div className="flex items-center justify-between text-xs text-[#8A8A9A] mb-3">
+        <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-3">
           <span>Volume</span>
           <span className="font-mono">${event.totalVolume.toLocaleString()} USDC</span>
         </div>

@@ -12,7 +12,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   success: "bg-[#2DD4BF]/15 text-[#2DD4BF]",
   danger: "bg-[#E85A7E]/15 text-[#E85A7E]",
   warning: "bg-[#F59E0B]/15 text-[#F59E0B]",
-  neutral: "bg-[#252536] text-[#8A8A9A]",
+  neutral: "bg-[var(--border)] text-[var(--text-secondary)]",
   info: "bg-[#2DD4BF]/15 text-[#2DD4BF]",
 };
 

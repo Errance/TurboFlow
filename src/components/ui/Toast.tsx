@@ -18,13 +18,13 @@ function ToastItem({ toast }: { toast: ToastType }) {
   return (
     <div
       className={[
-        "bg-[#161622] border border-[#252536] rounded-lg px-4 py-3 shadow-lg",
+        "bg-[var(--bg-card)] border border-[var(--border)] rounded-lg px-4 py-3 shadow-lg",
         "flex items-start gap-3 border-l-4",
         borderColor,
         "animate-[slide-in-from-top_0.25s_ease-out]",
       ].join(" ")}
     >
-      <p className="text-sm text-white flex-1 min-w-0">
+      <p className="text-sm text-[var(--text-primary)] flex-1 min-w-0">
         {toast.message}
         {toast.cta && (
           <span className="block mt-2">
@@ -44,7 +44,7 @@ function ToastItem({ toast }: { toast: ToastType }) {
       <button
         type="button"
         onClick={() => removeToast(toast.id)}
-        className="flex-shrink-0 text-[#8A8A9A] hover:text-white transition-colors p-1"
+        className="flex-shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1"
         aria-label="Close"
       >
         <svg

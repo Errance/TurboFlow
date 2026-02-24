@@ -79,7 +79,7 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
 
   return (
     <>
-      <div className={`bg-[#161622] rounded-xl p-4 border border-[#252536] ${className ?? ''}`}>
+      <div className={`bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] ${className ?? ''}`}>
         {isOpen && onLimitClick && (
           <SegmentedControl
             options={[
@@ -98,12 +98,12 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
           />
         )}
         {(!isOpen || !onLimitClick) && (
-          <h3 className="text-sm font-medium text-white mb-3">Quick Order</h3>
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">Quick Order</h3>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-[#8A8A9A] mb-1.5">Direction</label>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Direction</label>
             <SegmentedControl
               variant="yes-no"
               options={[
@@ -137,9 +137,9 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
 
         {/* Feedback */}
         {trackedOrder && feedbackTimeout && (
-          <div className="mt-4 pt-4 border-t border-[#252536]">
+          <div className="mt-4 pt-4 border-t border-[var(--border)]">
             {trackedOrder.status === 'Pending' && (
-              <div className="flex items-center gap-2 text-sm text-[#8A8A9A]">
+              <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <Spinner size="sm" />
                 <span>Processing...</span>
               </div>
@@ -184,13 +184,13 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
           <div className="space-y-2 text-sm">
             {[
               ['Side', side, side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
-              ['Amount', `${Number(amount).toFixed(2)} USDC`, 'text-white'],
-              ['Est. Avg Price', `${scenario.estimatedAvgPrice.toFixed(2)} USDC`, 'text-white'],
-              ['Est. Levels', String(scenario.estimatedLevels), 'text-white'],
-              ['Est. Fee', `${scenario.estimatedFee.toFixed(2)} USDC`, 'text-white'],
+              ['Amount', `${Number(amount).toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
+              ['Est. Avg Price', `${scenario.estimatedAvgPrice.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
+              ['Est. Levels', String(scenario.estimatedLevels), 'text-[var(--text-primary)]'],
+              ['Est. Fee', `${scenario.estimatedFee.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between">
-                <span className="text-[#8A8A9A]">{label}</span>
+                <span className="text-[var(--text-secondary)]">{label}</span>
                 <span className={color}>{value}</span>
               </div>
             ))}

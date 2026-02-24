@@ -21,7 +21,7 @@ export default function Drawer({
     <div className="fixed inset-0 z-40">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 transition-opacity duration-200"
+        className="fixed inset-0 bg-[var(--overlay-bg)] transition-opacity duration-200"
         onClick={onClose}
         aria-hidden
       />
@@ -29,7 +29,7 @@ export default function Drawer({
       <div
         className={[
           "fixed bottom-0 left-0 right-0 z-50",
-          "bg-[#161622] rounded-t-xl border-t border-[#252536]",
+          "bg-[var(--bg-card)] rounded-t-xl border-t border-[var(--border)]",
           "max-h-[85vh] overflow-y-auto",
           "transition-transform duration-200 ease-out",
           "animate-[slide-in-from-bottom_0.25s_ease-out]",
@@ -39,9 +39,9 @@ export default function Drawer({
           .join(" ")}
       >
         {/* Handle bar */}
-        <div className="w-10 h-1 bg-[#252536] rounded-full mx-auto mt-2 mb-4" />
+        <div className="w-10 h-1 bg-[var(--border)] rounded-full mx-auto mt-2 mb-4" />
         {title && (
-          <h2 className="text-lg font-semibold text-white px-4 mb-4">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] px-4 mb-4">
             {title}
           </h2>
         )}

@@ -114,19 +114,19 @@ function ActivityTab() {
   const events = useMemo(() => buildActivityEvents(allOrders, allTrades), [allOrders, allTrades])
 
   if (events.length === 0) {
-    return <p className="text-[#8A8A9A] text-sm text-center py-12">No activity yet</p>
+    return <p className="text-[var(--text-secondary)] text-sm text-center py-12">No activity yet</p>
   }
 
   return (
-    <div className="space-y-0 divide-y divide-[#252536]">
+    <div className="space-y-0 divide-y divide-[var(--border)]">
       {events.map((evt) => (
         <div key={evt.id} className="flex items-start justify-between gap-3 py-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               {eventBadge(evt.type)}
-              <span className="text-xs text-[#8A8A9A]">{formatTime(evt.timestamp)}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{formatTime(evt.timestamp)}</span>
             </div>
-            <p className="text-sm text-white truncate">{evt.description}</p>
+            <p className="text-sm text-[var(--text-primary)] truncate">{evt.description}</p>
           </div>
         </div>
       ))}
@@ -167,35 +167,35 @@ function TradeHistoryTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-1 bg-[#1C1C28] rounded-lg p-0.5">
+        <div className="flex gap-1 bg-[var(--bg-control)] rounded-lg p-0.5">
           {filterOptions.map((opt) => (
             <button
               key={opt.id}
               onClick={() => setSideFilter(opt.id)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[36px] ${
                 sideFilter === opt.id
-                  ? 'bg-[#252536] text-white'
-                  : 'text-[#8A8A9A] hover:text-white'
+                  ? 'bg-[var(--border)] text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {opt.label}
             </button>
           ))}
         </div>
-        <span className="text-xs text-[#8A8A9A]">
+        <span className="text-xs text-[var(--text-secondary)]">
           {filtered.length} trades &middot; {totalVolume} shares
         </span>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-[#8A8A9A] text-sm text-center py-12">No trades found</p>
+        <p className="text-[var(--text-secondary)] text-sm text-center py-12">No trades found</p>
       ) : (
         <div className="space-y-4">
           {grouped.map(([date, trades]) => (
             <div key={date}>
-              <div className="text-xs text-[#8A8A9A] font-medium mb-2 px-1">{date}</div>
-              <div className="bg-[#161622] rounded-xl border border-[#252536] overflow-hidden">
-                <div className="hidden md:grid grid-cols-6 gap-2 px-4 py-2 text-xs font-medium text-[#8A8A9A] border-b border-[#252536]">
+              <div className="text-xs text-[var(--text-secondary)] font-medium mb-2 px-1">{date}</div>
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+                <div className="hidden md:grid grid-cols-6 gap-2 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] border-b border-[var(--border)]">
                   <span>Time</span>
                   <span className="col-span-2">Market</span>
                   <span>Side</span>
@@ -205,17 +205,17 @@ function TradeHistoryTab() {
                 {trades.map((t) => (
                   <div
                     key={t.id}
-                    className="grid grid-cols-2 md:grid-cols-6 gap-2 px-4 py-3 text-sm border-b border-[#252536] last:border-b-0 hover:bg-[#252536]/30 transition-colors"
+                    className="grid grid-cols-2 md:grid-cols-6 gap-2 px-4 py-3 text-sm border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--border)]/30 transition-colors"
                   >
-                    <span className="text-xs text-[#8A8A9A] font-mono tabular-nums">
+                    <span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
                       {new Date(t.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="text-white truncate col-span-1 md:col-span-2 text-xs">{t.marketTitle}</span>
+                    <span className="text-[var(--text-primary)] truncate col-span-1 md:col-span-2 text-xs">{t.marketTitle}</span>
                     <span className={`font-medium text-xs ${t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                       {t.side}
                     </span>
-                    <span className="text-right font-mono tabular-nums text-[#8A8A9A] text-xs">${fmtUsdc(t.price)}</span>
-                    <span className="text-right font-mono tabular-nums text-white text-xs">{t.quantity}</span>
+                    <span className="text-right font-mono tabular-nums text-[var(--text-secondary)] text-xs">${fmtUsdc(t.price)}</span>
+                    <span className="text-right font-mono tabular-nums text-[var(--text-primary)] text-xs">{t.quantity}</span>
                   </div>
                 ))}
               </div>
@@ -231,7 +231,7 @@ function ParlaysTab() {
   const placedParlays = useParlayStore((s) => s.placedParlays)
 
   if (placedParlays.length === 0) {
-    return <p className="text-[#8A8A9A] text-sm text-center py-12">No parlays placed yet</p>
+    return <p className="text-[var(--text-secondary)] text-sm text-center py-12">No parlays placed yet</p>
   }
 
   return (
@@ -261,16 +261,16 @@ function ParlayCard({ parlay }: { parlay: Parlay }) {
       >
         <div className="flex items-center gap-2">
           <Badge variant={sc.variant}>{sc.label}</Badge>
-          <span className="text-sm font-medium text-white">{parlay.legs.length}-Leg Parlay</span>
+          <span className="text-sm font-medium text-[var(--text-primary)]">{parlay.legs.length}-Leg Parlay</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-xs text-[#8A8A9A] font-mono">${parlay.stake.toFixed(2)} stake</p>
+            <p className="text-xs text-[var(--text-secondary)] font-mono">${parlay.stake.toFixed(2)} stake</p>
             <p className="text-xs text-[#2DD4BF] font-mono">→ ${parlay.potentialPayout.toFixed(2)}</p>
           </div>
           <svg
             width="14" height="14" viewBox="0 0 14 14" fill="none"
-            className={`text-[#8A8A9A] transition-transform ${expanded ? 'rotate-180' : ''}`}
+            className={`text-[var(--text-secondary)] transition-transform ${expanded ? 'rotate-180' : ''}`}
           >
             <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -278,7 +278,7 @@ function ParlayCard({ parlay }: { parlay: Parlay }) {
       </div>
 
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-[#252536] space-y-2">
+        <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-2">
           {parlay.legs.map((leg) => (
             <div key={leg.contractId} className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -287,16 +287,21 @@ function ParlayCard({ parlay }: { parlay: Parlay }) {
                 }`}>
                   {leg.side}
                 </span>
-                <span className="text-white truncate">{leg.contractLabel}</span>
+                <span className="text-[var(--text-primary)] truncate">{leg.contractLabel}</span>
               </div>
-              <span className="text-[#8A8A9A] font-mono shrink-0">{leg.price.toFixed(2)}</span>
+              <span className="text-[var(--text-secondary)] font-mono shrink-0">{leg.price.toFixed(2)}</span>
             </div>
           ))}
-          <div className="flex justify-between text-xs pt-2 border-t border-[#252536]">
-            <span className="text-[#8A8A9A]">Combined odds</span>
-            <span className="text-white font-mono font-medium">{parlay.combinedOdds.toFixed(2)}x</span>
+          <div className="pt-2 border-t border-[var(--border)]">
+            <div className="flex justify-between text-xs">
+              <span className="text-[var(--text-secondary)]">Combined odds</span>
+              <span className="text-[var(--text-primary)] font-mono font-medium">{parlay.combinedOdds.toFixed(2)}x</span>
+            </div>
+            <p className="text-[10px] text-[var(--text-secondary)]/70 font-mono mt-1 overflow-x-auto scrollbar-hide whitespace-nowrap">
+              1 ÷ ({parlay.legs.map((l) => l.price.toFixed(2)).join(' × ')}) = {parlay.combinedOdds.toFixed(2)}x
+            </p>
           </div>
-          <p className="text-[10px] text-[#8A8A9A]">
+          <p className="text-[10px] text-[var(--text-secondary)]">
             Placed {new Date(parlay.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{' '}
             {new Date(parlay.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
           </p>
@@ -331,19 +336,19 @@ function PositionDetailContent({ position }: { position: Position }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-xs text-[#8A8A9A] block">Quantity</span>
-            <span className="text-sm font-mono tabular-nums text-white">{position.quantity}</span>
+            <span className="text-xs text-[var(--text-secondary)] block">Quantity</span>
+            <span className="text-sm font-mono tabular-nums text-[var(--text-primary)]">{position.quantity}</span>
           </div>
           <div>
-            <span className="text-xs text-[#8A8A9A] block">Avg Price</span>
-            <span className="text-sm font-mono tabular-nums text-white">${fmtUsdc(position.avgPrice)}</span>
+            <span className="text-xs text-[var(--text-secondary)] block">Avg Price</span>
+            <span className="text-sm font-mono tabular-nums text-[var(--text-primary)]">${fmtUsdc(position.avgPrice)}</span>
           </div>
           <div>
-            <span className="text-xs text-[#8A8A9A] block">Current Price</span>
-            <span className="text-sm font-mono tabular-nums text-white">${fmtUsdc(position.currentPrice)}</span>
+            <span className="text-xs text-[var(--text-secondary)] block">Current Price</span>
+            <span className="text-sm font-mono tabular-nums text-[var(--text-primary)]">${fmtUsdc(position.currentPrice)}</span>
           </div>
           <div>
-            <span className="text-xs text-[#8A8A9A] block">
+            <span className="text-xs text-[var(--text-secondary)] block">
               {position.marketStatus === 'SETTLED' ? 'Final P&L' : 'Unrealized P&L'}
             </span>
             <PnlText
@@ -353,8 +358,8 @@ function PositionDetailContent({ position }: { position: Position }) {
           </div>
         </div>
         {position.marketStatus === 'SETTLED' && position.settlementResult && (
-          <div className="bg-[#0B0B0F]/50 rounded-lg p-3">
-            <span className="text-xs text-[#8A8A9A]">Settlement Result: </span>
+          <div className="bg-[var(--bg-base)]/50 rounded-lg p-3">
+            <span className="text-xs text-[var(--text-secondary)]">Settlement Result: </span>
             <Badge variant={position.settlementResult === 'YES' ? 'success' : 'danger'}>
               {position.settlementResult}
             </Badge>
@@ -364,22 +369,22 @@ function PositionDetailContent({ position }: { position: Position }) {
 
       {/* Related trades */}
       <div>
-        <h4 className="text-sm font-medium text-white mb-2">Trades for this position</h4>
+        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">Trades for this position</h4>
         {relatedTrades.length === 0 ? (
-          <p className="text-xs text-[#8A8A9A] py-4 text-center">No trades found for this position</p>
+          <p className="text-xs text-[var(--text-secondary)] py-4 text-center">No trades found for this position</p>
         ) : (
-          <div className="divide-y divide-[#252536]">
+          <div className="divide-y divide-[var(--border)]">
             {relatedTrades.map((t) => (
               <div key={t.id} className="flex items-center justify-between py-2.5 text-sm">
                 <div className="flex items-center gap-2">
                   <span className={`font-medium text-xs ${t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                     {t.side}
                   </span>
-                  <span className="font-mono tabular-nums text-white text-xs">
+                  <span className="font-mono tabular-nums text-[var(--text-primary)] text-xs">
                     {t.quantity} @ ${fmtUsdc(t.price)}
                   </span>
                 </div>
-                <span className="text-xs text-[#8A8A9A]">
+                <span className="text-xs text-[var(--text-secondary)]">
                   {new Date(t.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -390,11 +395,11 @@ function PositionDetailContent({ position }: { position: Position }) {
 
       {/* Related orders */}
       <div>
-        <h4 className="text-sm font-medium text-white mb-2">Order History</h4>
+        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">Order History</h4>
         {relatedOrders.length === 0 ? (
-          <p className="text-xs text-[#8A8A9A] py-4 text-center">No orders found</p>
+          <p className="text-xs text-[var(--text-secondary)] py-4 text-center">No orders found</p>
         ) : (
-          <div className="divide-y divide-[#252536]">
+          <div className="divide-y divide-[var(--border)]">
             {relatedOrders.map((o) => {
               const statusVariant: Record<string, 'success' | 'warning' | 'neutral' | 'danger'> = {
                 Pending: 'warning',
@@ -406,14 +411,14 @@ function PositionDetailContent({ position }: { position: Position }) {
               }
               return (
                 <div key={o.id} className="py-2.5">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                     <div className="flex items-center gap-1.5">
                       <Badge variant={statusVariant[o.status] ?? 'neutral'}>{o.status}</Badge>
                       <Badge variant={o.side === 'YES' ? 'success' : 'danger'}>{o.side}</Badge>
                     </div>
-                    <span className="text-xs text-[#8A8A9A]">{formatTime(o.createdAt)}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{formatTime(o.createdAt)}</span>
                   </div>
-                  <div className="text-xs font-mono tabular-nums text-[#8A8A9A]">
+                  <div className="text-xs font-mono tabular-nums text-[var(--text-secondary)]">
                     {o.type === 'limit' ? 'Limit' : 'Market'} &middot; {o.quantity} @ ${fmtUsdc(o.price)}
                     {o.filledQuantity > 0 && ` (filled ${o.filledQuantity})`}
                   </div>
@@ -460,11 +465,11 @@ export default function PortfolioPage() {
   const placedParlays = useParlayStore((s) => s.placedParlays)
 
   const tabs = [
-    { id: 'positions' as const, label: 'Positions', count: positions.length },
-    { id: 'orders' as const, label: 'Open Orders', count: openOrders.length },
+    { id: 'positions' as const, label: 'Positions', shortLabel: 'Pos.', count: positions.length },
+    { id: 'orders' as const, label: 'Open Orders', shortLabel: 'Orders', count: openOrders.length },
     { id: 'parlays' as const, label: 'Parlays', count: placedParlays.length },
     { id: 'activity' as const, label: 'Activity' },
-    { id: 'trades' as const, label: 'Trade History', count: allTrades.length },
+    { id: 'trades' as const, label: 'Trade History', shortLabel: 'Trades', count: allTrades.length },
   ]
 
   return (
@@ -482,7 +487,7 @@ export default function PortfolioPage() {
       {activeTab === 'positions' && (
         <div className="space-y-3">
           {positions.length === 0 ? (
-            <p className="text-[#8A8A9A] text-sm text-center py-12">No positions</p>
+            <p className="text-[var(--text-secondary)] text-sm text-center py-12">No positions</p>
           ) : (
             positions.map((pos) => (
               <Card
@@ -491,13 +496,13 @@ export default function PortfolioPage() {
                 onClick={() => handlePositionClick(pos)}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="text-sm font-medium text-white text-left">
+                  <span className="text-sm font-medium text-[var(--text-primary)] text-left min-w-0 truncate">
                     {pos.marketTitle}
                   </span>
-                  <Badge variant={pos.side === 'YES' ? 'success' : 'danger'}>{pos.side}</Badge>
+                  <Badge variant={pos.side === 'YES' ? 'success' : 'danger'} className="shrink-0">{pos.side}</Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[#8A8A9A] mb-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[var(--text-secondary)] mb-2">
                   <span>Qty: {pos.quantity}</span>
                   <span>Avg: ${fmtUsdc(pos.avgPrice)}</span>
                   <span>Current: ${fmtUsdc(pos.currentPrice)}</span>
@@ -539,20 +544,20 @@ export default function PortfolioPage() {
 
           {openOrders.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-[#8A8A9A] text-sm">No open orders</p>
+              <p className="text-[var(--text-secondary)] text-sm">No open orders</p>
             </div>
           ) : (
             openOrders.map((order) => (
               <Card key={order.id}>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="text-sm font-medium text-white">{order.marketTitle}</span>
-                  <div className="flex gap-1.5">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                  <span className="text-sm font-medium text-[var(--text-primary)] min-w-0 flex-1">{order.marketTitle}</span>
+                  <div className="flex gap-1.5 shrink-0">
                     <Badge variant="info">{order.type === 'market' ? 'Market' : 'Limit'}</Badge>
                     <Badge variant={order.side === 'YES' ? 'success' : 'danger'}>{order.side}</Badge>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[#8A8A9A] mb-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono tabular-nums text-[var(--text-secondary)] mb-2">
                   <span>Price: ${fmtUsdc(order.price)}</span>
                   <span>Qty: {order.quantity}</span>
                   <span>Filled: {order.filledQuantity}/{order.quantity}</span>
@@ -581,7 +586,7 @@ export default function PortfolioPage() {
             ))
           )}
           {openOrders.length > 0 && (
-            <p className="text-xs text-[#8A8A9A] text-center mt-3">
+            <p className="text-xs text-[var(--text-secondary)] text-center mt-3">
               To modify an order, cancel it and place a new one.
             </p>
           )}
@@ -599,7 +604,7 @@ export default function PortfolioPage() {
 
       {/* Cancel All Confirmation */}
       <Modal isOpen={confirmCancelAll} onClose={() => setConfirmCancelAll(false)} title="Cancel All Orders">
-        <p className="text-sm text-[#8A8A9A] mb-4">
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
           Are you sure you want to cancel all {openOrders.length} open orders?
         </p>
         <div className="flex gap-3">

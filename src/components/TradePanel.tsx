@@ -37,36 +37,36 @@ function TradeConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative bg-[#161622] border border-[#252536] rounded-2xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto">
+      <div className="relative bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto">
         <div className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <svg className="w-6 h-6 text-[#2DD4BF]" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
               <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <h3 className="text-lg font-bold text-white">Trade Confirmed</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Trade Confirmed</h3>
           </div>
-          <div className="bg-[#0B0B0F] rounded-xl p-4 mb-4 space-y-2">
-            <p className="text-xs text-[#8A8A9A]">{event.title}</p>
-            <p className="text-sm font-medium text-white">{result.contractLabel}</p>
+          <div className="bg-[var(--bg-base)] rounded-xl p-4 mb-4 space-y-2">
+            <p className="text-xs text-[var(--text-secondary)]">{event.title}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)]">{result.contractLabel}</p>
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Side</span>
+              <span className="text-[var(--text-secondary)]">Side</span>
               <span className={result.side === 'YES' ? 'text-[#2DD4BF] font-medium' : 'text-[#E85A7E] font-medium'}>{result.side}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Price</span>
-              <span className="text-white font-mono">{formatUsdc(result.price)} USDC</span>
+              <span className="text-[var(--text-secondary)]">Price</span>
+              <span className="text-[var(--text-primary)] font-mono">{formatUsdc(result.price)} USDC</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Shares</span>
-              <span className="text-white font-mono">{result.shares.toFixed(1)}</span>
+              <span className="text-[var(--text-secondary)]">Shares</span>
+              <span className="text-[var(--text-primary)] font-mono">{result.shares.toFixed(1)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[#8A8A9A]">Total cost</span>
-              <span className="text-white font-mono">{formatUsdc(result.total)} USDC</span>
+              <span className="text-[var(--text-secondary)]">Total cost</span>
+              <span className="text-[var(--text-primary)] font-mono">{formatUsdc(result.total)} USDC</span>
             </div>
-            <div className="flex justify-between text-xs border-t border-[#252536] pt-2">
-              <span className="text-[#8A8A9A]">Potential profit</span>
+            <div className="flex justify-between text-xs border-t border-[var(--border)] pt-2">
+              <span className="text-[var(--text-secondary)]">Potential profit</span>
               <span className="text-[#2DD4BF] font-mono font-medium">+{formatUsdc(result.profit)} USDC</span>
             </div>
           </div>
@@ -124,8 +124,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
   if (!contract || !selectedSide) {
     return (
-      <div className="bg-[#161622] border border-[#252536] rounded-xl p-4">
-        <p className="text-sm text-[#8A8A9A] text-center py-8">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
+        <p className="text-sm text-[var(--text-secondary)] text-center py-8">
           Select a contract's Yes or No button to start trading
         </p>
       </div>
@@ -246,20 +246,20 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         }}
       />
     )}
-    <div className="bg-[#161622] border border-[#252536] rounded-xl p-4">
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
       {/* Header */}
       <div className="mb-4">
-        <p className="text-[10px] text-[#8A8A9A] uppercase tracking-wider mb-1">Trading</p>
-        <p className="text-sm font-medium text-white truncate">{event.title}</p>
-        <p className="text-xs text-[#8A8A9A] truncate">{contract.label}</p>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Trading</p>
+        <p className="text-sm font-medium text-[var(--text-primary)] truncate">{event.title}</p>
+        <p className="text-xs text-[var(--text-secondary)] truncate">{contract.label}</p>
       </div>
 
       {/* Side selector */}
-      <div className="flex gap-1 mb-4 bg-[#0B0B0F] rounded-lg p-0.5">
+      <div className="flex gap-1 mb-4 bg-[var(--bg-base)] rounded-lg p-0.5">
         <button
           onClick={() => openTradePanel(contract.id, 'YES')}
           className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-            isYes ? 'bg-[#2DD4BF] text-[#0B0B0F]' : 'text-[#8A8A9A] hover:text-white'
+            isYes ? 'bg-[#2DD4BF] text-[#0B0B0F]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           Yes {contract.probability}%
@@ -267,7 +267,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         <button
           onClick={() => openTradePanel(contract.id, 'NO')}
           className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-            !isYes ? 'bg-[#E85A7E] text-white' : 'text-[#8A8A9A] hover:text-white'
+            !isYes ? 'bg-[#E85A7E] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           No {Math.round((1 - contract.yesPrice) * 100)}%
@@ -289,8 +289,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
           onClick={() => setOrderType('quick')}
           className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
             orderType === 'quick'
-              ? 'bg-[#252536] text-white'
-              : 'text-[#8A8A9A] hover:text-white'
+              ? 'bg-[var(--border)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           Market
@@ -299,15 +299,15 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
           onClick={() => setOrderType('limit')}
           className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
             orderType === 'limit'
-              ? 'bg-[#252536] text-white'
-              : 'text-[#8A8A9A] hover:text-white'
+              ? 'bg-[var(--border)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           Limit
         </button>
       </div>
 
-      <p className="text-[10px] text-[#8A8A9A] mb-3">
+      <p className="text-[10px] text-[var(--text-secondary)] mb-3">
         {orderType === 'quick'
           ? 'Instant fill at current best price'
           : 'Set your own price and wait for a match'}
@@ -318,8 +318,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         <>
           {/* Market price reference */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[#8A8A9A]">Market price</span>
-            <span className="text-white font-mono">
+            <span className="text-[var(--text-secondary)]">Market price</span>
+            <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC ({probability}%)
               {contract.change24h !== 0 && (
                 <span className={`ml-1.5 ${contract.change24h > 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
@@ -331,26 +331,26 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Spend input */}
           <div className="mb-4">
-            <label className="text-xs text-[#8A8A9A] mb-1 block">Spend (USDC)</label>
-            <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
-              <span className="text-sm text-[#8A8A9A]">$</span>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Spend (USDC)</label>
+            <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
+              <span className="text-sm text-[var(--text-secondary)]">$</span>
               <input
                 type="number"
                 value={spendAmount}
                 onChange={(e) => setSpendAmount(e.target.value)}
                 placeholder="0.00"
-                className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+                className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
                 min="0"
                 step="0.01"
               />
-              <span className="text-xs text-[#8A8A9A]">USDC</span>
+              <span className="text-xs text-[var(--text-secondary)]">USDC</span>
             </div>
             <div className="flex gap-1.5 mt-2">
               {[10, 25, 50, 100].map((v) => (
                 <button
                   key={v}
                   onClick={() => setSpendAmount(String(v))}
-                  className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[#8A8A9A] bg-[#0B0B0F] rounded hover:bg-[#252536] hover:text-white transition-colors"
+                  className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   ${v}
                 </button>
@@ -360,21 +360,21 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Estimate breakdown */}
           {parsedSpend > 0 && (
-            <div className="bg-[#0B0B0F] rounded-lg p-3 mb-4 space-y-1.5">
+            <div className="bg-[var(--bg-base)] rounded-lg p-3 mb-4 space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-[#8A8A9A]">Price per share</span>
-                <span className="text-white font-mono">{formatUsdc(price)} USDC</span>
+                <span className="text-[var(--text-secondary)]">Price per share</span>
+                <span className="text-[var(--text-primary)] font-mono">{formatUsdc(price)} USDC</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-[#8A8A9A]">Est. shares</span>
-                <span className="text-white font-mono">{quickShares.toFixed(1)}</span>
+                <span className="text-[var(--text-secondary)]">Est. shares</span>
+                <span className="text-[var(--text-primary)] font-mono">{quickShares.toFixed(1)}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-[#8A8A9A]">Potential payout</span>
+                <span className="text-[var(--text-secondary)]">Potential payout</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(quickPayout)} USDC</span>
               </div>
-              <div className="flex justify-between text-xs border-t border-[#252536] pt-1.5">
-                <span className="text-[#8A8A9A]">Potential profit</span>
+              <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
+                <span className="text-[var(--text-secondary)]">Potential profit</span>
                 <span className={`font-mono font-medium ${quickProfit >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                   {quickProfit >= 0 ? '+' : ''}{formatUsdc(quickProfit)} USDC
                 </span>
@@ -384,10 +384,10 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           <div className="flex items-center gap-1.5 mb-4">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="#8A8A9A" strokeWidth="1" />
-              <path d="M6 3.5v3M6 8.5v0" stroke="#8A8A9A" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="6" cy="6" r="5" stroke="var(--text-secondary)" strokeWidth="1" />
+              <path d="M6 3.5v3M6 8.5v0" stroke="var(--text-secondary)" strokeWidth="1" strokeLinecap="round" />
             </svg>
-            <span className="text-[10px] text-[#8A8A9A]">
+            <span className="text-[10px] text-[var(--text-secondary)]">
               Win = 1 USDC/share · Lose = 0 USDC/share
             </span>
           </div>
@@ -411,8 +411,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         <>
           {/* Market price reference */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[#8A8A9A]">Market price</span>
-            <span className="text-white font-mono">
+            <span className="text-[var(--text-secondary)]">Market price</span>
+            <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC
               {contract.change24h !== 0 && (
                 <span className={`ml-1.5 ${contract.change24h > 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
@@ -424,43 +424,43 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Price per share */}
           <div className="mb-3">
-            <label className="text-xs text-[#8A8A9A] mb-1 block">Price per share</label>
-            <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Price per share</label>
+            <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <input
                 type="number"
                 value={limitPrice}
                 onChange={(e) => handleLimitPriceChange(e.target.value)}
                 placeholder="0.01 – 0.99"
-                className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+                className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
                 min="0.01"
                 max="0.99"
                 step="0.01"
               />
-              <span className="text-xs text-[#8A8A9A]">USDC</span>
+              <span className="text-xs text-[var(--text-secondary)]">USDC</span>
             </div>
           </div>
 
           {/* Shares */}
           <div className="mb-3">
-            <label className="text-xs text-[#8A8A9A] mb-1 block">Shares</label>
-            <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Shares</label>
+            <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <input
                 type="number"
                 value={limitShares}
                 onChange={(e) => handleLimitSharesChange(e.target.value)}
                 placeholder="0"
-                className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+                className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
                 min="1"
                 step="1"
               />
-              <span className="text-xs text-[#8A8A9A]">shares</span>
+              <span className="text-xs text-[var(--text-secondary)]">shares</span>
             </div>
             <div className="flex gap-1.5 mt-2">
               {[25, 50, 75, 100].map((pct) => (
                 <button
                   key={pct}
                   onClick={() => handlePercentClick(pct)}
-                  className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[#8A8A9A] bg-[#0B0B0F] rounded hover:bg-[#252536] hover:text-white transition-colors"
+                  className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   {pct === 100 ? 'Max' : `${pct}%`}
                 </button>
@@ -470,32 +470,32 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Total Cost */}
           <div className="mb-3">
-            <label className="text-xs text-[#8A8A9A] mb-1 block">Total cost</label>
-            <div className="flex items-center gap-2 bg-[#1C1C28] border border-[#252536] rounded-lg px-3 py-2">
-              <span className="text-sm text-[#8A8A9A]">$</span>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Total cost</label>
+            <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
+              <span className="text-sm text-[var(--text-secondary)]">$</span>
               <input
                 type="number"
                 value={limitTotal}
                 onChange={(e) => handleLimitTotalChange(e.target.value)}
                 placeholder="0.00"
-                className="bg-transparent text-sm text-white placeholder-[#8A8A9A] outline-none flex-1 font-mono tabular-nums"
+                className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none flex-1 font-mono tabular-nums"
                 min="0"
                 step="0.01"
               />
-              <span className="text-xs text-[#8A8A9A]">USDC</span>
+              <span className="text-xs text-[var(--text-secondary)]">USDC</span>
             </div>
           </div>
 
           {/* Available balance */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[#8A8A9A]">Available</span>
-            <span className="text-white font-mono">{formatUsdc(MOCK_BALANCE)} USDC</span>
+            <span className="text-[var(--text-secondary)]">Available</span>
+            <span className="text-[var(--text-primary)] font-mono">{formatUsdc(MOCK_BALANCE)} USDC</span>
           </div>
 
           {/* Advanced (TIF) */}
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1 text-xs text-[#8A8A9A] hover:text-white transition-colors mb-3"
+            className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-3"
           >
             <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▸</span>
             Advanced: {tif}
@@ -505,7 +505,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               <select
                 value={tif}
                 onChange={(e) => setTif(e.target.value)}
-                className="w-full h-8 px-2 text-xs bg-[#1C1C28] text-white border border-[#252536] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
+                className="w-full h-8 px-2 text-xs bg-[var(--bg-control)] text-[var(--text-primary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
               >
                 <option value="GTC">GTC (Good til Cancel)</option>
                 <option value="IOC">IOC (Immediate or Cancel)</option>
@@ -515,13 +515,13 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Estimate breakdown */}
           {limitValid && (
-            <div className="bg-[#0B0B0F] rounded-lg p-3 mb-4 space-y-1.5">
+            <div className="bg-[var(--bg-base)] rounded-lg p-3 mb-4 space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-[#8A8A9A]">Potential payout</span>
+                <span className="text-[var(--text-secondary)]">Potential payout</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(limitPayout)} USDC</span>
               </div>
-              <div className="flex justify-between text-xs border-t border-[#252536] pt-1.5">
-                <span className="text-[#8A8A9A]">Potential profit</span>
+              <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
+                <span className="text-[var(--text-secondary)]">Potential profit</span>
                 <span className={`font-mono font-medium ${limitProfit >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                   {limitProfit >= 0 ? '+' : ''}{formatUsdc(limitProfit)} USDC
                 </span>
@@ -531,10 +531,10 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           <div className="flex items-center gap-1.5 mb-4">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="#8A8A9A" strokeWidth="1" />
-              <path d="M6 3.5v3M6 8.5v0" stroke="#8A8A9A" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="6" cy="6" r="5" stroke="var(--text-secondary)" strokeWidth="1" />
+              <path d="M6 3.5v3M6 8.5v0" stroke="var(--text-secondary)" strokeWidth="1" strokeLinecap="round" />
             </svg>
-            <span className="text-[10px] text-[#8A8A9A]">
+            <span className="text-[10px] text-[var(--text-secondary)]">
               Win = 1 USDC/share · Lose = 0 USDC/share
             </span>
           </div>

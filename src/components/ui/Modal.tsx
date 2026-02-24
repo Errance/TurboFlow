@@ -21,14 +21,14 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 transition-opacity duration-200"
+        className="fixed inset-0 bg-[var(--overlay-bg)] transition-opacity duration-200"
         onClick={onClose}
         aria-hidden
       />
       {/* Content */}
       <div
         className={[
-          "relative z-10 bg-[#161622] rounded-xl border border-[#252536] p-6 max-w-md w-full mx-4",
+          "relative z-10 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6 max-w-md w-full mx-4",
           "transition-all duration-200 ease-out",
           "opacity-0 scale-95 animate-[fadeScaleIn_0.2s_ease-out_forwards]",
           className,
@@ -41,7 +41,7 @@ export default function Modal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 text-[#8A8A9A] hover:text-white transition-colors"
+          className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           aria-label="Close"
         >
           <svg
@@ -60,7 +60,7 @@ export default function Modal({
           </svg>
         </button>
         {title && (
-          <h2 className="text-lg font-semibold text-white mb-4 pr-10">{title}</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 pr-10">{title}</h2>
         )}
         {children}
       </div>

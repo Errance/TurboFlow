@@ -1,6 +1,7 @@
 export interface TabItem {
   id: string;
   label: string;
+  shortLabel?: string;
   count?: number;
 }
 
@@ -14,12 +15,12 @@ export interface TabsProps {
 export default function Tabs({ tabs, activeTab, onChange, className = "" }: TabsProps) {
   return (
     <div
-      className={["flex gap-1 border-b border-[#252536]", className].filter(Boolean).join(" ")}
+      className={["flex gap-1 border-b border-[var(--border)] overflow-x-auto scrollbar-hide", className].filter(Boolean).join(" ")}
       role="tablist"
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
-        const label = tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label;
+        const suffix = tab.count !== undefined ? ` (${tab.count})` : '';
 
         return (
           <button
@@ -31,13 +32,20 @@ export default function Tabs({ tabs, activeTab, onChange, className = "" }: Tabs
             id={`tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={[
-              "px-4 py-2 text-sm font-medium transition-colors duration-150 min-h-[44px]",
+              "px-3 md:px-4 py-2 text-sm font-medium transition-colors duration-150 min-h-[44px] whitespace-nowrap shrink-0",
               isActive
                 ? "text-[#2DD4BF] border-b-2 border-[#2DD4BF] -mb-px"
-                : "text-[#8A8A9A] hover:text-white",
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
             ].join(" ")}
           >
-            {label}
+            {tab.shortLabel ? (
+              <>
+                <span className="md:hidden">{tab.shortLabel}{suffix}</span>
+                <span className="hidden md:inline">{tab.label}{suffix}</span>
+              </>
+            ) : (
+              `${tab.label}${suffix}`
+            )}
           </button>
         );
       })}

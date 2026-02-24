@@ -27,12 +27,12 @@ export default function SegmentedControl({
       if (index === 1) return "bg-[#E85A7E] text-white";
     }
 
-    return "bg-[#252536] text-white";
+    return "bg-[var(--border)] text-[var(--text-primary)]";
   };
 
   return (
     <div
-      className={["flex bg-[#1C1C28] rounded-lg p-1", className].filter(Boolean).join(" ")}
+      className={["flex bg-[var(--bg-control)] rounded-lg p-1", className].filter(Boolean).join(" ")}
       role="tablist"
     >
       {options.map((option, index) => {
@@ -47,7 +47,7 @@ export default function SegmentedControl({
             onClick={() => onChange(option.id)}
             className={[
               "flex-1 px-3 py-1.5 text-sm font-medium rounded-md text-center transition-all duration-150 min-h-[36px] flex items-center justify-center",
-              isActive ? getActiveStyles(option, index) : "text-[#8A8A9A] hover:text-white cursor-pointer",
+              isActive ? getActiveStyles(option, index) : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer",
             ].join(" ")}
           >
             {option.label}

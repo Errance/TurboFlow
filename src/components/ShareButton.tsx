@@ -31,7 +31,7 @@ export default function ShareButton({ event, size = 'sm' }: ShareButtonProps) {
         e.stopPropagation()
         handleShare()
       }}
-      className={`${px} rounded-lg text-[#8A8A9A] hover:text-[#2DD4BF] hover:bg-[#252536] transition-colors flex items-center gap-1.5`}
+      className={`${px} rounded-lg text-[var(--text-secondary)] hover:text-[#2DD4BF] hover:bg-[var(--border)] transition-colors flex items-center gap-1.5`}
       title="Share"
     >
       <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none">
