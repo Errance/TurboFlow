@@ -82,3 +82,27 @@ export const EC_ASSET_DECIMALS: Record<ECAsset, number> = {
   BTC: 2,
   ETH: 2,
 }
+
+// --- Social / Global types ---
+
+export interface ECGlobalBet extends ECBet {
+  playerName: string
+}
+
+export interface ECGlobalSettlement {
+  id: string
+  playerName: string
+  asset: ECAsset
+  direction: ECDirection
+  pnl: number
+  price: number
+  timestamp: number
+}
+
+export interface ECLeaderboardEntry {
+  rank: number
+  playerName: string
+  maxStreak: number
+  bestSinglePnl: number
+  totalPnl: number
+}

@@ -5,6 +5,9 @@ import type {
   ECBetStatus,
   ECDirection,
   ECEffectsSettings,
+  ECGlobalBet,
+  ECGlobalSettlement,
+  ECLeaderboardEntry,
   ECStreak,
   ECTimeIncrement,
 } from '../types/eventContract'
@@ -14,6 +17,14 @@ import {
   EC_STRIKE_OFFSETS,
 } from '../types/eventContract'
 import { subscribe as subscribePriceEngine } from '../data/ecPriceEngine'
+import {
+  startMockEngine,
+  stopMockEngine,
+  onGlobalFeed,
+  onGlobalSettlement,
+  onLeaderboardUpdate,
+  getLeaderboard,
+} from '../data/ecMockPlayers'
 
 const EC_DEMO_DURATION = 20 // seconds — all bets use this for demo; swap back to real durations later
 
@@ -35,9 +46,15 @@ interface EventContractState {
   // Whether we've shown the one-time "customize effects" hint
   effectsHintShown: boolean
 
+  // Global social data
+  globalFeed: ECGlobalBet[]
+  globalSettlements: ECGlobalSettlement[]
+  leaderboard: ECLeaderboardEntry[]
+
   // Timers for active bets
   _timers: Map<string, ReturnType<typeof setTimeout>>
   _priceUnsubs: (() => void)[]
+  _mockUnsubs: (() => void)[]
 
   // Actions
   setAsset: (asset: ECAsset) => void
@@ -49,6 +66,7 @@ interface EventContractState {
   updateEffects: (settings: Partial<ECEffectsSettings>) => void
   markEffectsHintShown: () => void
   initPriceFeed: () => void
+  initMockEngine: () => void
   dispose: () => void
 
   // Derived helpers
@@ -92,8 +110,13 @@ export const useEventContractStore = create<EventContractState>((set, get) => ({
 
   effectsHintShown: false,
 
+  globalFeed: [],
+  globalSettlements: [],
+  leaderboard: getLeaderboard(),
+
   _timers: new Map(),
   _priceUnsubs: [],
+  _mockUnsubs: [],
 
   setAsset: (asset) => set({ currentAsset: asset }),
 
@@ -246,11 +269,48 @@ export const useEventContractStore = create<EventContractState>((set, get) => ({
     set({ _priceUnsubs: [unsub1, unsub2] })
   },
 
+  initMockEngine: () => {
+    const MAX_FEED = 50
+    const SETTLEMENT_TTL = 5000
+
+    const unsubFeed = onGlobalFeed((bet) => {
+      set((s) => {
+        const existing = s.globalFeed.findIndex((b) => b.id === bet.id)
+        if (existing >= 0) {
+          const updated = [...s.globalFeed]
+          updated[existing] = bet
+          return { globalFeed: updated }
+        }
+        return { globalFeed: [bet, ...s.globalFeed].slice(0, MAX_FEED) }
+      })
+    })
+
+    const unsubSettlement = onGlobalSettlement((settlement) => {
+      set((s) => ({
+        globalSettlements: [...s.globalSettlements, settlement].slice(-6),
+      }))
+      setTimeout(() => {
+        set((s) => ({
+          globalSettlements: s.globalSettlements.filter((gs) => gs.id !== settlement.id),
+        }))
+      }, SETTLEMENT_TTL)
+    })
+
+    const unsubLeaderboard = onLeaderboardUpdate((lb) => {
+      set({ leaderboard: lb })
+    })
+
+    set({ _mockUnsubs: [unsubFeed, unsubSettlement, unsubLeaderboard] })
+    startMockEngine()
+  },
+
   dispose: () => {
     const state = get()
     for (const unsub of state._priceUnsubs) unsub()
+    for (const unsub of state._mockUnsubs) unsub()
     for (const timer of state._timers.values()) clearTimeout(timer)
-    set({ _priceUnsubs: [], _timers: new Map() })
+    stopMockEngine()
+    set({ _priceUnsubs: [], _mockUnsubs: [], _timers: new Map() })
   },
 
   // Derived

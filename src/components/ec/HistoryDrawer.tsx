@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import { useEventContractStore } from '../../stores/eventContractStore'
 import type { ECBet } from '../../types/eventContract'
 
@@ -33,6 +34,83 @@ function HistoryRow({ bet }: { bet: ECBet }) {
           {won ? '+' : ''}{bet.pnl?.toFixed(2) ?? '0.00'}
         </div>
         <div className="text-[10px] text-[var(--text-tertiary)]">${bet.amount} bet</div>
+      </div>
+    </div>
+  )
+}
+
+const BEAD_ROWS = 6
+const CELL_SIZE = 24
+const DOT_SIZE = 16
+
+function DragonBallChart({ bets }: { bets: ECBet[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const chronological = [...bets].reverse()
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    }
+  }, [bets.length])
+
+  const cols = Math.max(1, Math.ceil(chronological.length / BEAD_ROWS))
+  const grid: (ECBet | null)[][] = []
+  for (let c = 0; c < cols; c++) {
+    const column: (ECBet | null)[] = []
+    for (let r = 0; r < BEAD_ROWS; r++) {
+      const idx = c * BEAD_ROWS + r
+      column.push(idx < chronological.length ? chronological[idx] : null)
+    }
+    grid.push(column)
+  }
+
+  return (
+    <div className="px-4 py-2.5 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+          Bead Road
+        </span>
+        <span className="text-[10px] text-[var(--text-tertiary)]">
+          {chronological.length} rounds
+        </span>
+      </div>
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <div
+          className="inline-flex border border-[var(--border)] rounded-md overflow-hidden"
+          style={{ borderCollapse: 'collapse' }}
+        >
+          {grid.map((column, ci) => (
+            <div key={ci} className="flex flex-col">
+              {column.map((bet, ri) => (
+                <div
+                  key={`${ci}-${ri}`}
+                  className="flex items-center justify-center border-r border-b border-[var(--border)] last:border-b-0"
+                  style={{
+                    width: `${CELL_SIZE}px`,
+                    height: `${CELL_SIZE}px`,
+                    borderRight: ci === cols - 1 ? 'none' : undefined,
+                  }}
+                  title={bet ? `${bet.status === 'won' ? 'Win' : 'Loss'} ${bet.pnl?.toFixed(2) ?? ''}` : ''}
+                >
+                  {bet && (
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: `${DOT_SIZE}px`,
+                        height: `${DOT_SIZE}px`,
+                        background: bet.status === 'won' ? '#2DD4BF' : '#F87171',
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -99,6 +177,11 @@ export default function HistoryDrawer({
             </div>
           </div>
         </div>
+
+        {/* Dragon Ball Chart */}
+        {settledBets.length > 0 && (
+          <DragonBallChart bets={settledBets} />
+        )}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto px-4">

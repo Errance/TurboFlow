@@ -73,6 +73,10 @@ export default function OrderPanel() {
 
       {/* Amount Input */}
       <div className="mb-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-[var(--text-tertiary)]">Amount</span>
+          <span className="text-xs text-[var(--text-tertiary)]">${EC_MIN_BET} – ${EC_MAX_BET} USDT</span>
+        </div>
         <div className="flex items-center gap-2 bg-[var(--bg-base)] rounded-lg border border-[var(--border)] px-3 py-2">
           <span className="text-sm text-[var(--text-tertiary)]">$</span>
           <input

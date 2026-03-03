@@ -5,21 +5,26 @@ import OrderPanel from '../components/ec/OrderPanel'
 import PositionsStage from '../components/ec/PositionsStage'
 import SettlementReveal from '../components/ec/SettlementReveal'
 import EffectsSettings from '../components/ec/EffectsSettings'
+import Leaderboard from '../components/ec/Leaderboard'
 
 export default function EventContractPage() {
   const initPriceFeed = useEventContractStore((s) => s.initPriceFeed)
+  const initMockEngine = useEventContractStore((s) => s.initMockEngine)
   const dispose = useEventContractStore((s) => s.dispose)
   const [effectsOpen, setEffectsOpen] = useState(false)
+  const [leaderboardExpanded, setLeaderboardExpanded] = useState(false)
 
   useEffect(() => {
     initPriceFeed()
+    initMockEngine()
     return () => dispose()
-  }, [initPriceFeed, dispose])
+  }, [initPriceFeed, initMockEngine, dispose])
 
   return (
     <>
       {/* Mobile: single column */}
       <div className="md:hidden px-4 py-4">
+        <Leaderboard expanded={leaderboardExpanded} onToggle={() => setLeaderboardExpanded(!leaderboardExpanded)} />
         <div className="flex justify-end mb-2">
           <EffectsButton onClick={() => setEffectsOpen(true)} />
         </div>
@@ -30,12 +35,12 @@ export default function EventContractPage() {
 
       {/* Desktop: two-column */}
       <div className="hidden md:block max-w-6xl mx-auto px-6 py-6">
+        <Leaderboard expanded={leaderboardExpanded} onToggle={() => setLeaderboardExpanded(!leaderboardExpanded)} />
         <div className="flex items-center justify-between mb-2">
           <MarketPriceBar />
           <EffectsButton onClick={() => setEffectsOpen(true)} />
         </div>
         <div className="grid grid-cols-[1fr_380px] gap-6 items-start">
-          {/* Left: Sparkline + Positions */}
           <div>
             <MarketChart />
             <div className="mt-4">
@@ -43,7 +48,6 @@ export default function EventContractPage() {
             </div>
           </div>
 
-          {/* Right: Order Panel (sticky, top-aligned with sparkline) */}
           <div className="sticky top-20">
             <OrderPanel />
           </div>
