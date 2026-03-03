@@ -93,6 +93,7 @@ export default function LimitOrderPanel({
       priceNum,
       Math.round(sharesNum),
       contractId,
+      'BUY',
     )
     useToastStore.getState().addToast({
       type: 'success',

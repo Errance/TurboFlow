@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { OrderSide, Position, Trade } from '../types'
+import type { OrderAction, OrderSide, Position, Trade } from '../types'
 import { positions as fixturePositions } from '../data/positions'
 import { trades as fixtureTrades } from '../data/trades'
 
@@ -7,24 +7,26 @@ interface ExecuteTradeParams {
   contractId: string
   marketTitle: string
   side: OrderSide
+  action?: OrderAction
   /** USDC decimal */
   price: number
   quantity: number
+  fee?: number
   parlayId?: string
 }
 
 interface PortfolioState {
   positions: Position[]
   trades: Trade[]
-  activeTab: 'positions' | 'orders' | 'history'
+  activeTab: 'positions' | 'orders' | 'history' | 'events'
 
   getPositionsByMarket: (marketId: string) => Position[]
   getTradesByMarket: (marketId: string) => Trade[]
   setActiveTab: (tab: PortfolioState['activeTab']) => void
   addPosition: (position: Position) => void
+  reducePosition: (contractId: string, side: OrderSide, quantity: number, parlayId?: string) => void
   addTrade: (trade: Trade) => void
   executeTrade: (params: ExecuteTradeParams) => void
-  closePosition: (positionId: string) => void
 }
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
@@ -65,9 +67,32 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     }
   },
 
+  reducePosition: (contractId, side, quantity, parlayId) => {
+    const matchKey = contractId
+    const existing = get().positions.find(
+      (p) =>
+        (p.contractId ?? p.marketId) === matchKey &&
+        p.side === side &&
+        p.parlayId === parlayId,
+    )
+    if (!existing) return
+
+    if (quantity >= existing.quantity) {
+      set({ positions: get().positions.filter((p) => p.id !== existing.id) })
+    } else {
+      set({
+        positions: get().positions.map((p) =>
+          p.id === existing.id
+            ? { ...p, quantity: p.quantity - quantity }
+            : p,
+        ),
+      })
+    }
+  },
+
   addTrade: (trade) => set({ trades: [trade, ...get().trades] }),
 
-  executeTrade: ({ contractId, marketTitle, side, price, quantity, parlayId }) => {
+  executeTrade: ({ contractId, marketTitle, side, action = 'BUY', price, quantity, fee = 0, parlayId }) => {
     const tradeId = `trade-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
     get().addTrade({
@@ -76,28 +101,30 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
       contractId,
       marketTitle,
       side,
+      action,
       price,
       quantity,
+      fee,
       timestamp: new Date().toISOString(),
     })
 
-    get().addPosition({
-      id: `pos-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      marketId: contractId,
-      contractId,
-      marketTitle,
-      side,
-      quantity,
-      avgPrice: price,
-      currentPrice: price,
-      unrealizedPnl: 0,
-      unrealizedPnlPercent: 0,
-      marketStatus: 'OPEN',
-      ...(parlayId ? { parlayId } : {}),
-    })
-  },
-
-  closePosition: (positionId) => {
-    set({ positions: get().positions.filter((p) => p.id !== positionId) })
+    if (action === 'SELL') {
+      get().reducePosition(contractId, side, quantity, parlayId)
+    } else {
+      get().addPosition({
+        id: `pos-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        marketId: contractId,
+        contractId,
+        marketTitle,
+        side,
+        quantity,
+        avgPrice: price,
+        currentPrice: price,
+        unrealizedPnl: 0,
+        unrealizedPnlPercent: 0,
+        marketStatus: 'OPEN',
+        ...(parlayId ? { parlayId } : {}),
+      })
+    }
   },
 }))

@@ -6,6 +6,7 @@ import PortfolioPage from './pages/PortfolioPage'
 import SportsGamePage from './pages/SportsGamePage'
 import ContractDetailPage from './pages/ContractDetailPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import EventContractPage from './pages/EventContractPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/event/:eventId" element={<EventDetailPage />} />
           <Route path="/game/:eventId" element={<SportsGamePage />} />
           <Route path="/contract/:contractId" element={<ContractDetailPage />} />
+          <Route path="/events" element={<EventContractPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
         </Route>

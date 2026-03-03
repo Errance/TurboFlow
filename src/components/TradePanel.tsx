@@ -199,6 +199,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       contractId: contract!.id,
       marketTitle: `${event.title} — ${contract!.label}`,
       side: selectedSide!,
+      action: 'BUY',
       price: tradePrice,
       quantity: Math.round(tradeShares),
     })
@@ -235,6 +236,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       lPrice,
       lShares,
       contract!.id,
+      'BUY',
     )
 
     if (context === 'list') {
@@ -339,9 +341,9 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       {/* ========= MARKET ORDER ========= */}
       {orderType === 'quick' && (
         <>
-          {/* Market price reference */}
+          {/* Est. execution price */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[var(--text-secondary)]">Market price</span>
+            <span className="text-[var(--text-secondary)]">Est. execution price</span>
             <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC ({probability}%)
               {contract.change24h !== 0 && (
@@ -432,9 +434,9 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       {/* ========= LIMIT ORDER ========= */}
       {orderType === 'limit' && (
         <>
-          {/* Market price reference */}
+          {/* Est. execution price */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[var(--text-secondary)]">Market price</span>
+            <span className="text-[var(--text-secondary)]">Est. execution price</span>
             <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC
               {contract.change24h !== 0 && (

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Order, OrderSide, QuickOrderScenario, ScenarioStep } from '../types'
+import type { Order, OrderAction, OrderSide, QuickOrderScenario, ScenarioStep } from '../types'
+import { MVP_FEE_RATE } from '../types'
 import { orders as fixtureOrders } from '../data/orders'
 import { quickOrderScenarios } from '../data/scenarios'
 import { usePortfolioStore } from './portfolioStore'
@@ -8,6 +9,7 @@ interface MarketOrderParams {
   contractId: string
   marketTitle: string
   side: OrderSide
+  action?: OrderAction
   price: number
   quantity: number
 }
@@ -37,6 +39,7 @@ interface OrderState {
     price: number,
     quantity: number,
     contractId?: string,
+    action?: OrderAction,
   ) => void
   simulateFillOrder: (orderId: string) => void
   cancelOrder: (orderId: string) => void
@@ -50,6 +53,10 @@ function clearScenarioTimers() {
   scenarioTimers = []
 }
 
+function computeFee(price: number, quantity: number): number {
+  return Math.round(price * quantity * MVP_FEE_RATE * 100) / 100
+}
+
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [...fixtureOrders],
   activeScenario: null,
@@ -61,9 +68,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
 
-  placeMarketOrder: ({ contractId, marketTitle, side, price, quantity }) => {
+  placeMarketOrder: ({ contractId, marketTitle, side, action = 'BUY', price, quantity }) => {
     const orderId = `ord-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     const now = new Date().toISOString()
+    const fee = computeFee(price, quantity)
 
     const newOrder: Order = {
       id: orderId,
@@ -71,10 +79,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       contractId,
       marketTitle,
       side,
+      action,
       type: 'market',
       price,
       quantity,
       filledQuantity: quantity,
+      fee,
+      timeInForce: 'GTC',
       status: 'Filled',
       createdAt: now,
       updatedAt: now,
@@ -82,7 +93,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     set((state) => ({ orders: [newOrder, ...state.orders] }))
 
-    usePortfolioStore.getState().executeTrade({ contractId, marketTitle, side, price, quantity })
+    usePortfolioStore.getState().executeTrade({ contractId, marketTitle, side, action, price, quantity, fee })
   },
 
   placeQuickOrder: (marketId, marketTitle, side, quantity, contractId, scenarioId) => {
@@ -95,6 +106,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     const orderId = `ord-${Date.now()}`
     const now = new Date().toISOString()
+    const fee = computeFee(scenario.estimatedAvgPrice, quantity)
 
     const newOrder: Order = {
       id: orderId,
@@ -102,10 +114,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       contractId: contractId ?? marketId,
       marketTitle,
       side,
+      action: 'BUY',
       type: 'market',
       price: scenario.estimatedAvgPrice,
       quantity,
       filledQuantity: 0,
+      fee,
+      timeInForce: 'GTC',
       status: 'Pending',
       createdAt: now,
       updatedAt: now,
@@ -142,8 +157,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             contractId: contractId ?? marketId,
             marketTitle,
             side,
+            action: 'BUY',
             price: scenario.estimatedAvgPrice,
             quantity: step.filledQuantity ?? quantity,
+            fee,
           })
         }
       }, cumulativeDelay)
@@ -151,9 +168,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     })
   },
 
-  placeLimitOrder: (marketId, marketTitle, side, price, quantity, contractId) => {
+  placeLimitOrder: (marketId, marketTitle, side, price, quantity, contractId, action = 'BUY') => {
     const orderId = `ord-${Date.now()}`
     const now = new Date().toISOString()
+    const fee = computeFee(price, quantity)
 
     const newOrder: Order = {
       id: orderId,
@@ -161,10 +179,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       contractId: contractId ?? marketId,
       marketTitle,
       side,
+      action,
       type: 'limit',
       price,
       quantity,
       filledQuantity: 0,
+      fee,
+      timeInForce: 'GTC',
       status: 'Open',
       createdAt: now,
       updatedAt: now,
@@ -191,8 +212,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       contractId: order.contractId ?? order.marketId,
       marketTitle: order.marketTitle,
       side: order.side,
+      action: order.action,
       price: order.price,
       quantity: order.quantity,
+      fee: order.fee,
     })
   },
 

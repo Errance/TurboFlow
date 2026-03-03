@@ -63,8 +63,18 @@ export interface Contract {
   label: string
   type?: 'binary' | 'moneyline' | 'spread' | 'total'
   status: ContractStatus
-  yesPrice: number       // 0.01–0.99 USDC
+  /** Display price (midpoint or last traded), USDC 0.01–0.99. Theoretical: yesPrice + noPrice = 1. */
+  yesPrice: number
+  /** Display price (midpoint or last traded), USDC 0.01–0.99. */
   noPrice: number
+  /** Orderbook best bid for YES shares */
+  yesBid?: number
+  /** Orderbook best ask for YES shares */
+  yesAsk?: number
+  /** Orderbook best bid for NO shares */
+  noBid?: number
+  /** Orderbook best ask for NO shares */
+  noAsk?: number
   probability: number    // display percentage 0–100
   change24h: number      // percentage points
   volume: number         // USDC
@@ -173,19 +183,31 @@ export interface OrderbookDelta {
 
 export type OrderStatus = 'Pending' | 'Open' | 'PartialFill' | 'Filled' | 'Cancelled' | 'Rejected'
 export type OrderSide = 'YES' | 'NO'
+export type OrderAction = 'BUY' | 'SELL'
 export type OrderType = 'market' | 'limit'
+export type TimeInForce = 'GTC' | 'GTD' | 'IOC' | 'FOK'
+
+/** MVP fee rate — set to 0 for zero-fee demo; formulas retain the fee term for future use */
+export const MVP_FEE_RATE = 0
 
 export interface Order {
   id: string
   marketId: string
   contractId?: string
   marketTitle: string
+  /** Outcome direction */
   side: OrderSide
+  /** Trade action — BUY to enter, SELL to exit */
+  action: OrderAction
   type: OrderType
   /** USDC decimal, e.g. 0.65 */
   price: number
   quantity: number
   filledQuantity: number
+  /** Transaction fee in USDC */
+  fee: number
+  /** Order validity policy — MVP only supports GTC */
+  timeInForce: TimeInForce
   status: OrderStatus
   rejectReason?: string
   rejectCta?: { label: string; route: string }
@@ -221,10 +243,15 @@ export interface Trade {
   marketId: string
   contractId?: string
   marketTitle: string
+  /** Outcome direction */
   side: OrderSide
+  /** Trade action — BUY or SELL */
+  action: OrderAction
   /** USDC decimal, e.g. 0.64 */
   price: number
   quantity: number
+  /** Transaction fee in USDC */
+  fee: number
   timestamp: string
 }
 

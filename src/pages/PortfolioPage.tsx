@@ -4,6 +4,7 @@ import { usePortfolioStore } from '../stores/portfolioStore'
 import { useOrderStore } from '../stores/orderStore'
 import { useToastStore } from '../stores/toastStore'
 import { useParlayStore, type Parlay } from '../stores/parlayStore'
+import { useEventContractStore } from '../stores/eventContractStore'
 import PnlChart from '../components/PnlChart'
 import Tabs from '../components/ui/Tabs'
 import Card from '../components/ui/Card'
@@ -44,8 +45,10 @@ interface HistoryItem {
   id: string
   kind: 'trade' | 'order_filled' | 'order_cancelled' | 'order_rejected'
   side: OrderSide
+  action: 'BUY' | 'SELL'
   price: number
   quantity: number
+  fee: number
   marketTitle: string
   timestamp: string
 }
@@ -70,8 +73,10 @@ function HistoryTab() {
         id: `h-trade-${t.id}`,
         kind: 'trade',
         side: t.side,
+        action: t.action,
         price: t.price,
         quantity: t.quantity,
+        fee: t.fee,
         marketTitle: t.marketTitle,
         timestamp: t.timestamp,
       })
@@ -83,8 +88,10 @@ function HistoryTab() {
           id: `h-ord-fill-${o.id}`,
           kind: 'order_filled',
           side: o.side,
+          action: o.action,
           price: o.price,
           quantity: o.filledQuantity,
+          fee: o.fee,
           marketTitle: o.marketTitle,
           timestamp: o.updatedAt,
         })
@@ -93,8 +100,10 @@ function HistoryTab() {
           id: `h-ord-cancel-${o.id}`,
           kind: 'order_cancelled',
           side: o.side,
+          action: o.action,
           price: o.price,
           quantity: o.quantity,
+          fee: o.fee,
           marketTitle: o.marketTitle,
           timestamp: o.updatedAt,
         })
@@ -103,8 +112,10 @@ function HistoryTab() {
           id: `h-ord-reject-${o.id}`,
           kind: 'order_rejected',
           side: o.side,
+          action: o.action,
           price: o.price,
           quantity: o.quantity,
+          fee: o.fee,
           marketTitle: o.marketTitle,
           timestamp: o.updatedAt,
         })
@@ -191,9 +202,10 @@ function HistoryTab() {
             <div key={date}>
               <div className="text-xs text-[var(--text-secondary)] font-medium mb-2 px-1">{date}</div>
               <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
-                <div className="hidden md:grid grid-cols-7 gap-2 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] border-b border-[var(--border)]">
+                <div className="hidden md:grid grid-cols-8 gap-2 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] border-b border-[var(--border)]">
                   <span>Time</span>
                   <span>Type</span>
+                  <span>Action</span>
                   <span className="col-span-2">Market</span>
                   <span>Side</span>
                   <span className="text-right">Price</span>
@@ -204,12 +216,17 @@ function HistoryTab() {
                   return (
                     <div
                       key={item.id}
-                      className="grid grid-cols-2 md:grid-cols-7 gap-2 px-4 py-3 text-sm border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--border)]/30 transition-colors"
+                      className="grid grid-cols-2 md:grid-cols-8 gap-2 px-4 py-3 text-sm border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--border)]/30 transition-colors"
                     >
                       <span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
                         {new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <span><Badge variant={kb.variant}>{kb.label}</Badge></span>
+                      <span>
+                        <Badge variant={item.action === 'BUY' ? 'success' : 'warning'}>
+                          {item.action}
+                        </Badge>
+                      </span>
                       <span className="text-[var(--text-primary)] truncate col-span-1 md:col-span-2 text-xs">{item.marketTitle}</span>
                       <span className={`font-medium text-xs ${item.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                         {item.side}
@@ -224,6 +241,127 @@ function HistoryTab() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function EventsTab() {
+  const activeBets = useEventContractStore((s) => s.activeBets)
+  const settledBets = useEventContractStore((s) => s.settledBets)
+  const balance = useEventContractStore((s) => s.balance)
+  const streak = useEventContractStore((s) => s.streak)
+
+  const totalPnl = settledBets.reduce((sum, b) => sum + (b.pnl ?? 0), 0)
+  const wins = settledBets.filter((b) => b.status === 'won').length
+  const losses = settledBets.filter((b) => b.status === 'lost').length
+  const winRate = settledBets.length > 0 ? ((wins / settledBets.length) * 100).toFixed(0) : '—'
+  const totalBets = settledBets.length + activeBets.length
+
+  return (
+    <div className="space-y-4">
+      {/* Summary card */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Balance</div>
+            <div className="text-sm font-bold tabular-nums text-[var(--text-primary)]">
+              ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Total P&L</div>
+            <div className={`text-sm font-bold tabular-nums ${totalPnl >= 0 ? 'text-[#2DD4BF]' : 'text-[#F87171]'}`}>
+              {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Win Rate</div>
+            <div className="text-sm font-bold text-[var(--text-primary)]">{winRate}%</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Streak</div>
+            <div className={`text-sm font-bold ${
+              streak.type === 'win' ? 'text-[#2DD4BF]' : streak.type === 'lose' ? 'text-[#F87171]' : 'text-[var(--text-primary)]'
+            }`}>
+              {streak.count > 0 ? `${streak.count}x ${streak.type === 'win' ? 'W' : 'L'}` : '—'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active bets */}
+      {activeBets.length > 0 && (
+        <div>
+          <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-2">
+            Active ({activeBets.length})
+          </h3>
+          <div className="space-y-2">
+            {activeBets.map((bet) => (
+              <div key={bet.id} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      bet.direction === 'higher' ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[#F87171]/15 text-[#F87171]'
+                    }`}>
+                      {bet.direction === 'higher' ? 'HIGHER' : 'LOWER'}
+                    </span>
+                    <span className="text-xs text-[var(--text-primary)]">{bet.asset}/USDT</span>
+                    <span className="text-[10px] text-[var(--text-tertiary)]">{bet.duration / 60}min</span>
+                  </div>
+                  <span className="text-xs font-bold tabular-nums text-[var(--text-primary)]">${bet.amount}</span>
+                </div>
+                <div className="text-[10px] text-[var(--text-tertiary)]">
+                  Entry: ${bet.entryPrice.toFixed(2)} · Return: {(bet.payout * 100).toFixed(0)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Settled bets */}
+      <div>
+        <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-2">
+          History ({settledBets.length})
+        </h3>
+        {settledBets.length === 0 ? (
+          <p className="text-sm text-[var(--text-tertiary)] text-center py-8">No settled bets yet</p>
+        ) : (
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+            {settledBets.map((bet) => {
+              const won = bet.status === 'won'
+              return (
+                <div key={bet.id} className="flex items-center justify-between px-3 py-2.5 border-b border-[var(--border)] last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      bet.direction === 'higher' ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[#F87171]/15 text-[#F87171]'
+                    }`}>
+                      {bet.direction === 'higher' ? 'H' : 'L'}
+                    </span>
+                    <div>
+                      <div className="text-xs text-[var(--text-primary)]">{bet.asset}/USDT · {bet.duration / 60}min</div>
+                      <div className="text-[10px] text-[var(--text-tertiary)]">
+                        {new Date(bet.createdAt).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-xs font-bold tabular-nums ${won ? 'text-[#2DD4BF]' : 'text-[#F87171]'}`}>
+                      {won ? '+' : ''}{bet.pnl?.toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-tertiary)]">${bet.amount} bet</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="text-center text-[10px] text-[var(--text-tertiary)]">
+        {totalBets} total bets · <span className="text-[#2DD4BF]">{wins}W</span> / <span className="text-[#F87171]">{losses}L</span>
+      </div>
     </div>
   )
 }
@@ -366,7 +504,7 @@ function ParlayGroupCard({
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Badge variant="info">Parlay</Badge>
+          <Badge variant="info">{parlay?.mode === 'bundle' ? 'Bundle' : 'Parlay'}</Badge>
           <Badge variant={sc.variant}>{sc.label}</Badge>
           <span className="text-sm font-medium text-[var(--text-primary)] hidden sm:inline">
             {positions.length}-Leg
@@ -563,21 +701,20 @@ function PositionDetailContent({ position, onClose }: { position: Position; onCl
         )}
       </div>
 
-      {/* Close Position */}
+      {/* Close Position — submit SELL market order, which triggers reducePosition on fill */}
       {position.marketStatus === 'OPEN' && (
         <Button
           variant="danger"
           fullWidth
           onClick={() => {
-            const closeSide: OrderSide = position.side === 'YES' ? 'NO' : 'YES'
             useOrderStore.getState().placeMarketOrder({
               contractId: position.contractId ?? position.marketId,
               marketTitle: position.marketTitle,
-              side: closeSide,
+              side: position.side,
+              action: 'SELL',
               price: position.currentPrice,
               quantity: position.quantity,
             })
-            usePortfolioStore.getState().closePosition(position.id)
             useToastStore.getState().addToast({
               type: 'success',
               message: `Position closed — ${position.quantity} shares sold at $${fmtUsdc(position.currentPrice)}`,
@@ -667,9 +804,14 @@ export default function PortfolioPage() {
     return sortItems(items, sortKey)
   }, [listItems, searchQuery, sortKey])
 
+  const ecActiveBets = useEventContractStore((s) => s.activeBets)
+  const ecSettledBets = useEventContractStore((s) => s.settledBets)
+  const ecTotalCount = ecActiveBets.length + ecSettledBets.length
+
   const tabs = [
     { id: 'positions' as const, label: 'Positions', count: positions.length },
     { id: 'orders' as const, label: 'Open Orders', count: openOrders.length },
+    { id: 'events' as const, label: 'Events', count: ecTotalCount },
     { id: 'history' as const, label: 'History', count: historyCount },
   ]
 
@@ -787,6 +929,7 @@ export default function PortfolioPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                   <span className="text-sm font-medium text-[var(--text-primary)] min-w-0 flex-1">{order.marketTitle}</span>
                   <div className="flex gap-1.5 shrink-0">
+                    <Badge variant={order.action === 'BUY' ? 'success' : 'warning'}>{order.action}</Badge>
                     <Badge variant="info">{order.type === 'market' ? 'Market' : 'Limit'}</Badge>
                     <Badge variant={order.side === 'YES' ? 'success' : 'danger'}>{order.side}</Badge>
                   </div>
@@ -796,6 +939,7 @@ export default function PortfolioPage() {
                   <span>Price: ${fmtUsdc(order.price)}</span>
                   <span>Qty: {order.quantity}</span>
                   <span>Filled: {order.filledQuantity}/{order.quantity}</span>
+                  <span>{order.timeInForce}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -842,6 +986,9 @@ export default function PortfolioPage() {
           )}
         </div>
       )}
+
+      {/* Events */}
+      {activeTab === 'events' && <EventsTab />}
 
       {/* History */}
       {activeTab === 'history' && <HistoryTab />}

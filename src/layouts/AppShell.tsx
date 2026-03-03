@@ -6,6 +6,7 @@ import ParlaySlip from '../components/ParlaySlip'
 
 const navItems = [
   { to: '/', label: 'Explore' },
+  { to: '/events', label: 'Events', badge: 'NEW' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/leaderboard', label: 'Leaderboard' },
 ]
@@ -40,6 +41,11 @@ export default function AppShell() {
               }
             >
               {item.label}
+              {item.badge && (
+                <span className="ml-1 text-[9px] font-bold bg-[#2DD4BF] text-[#0B0B0F] px-1 py-0.5 rounded leading-none">
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -132,6 +138,13 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
       </svg>
     )
   }
+  if (name === 'Events') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 3L12.5 8H17L13.5 11.5L15 17L10 13.5L5 17L6.5 11.5L3 8H7.5L10 3Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    )
+  }
   if (name === 'Portfolio') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -141,12 +154,14 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
       </svg>
     )
   }
-  // Leaderboard
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <rect x="3" y="10" width="4" height="7" rx="0.5" stroke={color} strokeWidth="1.5" />
-      <rect x="8" y="4" width="4" height="13" rx="0.5" stroke={color} strokeWidth="1.5" />
-      <rect x="13" y="7" width="4" height="10" rx="0.5" stroke={color} strokeWidth="1.5" />
-    </svg>
-  )
+  if (name === 'Leaderboard') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="10" width="4" height="7" rx="0.5" stroke={color} strokeWidth="1.5" />
+        <rect x="8" y="4" width="4" height="13" rx="0.5" stroke={color} strokeWidth="1.5" />
+        <rect x="13" y="7" width="4" height="10" rx="0.5" stroke={color} strokeWidth="1.5" />
+      </svg>
+    )
+  }
+  return null
 }

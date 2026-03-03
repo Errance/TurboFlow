@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParlayStore } from '../stores/parlayStore'
+import type { ParlayMode } from '../stores/parlayStore'
 import Button from './ui/Button'
 
 function formatUsdc(v: number): string {
@@ -73,17 +74,27 @@ function ParlayPanel({
   onClose: () => void
   onRemoveLeg: (contractId: string) => void
   onClear: () => void
-  onPlace: (stake: number) => void
+  onPlace: (stake: number, mode: ParlayMode) => void
 }) {
   const [stake, setStake] = useState('')
+  const [mode, setMode] = useState<ParlayMode>('parlay')
   const parsedStake = parseFloat(stake) || 0
   const potentialPayout = parsedStake * combinedOdds
   const potentialProfit = potentialPayout - parsedStake
   const canPlace = slip.length >= 2 && parsedStake > 0
 
+  const stakePerLeg = parsedStake > 0 ? parsedStake / slip.length : 0
+  const legCosts = slip.map((leg) => {
+    const shares = Math.round(stakePerLeg / leg.price)
+    const legCost = Math.round(shares * leg.price * 100) / 100
+    return { leg, shares, legCost }
+  })
+  const actualCost = legCosts.reduce((s, l) => s + l.legCost, 0)
+  const residual = parsedStake > 0 ? Math.round((parsedStake - actualCost) * 100) / 100 : 0
+
   const handlePlace = () => {
     if (!canPlace) return
-    onPlace(parsedStake)
+    onPlace(parsedStake, mode)
     setStake('')
   }
 
@@ -113,6 +124,28 @@ function ParlayPanel({
             </button>
           </div>
         </div>
+
+        {/* Mode Selector */}
+        <div className="px-4 pt-3 flex gap-1 bg-[var(--bg-control)] mx-4 mt-3 rounded-lg p-1">
+          {(['parlay', 'bundle'] as ParlayMode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                mode === m
+                  ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              {m === 'parlay' ? 'Parlay' : 'Bundle'}
+            </button>
+          ))}
+        </div>
+        <p className="px-4 mt-1.5 text-[10px] text-[var(--text-secondary)]">
+          {mode === 'parlay'
+            ? 'All legs must win — higher payout, all-or-nothing'
+            : 'Each leg settles independently — partial wins possible'}
+        </p>
 
         {/* Legs */}
         <div className="overflow-y-auto flex-1 p-4 space-y-2">
@@ -195,28 +228,48 @@ function ParlayPanel({
             <div className="bg-[var(--bg-base)] rounded-lg p-3 space-y-1.5">
               {slip.length >= 2 && (
                 <div className="space-y-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
-                  {slip.map((leg) => {
-                    const legStake = parsedStake / slip.length
-                    const legShares = Math.round(legStake / leg.price)
-                    return (
-                      <div key={leg.contractId} className="flex justify-between text-[10px]">
-                        <span className="text-[var(--text-secondary)] truncate max-w-[60%]">{leg.contractLabel}</span>
-                        <span className="text-[var(--text-secondary)] font-mono">${formatUsdc(legStake)} → {legShares} shares</span>
-                      </div>
-                    )
-                  })}
+                  {legCosts.map(({ leg, shares, legCost }) => (
+                    <div key={leg.contractId} className="flex justify-between text-[10px]">
+                      <span className="text-[var(--text-secondary)] truncate max-w-[55%]">{leg.contractLabel}</span>
+                      <span className="text-[var(--text-secondary)] font-mono">${formatUsdc(legCost)} → {shares} sh.</span>
+                    </div>
+                  ))}
+                  {residual !== 0 && (
+                    <div className="flex justify-between text-[10px] pt-0.5">
+                      <span className="text-[var(--text-secondary)]">{residual > 0 ? 'Returned to balance' : 'Extra from balance'}</span>
+                      <span className="text-[var(--text-secondary)] font-mono">
+                        {residual > 0 ? '+' : ''}{formatUsdc(residual)} USDC
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="flex justify-between text-xs">
-                <span className="text-[var(--text-secondary)]">Potential payout</span>
-                <span className="text-[#2DD4BF] font-mono">{formatUsdc(potentialPayout)} USDC</span>
-              </div>
-              <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
-                <span className="text-[var(--text-secondary)]">Potential profit</span>
-                <span className="text-[#2DD4BF] font-mono font-medium">
-                  +{formatUsdc(potentialProfit)} USDC
-                </span>
-              </div>
+              {mode === 'parlay' ? (
+                <>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">Potential payout</span>
+                    <span className="text-[#2DD4BF] font-mono">{formatUsdc(potentialPayout)} USDC</span>
+                  </div>
+                  <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
+                    <span className="text-[var(--text-secondary)]">Potential profit</span>
+                    <span className="text-[#2DD4BF] font-mono font-medium">
+                      +{formatUsdc(potentialProfit)} USDC
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">Max payout (all win)</span>
+                    <span className="text-[#2DD4BF] font-mono">
+                      {formatUsdc(legCosts.reduce((s, l) => s + l.shares, 0))} USDC
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-[var(--text-secondary)]">
+                    <span>Each leg pays 1 USDC/share if correct</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -230,7 +283,7 @@ function ParlayPanel({
             {slip.length < 2
               ? `Need ${2 - slip.length} more leg${2 - slip.length > 1 ? 's' : ''}`
               : parsedStake > 0
-                ? `Place Parlay — $${formatUsdc(parsedStake)}`
+                ? `Place ${mode === 'parlay' ? 'Parlay' : 'Bundle'} — $${formatUsdc(parsedStake)}`
                 : 'Enter Stake Amount'}
           </Button>
         </div>
@@ -265,7 +318,7 @@ export default function ParlaySlip() {
       onClose={closeSlip}
       onRemoveLeg={removeLeg}
       onClear={clearSlip}
-      onPlace={(stake) => placeParlay(stake)}
+      onPlace={(stake, mode) => placeParlay(stake, mode)}
     />
   )
 }
