@@ -224,7 +224,7 @@ export default function DepthChart({ className }: { className?: string }) {
             y={yScale(tick) + 4}
             textAnchor="end"
             fill={COLORS.axis}
-            fontSize={10}
+            fontSize={12}
             fontFamily="Inter, system-ui, sans-serif"
           >
             {tick}
@@ -239,7 +239,7 @@ export default function DepthChart({ className }: { className?: string }) {
             y={CHART_HEIGHT - 6}
             textAnchor="middle"
             fill={COLORS.axis}
-            fontSize={10}
+            fontSize={12}
             fontFamily="Inter, system-ui, sans-serif"
           >
             {tick.toFixed(2)}

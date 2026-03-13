@@ -77,8 +77,8 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
-        <div className="flex gap-4">
+      <div className="flex items-center justify-between px-3 border-b border-[var(--border)]">
+        <div className="flex gap-4 min-h-[44px] items-center">
           <button
             onClick={() => setViewMode('levels')}
             className={`text-xs font-medium pb-0.5 transition-colors ${
@@ -114,9 +114,9 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
           {displayAsks.map((level) => (
             <div
               key={`ask-${level.price}`}
-              className={`relative flex justify-between items-center px-3 min-h-[22px] transition-colors ${
+              className={`relative flex justify-between items-center px-3 min-h-[36px] transition-colors ${
                 isOpen
-                  ? 'cursor-pointer hover:bg-[var(--border)]/50'
+                  ? 'cursor-pointer hover:bg-[var(--border)]'
                   : 'cursor-default'
               }`}
               onClick={() => isOpen && onPriceClick?.(level.price, side)}
@@ -126,23 +126,23 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
                 style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${askColor}1A` }}
               />
               <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono tabular-nums" style={{ color: askColor }}>{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-sm font-mono font-medium tabular-nums" style={{ color: askColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
           {/* Spread divider */}
-          <div className="flex items-center justify-between px-3 py-1 border-y border-[var(--border)] bg-[var(--bg-base)]">
-            <span className="text-[10px] text-[var(--text-secondary)]">Spread</span>
-            <span className="text-[10px] text-[var(--text-secondary)] font-mono tabular-nums">{fmtUsdc(spread)} USDC</span>
+          <div className="flex items-center justify-between px-3 py-1.5 border-y border-[var(--border)] bg-[var(--bg-base)]">
+            <span className="text-xs text-[var(--text-secondary)]">Spread</span>
+            <span className="text-sm text-[var(--text-secondary)] font-mono font-medium tabular-nums">{fmtUsdc(spread)} USDC</span>
           </div>
 
           {/* Bids — highest near spread, lowest at bottom */}
           {displayBids.map((level) => (
             <div
               key={`bid-${level.price}`}
-              className={`relative flex justify-between items-center px-3 min-h-[22px] transition-colors ${
+              className={`relative flex justify-between items-center px-3 min-h-[36px] transition-colors ${
                 isOpen
-                  ? 'cursor-pointer hover:bg-[var(--border)]/50'
+                  ? 'cursor-pointer hover:bg-[var(--border)]'
                   : 'cursor-default'
               }`}
               onClick={() => isOpen && onPriceClick?.(level.price, side)}
@@ -152,14 +152,14 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
                 style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${bidColor}1A` }}
               />
               <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono tabular-nums" style={{ color: bidColor }}>{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-sm font-mono font-medium tabular-nums" style={{ color: bidColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
           {hasMoreDepth && (
             <button
               onClick={() => setShowAll((v) => !v)}
-              className="w-full text-center py-2 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors border-t border-[var(--border)]"
+              className="w-full text-center min-h-[44px] text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors border-t border-[var(--border)]"
             >
               {showAll ? 'Show Less' : `Show All (${bids.length})`}
             </button>
@@ -170,11 +170,11 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border)]">
+      <div className="flex items-center justify-between px-3 min-h-[44px] border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-[var(--text-secondary)]">{side} Bids · Asks</span>
           <span
-            className="text-[var(--text-secondary)] cursor-help"
+            className="text-[var(--text-secondary)] cursor-help p-2 -m-2"
             title="YES bid X USDC = NO ask (1−X) USDC. Binary market equivalence."
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -183,7 +183,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
             </svg>
           </span>
         </div>
-        <span className="text-xs text-[var(--text-secondary)] tabular-nums">Seq: {lastSeq}</span>
+        <span className="text-sm text-[var(--text-secondary)] font-medium tabular-nums font-mono">Seq: {lastSeq}</span>
       </div>
     </div>
   )
