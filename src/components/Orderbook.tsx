@@ -21,12 +21,14 @@ function mirrorLevels(levels: OrderbookLevel[]): OrderbookLevel[] {
     .filter((l) => l.price > 0 && l.price < 1)
 }
 
-export default function Orderbook({ isOpen, side = 'YES', className, onPriceClick, compact }: Props) {
+export default function Orderbook({ isOpen, side: initialSide = 'YES', className, onPriceClick, compact }: Props) {
   const rawBids = useOrderbookStore((s) => s.bids)
   const rawAsks = useOrderbookStore((s) => s.asks)
   const lastSeq = useOrderbookStore((s) => s.lastSeq)
 
-  const isNo = side === 'NO'
+  const [activeSide, setActiveSide] = useState<OrderSide>(initialSide)
+  const isNo = activeSide === 'NO'
+
   const bids = useMemo(() => {
     const src = isNo ? mirrorLevels(rawAsks) : rawBids
     return [...src].sort((a, b) => b.price - a.price)
@@ -62,12 +64,11 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
   const bestAsk = displayAsks[displayAsks.length - 1]?.price ?? 0
   const spread = bestAsk > 0 && bestBid > 0 ? bestAsk - bestBid : 0
 
-  const bidColor = side === 'YES' ? '#2DD4BF' : '#E85A7E'
-  const askColor = side === 'YES' ? '#E85A7E' : '#2DD4BF'
+  const bidColor = activeSide === 'YES' ? '#2DD4BF' : '#E85A7E'
+  const askColor = activeSide === 'YES' ? '#E85A7E' : '#2DD4BF'
 
   return (
     <div className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden relative ${className ?? ''}`}>
-      {/* Frozen overlay for closed markets */}
       {!isOpen && (
         <div className="absolute inset-0 z-10 bg-[var(--bg-base)]/60 flex items-center justify-center rounded-xl">
           <span className="bg-[var(--bg-card)] border border-[var(--border)] px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] font-medium">
@@ -87,7 +88,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            {side} Book
+            Book
           </button>
           <button
             onClick={() => setViewMode('depth')}
@@ -101,37 +102,61 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
           </button>
         </div>
         {viewMode === 'levels' && (
-          <div className="flex gap-6 text-xs font-medium text-[var(--text-secondary)]">
-            <span>Qty</span>
-            <span>Price</span>
+          <div className="flex items-center gap-1 rounded-md bg-[var(--bg-base)] p-0.5">
+            <button
+              onClick={() => setActiveSide('YES')}
+              className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                activeSide === 'YES'
+                  ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              YES
+            </button>
+            <button
+              onClick={() => setActiveSide('NO')}
+              className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                activeSide === 'NO'
+                  ? 'bg-[#E85A7E]/15 text-[#E85A7E]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              NO
+            </button>
           </div>
         )}
       </div>
 
       {viewMode === 'levels' ? (
         <>
+          {/* Column labels */}
+          <div className="flex justify-between items-center px-3 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
+            <span>Qty</span>
+            <span>Price</span>
+          </div>
+
           {/* Asks — highest at top, lowest near spread */}
           {displayAsks.map((level) => (
             <div
               key={`ask-${level.price}`}
-              className={`relative flex justify-between items-center px-3 min-h-[44px] transition-colors ${
+              className={`relative flex justify-between items-center px-3 min-h-[22px] transition-colors ${
                 isOpen
                   ? 'cursor-pointer hover:bg-[var(--border)]/50'
                   : 'cursor-default'
               }`}
-              onClick={() => isOpen && onPriceClick?.(level.price, side)}
+              onClick={() => isOpen && onPriceClick?.(level.price, activeSide)}
             >
               <div
                 className="absolute inset-y-0 right-0"
                 style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${askColor}1A` }}
               />
-              <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono tabular-nums" style={{ color: askColor }}>{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-[11px] text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
+              <span className="relative text-xs font-mono tabular-nums" style={{ color: askColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
           {/* Spread divider */}
-          <div className="flex items-center justify-between px-3 py-1 border-y border-[var(--border)] bg-[var(--bg-base)]">
+          <div className="flex items-center justify-between px-3 py-0.5 border-y border-[var(--border)] bg-[var(--bg-base)]">
             <span className="text-[10px] text-[var(--text-secondary)]">Spread</span>
             <span className="text-[10px] text-[var(--text-secondary)] font-mono tabular-nums">{fmtUsdc(spread)} USDC</span>
           </div>
@@ -140,26 +165,26 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
           {displayBids.map((level) => (
             <div
               key={`bid-${level.price}`}
-              className={`relative flex justify-between items-center px-3 min-h-[44px] transition-colors ${
+              className={`relative flex justify-between items-center px-3 min-h-[22px] transition-colors ${
                 isOpen
                   ? 'cursor-pointer hover:bg-[var(--border)]/50'
                   : 'cursor-default'
               }`}
-              onClick={() => isOpen && onPriceClick?.(level.price, side)}
+              onClick={() => isOpen && onPriceClick?.(level.price, activeSide)}
             >
               <div
                 className="absolute inset-y-0 right-0"
                 style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${bidColor}1A` }}
               />
-              <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono tabular-nums" style={{ color: bidColor }}>{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-[11px] text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
+              <span className="relative text-xs font-mono tabular-nums" style={{ color: bidColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
           {hasMoreDepth && (
             <button
               onClick={() => setShowAll((v) => !v)}
-              className="w-full text-center py-2 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors border-t border-[var(--border)]"
+              className="w-full text-center py-1.5 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors border-t border-[var(--border)]"
             >
               {showAll ? 'Show Less' : `Show All (${bids.length})`}
             </button>
@@ -170,20 +195,20 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border)]">
+      <div className="flex items-center justify-between px-3 py-1 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[var(--text-secondary)]">{side} Bids · Asks</span>
+          <span className="text-[10px] text-[var(--text-secondary)]">{activeSide} Bids · Asks</span>
           <span
             className="text-[var(--text-secondary)] cursor-help"
             title="YES bid X USDC = NO ask (1−X) USDC. Binary market equivalence."
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 16v-4M12 8h.01" />
             </svg>
           </span>
         </div>
-        <span className="text-xs text-[var(--text-secondary)] tabular-nums">Seq: {lastSeq}</span>
+        <span className="text-[10px] text-[var(--text-secondary)] tabular-nums">Seq: {lastSeq}</span>
       </div>
     </div>
   )
