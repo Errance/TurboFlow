@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useEventStore } from '../stores/eventStore'
+import { useOrderbookStore } from '../stores/orderbookStore'
 import { useToastStore } from '../stores/toastStore'
 import { useParlayStore } from '../stores/parlayStore'
 import type { PredictionEvent, Contract, EventStatusInfo } from '../types'
@@ -8,6 +9,7 @@ import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import SideDrawer from '../components/ui/SideDrawer'
 import TradePanel from '../components/TradePanel'
+import Orderbook from '../components/Orderbook'
 import DisputePanel from '../components/DisputePanel'
 import RefundBanner from '../components/RefundBanner'
 import PriceChart from '../components/PriceChart'
@@ -504,6 +506,12 @@ export default function EventDetailPage() {
     }
   }, [event, selectedContractId, setTradeSelection])
 
+  useEffect(() => {
+    if (!selectedContractId || event?.status !== 'OPEN') return
+    useOrderbookStore.getState().startDeltaStream(selectedContractId)
+    return () => { useOrderbookStore.getState().stopDeltaStream() }
+  }, [selectedContractId, event?.status])
+
   if (!event) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
@@ -657,9 +665,15 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        {/* Right trade panel — desktop only */}
-        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 self-start">
+        {/* Right trade panel + orderbook — desktop only */}
+        <div className="hidden md:block w-[340px] shrink-0 sticky top-20 self-start space-y-4">
           <TradePanel event={event} />
+          {selectedContractId && (
+            <Orderbook
+              isOpen={event.status === 'OPEN'}
+              compact
+            />
+          )}
         </div>
       </div>
 

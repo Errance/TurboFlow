@@ -19,7 +19,7 @@
 - **强制触发**：每次收到用户新指令，必须先判断改动规模（Small/Medium/Large），在回复开头显式声明"规模判定：X"，再按对应流程执行。未声明不得开始改动。
 
 ### Gate B — 回归闸门（每次改动必须给出）
-- Demo 演示步骤（参考 /docs/Demo-script.md，仅作回归参考和演示备忘，不作为行为准则）
+- Demo 演示步骤（参考 /docs/reference/Demo-script.md，仅作回归参考和演示备忘，不作为行为准则）
 - 回归清单（主干没变乱、分叉没失控、移动端可用、错误含 CTA）
 
 ## 底线检查点（每次提交前自检）
@@ -29,14 +29,14 @@
 4. 看见就懂（所有关键控件有充分 signifier；图标不自解释时必须配文字）
 
 ## LLM 读取时机
-- Gate A（Medium/Large）提案前 → 必须读 `/docs/UX-spec.md`
-- Gate B 回归前 → 必须读 `/docs/Demo-script.md`
+- Gate A（Medium/Large）提案前 → 必须读 `/docs/ux/UX-spec.md`
+- Gate B 回归前 → 必须读 `/docs/reference/Demo-script.md`
 - Small 改动 → 本文件足够，不强制读 docs
-- 功能遍历/防漏项 → 读 `/docs/Capability-Inventory.md`
+- 功能遍历/防漏项 → 读 `/docs/mvp/Capability-Inventory.md`
 
 ## 文档指针
-- 设计原则与契约 → /docs/UX-spec.md
-- 一致性约束 → /docs/Interaction-UI-Constraints.md
-- 能力地图与覆盖矩阵 → /docs/Capability-Inventory.md
-- 演进决策记录 → /docs/Shortest-Path-Tree.md
-- 演示脚本与回归清单 → /docs/Demo-script.md
+- 设计原则与契约 → /docs/ux/UX-spec.md
+- 一致性约束 → /docs/ux/Interaction-UI-Constraints.md
+- 能力地图与覆盖矩阵 → /docs/mvp/Capability-Inventory.md
+- 演进决策记录 → /docs/mvp/Shortest-Path-Tree.md
+- 演示脚本与回归清单 → /docs/reference/Demo-script.md

@@ -114,9 +114,9 @@ Codex 代码中 **可能部分可参考** 的：
 ## 四、规范文档（需遵守）
 
 - `.cursor/rules/prototype.md` — Gate A/B 交互规则
-- `docs/UX-spec.md` — 设计规范（注意：布局决策已改为"交易优先"，UX-spec 待更新）
-- `docs/Demo-script.md` — 演示脚本（待更新以匹配 MVP）
-- `docs/Capability-Inventory.md` — 能力覆盖矩阵
+- `docs/ux/UX-spec.md` — 设计规范（注意：布局决策已改为"交易优先"，UX-spec 待更新）
+- `docs/reference/Demo-script.md` — 演示脚本（待更新以匹配 MVP）
+- `docs/mvp/Capability-Inventory.md` — 能力覆盖矩阵
 
 ### UX-spec 待更新项
 

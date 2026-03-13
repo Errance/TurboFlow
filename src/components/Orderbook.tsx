@@ -7,30 +7,42 @@ interface Props {
   isOpen: boolean
   className?: string
   onPriceClick?: (price: number, side: OrderSide) => void
+  compact?: boolean
 }
 
 function fmtUsdc(v: number): string {
   return v.toFixed(2)
 }
 
-export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
+export default function Orderbook({ isOpen, className, onPriceClick, compact }: Props) {
   const bids = useOrderbookStore((s) => s.bids)
+  const asks = useOrderbookStore((s) => s.asks)
   const lastSeq = useOrderbookStore((s) => s.lastSeq)
 
   const [showAll, setShowAll] = useState(false)
   const [viewMode, setViewMode] = useState<'levels' | 'depth'>('levels')
-  const defaultDepth = 8
+  const defaultDepth = compact ? 5 : 8
 
-  const displayBids = useMemo(
-    () => (showAll ? bids : bids.slice(0, defaultDepth)),
-    [bids, showAll],
+  const displayAsks = useMemo(
+    () => [...asks].sort((a, b) => a.price - b.price).slice(0, defaultDepth).reverse(),
+    [asks, defaultDepth],
   )
 
-  const hasMoreDepth = bids.length > defaultDepth
+  const displayBids = useMemo(
+    () => (showAll && !compact ? bids : bids.slice(0, defaultDepth)),
+    [bids, showAll, compact, defaultDepth],
+  )
+
+  const hasMoreDepth = !compact && bids.length > defaultDepth
 
   const maxQty = useMemo(() => {
-    return Math.max(...displayBids.map((l) => l.quantity), 1)
-  }, [displayBids])
+    const all = [...displayAsks, ...displayBids]
+    return Math.max(...all.map((l) => l.quantity), 1)
+  }, [displayAsks, displayBids])
+
+  const bestBid = displayBids[0]?.price ?? 0
+  const bestAsk = displayAsks[displayAsks.length - 1]?.price ?? 0
+  const spread = bestAsk > 0 && bestBid > 0 ? bestAsk - bestBid : 0
 
   return (
     <div className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden relative ${className ?? ''}`}>
@@ -54,7 +66,7 @@ export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            YES Bids
+            Book
           </button>
           <button
             onClick={() => setViewMode('depth')}
@@ -77,6 +89,33 @@ export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
 
       {viewMode === 'levels' ? (
         <>
+          {/* Asks — highest at top, lowest near spread */}
+          {displayAsks.map((level) => (
+            <div
+              key={`ask-${level.price}`}
+              className={`relative flex justify-between items-center px-3 min-h-[44px] transition-colors ${
+                isOpen
+                  ? 'cursor-pointer hover:bg-[var(--border)]/50'
+                  : 'cursor-default'
+              }`}
+              onClick={() => isOpen && onPriceClick?.(level.price, 'NO')}
+            >
+              <div
+                className="absolute inset-y-0 right-0 bg-[#E85A7E]/10"
+                style={{ width: `${(level.quantity / maxQty) * 100}%` }}
+              />
+              <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
+              <span className="relative text-sm font-mono text-[#E85A7E] tabular-nums">{fmtUsdc(level.price)} USDC</span>
+            </div>
+          ))}
+
+          {/* Spread divider */}
+          <div className="flex items-center justify-between px-3 py-1 border-y border-[var(--border)] bg-[var(--bg-base)]">
+            <span className="text-[10px] text-[var(--text-secondary)]">Spread</span>
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono tabular-nums">{fmtUsdc(spread)} USDC</span>
+          </div>
+
+          {/* Bids — highest near spread, lowest at bottom */}
           {displayBids.map((level) => (
             <div
               key={`bid-${level.price}`}
@@ -112,7 +151,7 @@ export default function Orderbook({ isOpen, className, onPriceClick }: Props) {
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[var(--text-secondary)]">Bids Only</span>
+          <span className="text-xs text-[var(--text-secondary)]">Bids · Asks</span>
           <span
             className="text-[var(--text-secondary)] cursor-help"
             title="YES bid X USDC = NO ask (1−X) USDC. Binary market equivalence."

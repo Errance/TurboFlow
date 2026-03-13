@@ -1,99 +1,84 @@
 import type { OrderbookSnapshot, OrderbookDelta } from '../types'
+import { events } from './events'
 
-// --- Snapshots (seq = 1) ---
-
-export const orderbookSnapshots: Record<string, OrderbookSnapshot> = {
-  'mkt-btc-100k': {
-    marketId: 'mkt-btc-100k',
-    bids: [
-      { price: 0.65, quantity: 320 },
-      { price: 0.645, quantity: 185 },
-      { price: 0.64, quantity: 420 },
-      { price: 0.635, quantity: 95 },
-      { price: 0.63, quantity: 275 },
-      { price: 0.625, quantity: 150 },
-      { price: 0.62, quantity: 380 },
-      { price: 0.615, quantity: 210 },
-    ],
-    asks: [
-      { price: 0.66, quantity: 195 },
-      { price: 0.665, quantity: 340 },
-      { price: 0.67, quantity: 125 },
-      { price: 0.675, quantity: 280 },
-      { price: 0.68, quantity: 165 },
-      { price: 0.685, quantity: 410 },
-      { price: 0.69, quantity: 90 },
-      { price: 0.695, quantity: 235 },
-    ],
-    seq: 1,
-  },
-  'mkt-fed-rates': {
-    marketId: 'mkt-fed-rates',
-    bids: [
-      { price: 0.42, quantity: 175 },
-      { price: 0.415, quantity: 290 },
-      { price: 0.41, quantity: 115 },
-      { price: 0.405, quantity: 365 },
-      { price: 0.40, quantity: 220 },
-      { price: 0.395, quantity: 85 },
-      { price: 0.39, quantity: 310 },
-      { price: 0.385, quantity: 155 },
-    ],
-    asks: [
-      { price: 0.43, quantity: 245 },
-      { price: 0.435, quantity: 130 },
-      { price: 0.44, quantity: 395 },
-      { price: 0.445, quantity: 180 },
-      { price: 0.45, quantity: 265 },
-      { price: 0.455, quantity: 105 },
-      { price: 0.46, quantity: 340 },
-      { price: 0.465, quantity: 200 },
-    ],
-    seq: 1,
-  },
+function seededRandom(seed: number): () => number {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s - 1) / 2147483646
+  }
 }
 
-// --- Delta sequences (seq 2..N, simulating live market activity) ---
+function hashString(str: string): number {
+  let hash = 5381
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
 
-export const orderbookDeltas: Record<string, OrderbookDelta[]> = {
-  'mkt-btc-100k': [
-    { marketId: 'mkt-btc-100k', seq: 2, side: 'bid', price: 0.65, quantity: 285 },
-    { marketId: 'mkt-btc-100k', seq: 3, side: 'ask', price: 0.66, quantity: 220 },
-    { marketId: 'mkt-btc-100k', seq: 4, side: 'bid', price: 0.645, quantity: 210 },
-    { marketId: 'mkt-btc-100k', seq: 5, side: 'ask', price: 0.665, quantity: 295 },
-    { marketId: 'mkt-btc-100k', seq: 6, side: 'bid', price: 0.64, quantity: 380 },
-    { marketId: 'mkt-btc-100k', seq: 7, side: 'bid', price: 0.65, quantity: 310 },
-    { marketId: 'mkt-btc-100k', seq: 8, side: 'ask', price: 0.67, quantity: 95 },
-    { marketId: 'mkt-btc-100k', seq: 9, side: 'ask', price: 0.66, quantity: 175 },
-    { marketId: 'mkt-btc-100k', seq: 10, side: 'bid', price: 0.635, quantity: 120 },
-    { marketId: 'mkt-btc-100k', seq: 11, side: 'ask', price: 0.675, quantity: 245 },
-    { marketId: 'mkt-btc-100k', seq: 12, side: 'bid', price: 0.625, quantity: 185 },
-    { marketId: 'mkt-btc-100k', seq: 13, side: 'bid', price: 0.65, quantity: 265 },
-    { marketId: 'mkt-btc-100k', seq: 14, side: 'ask', price: 0.665, quantity: 320 },
-    { marketId: 'mkt-btc-100k', seq: 15, side: 'bid', price: 0.64, quantity: 410 },
-    { marketId: 'mkt-btc-100k', seq: 16, side: 'ask', price: 0.68, quantity: 140 },
-    { marketId: 'mkt-btc-100k', seq: 17, side: 'bid', price: 0.63, quantity: 230 },
-    { marketId: 'mkt-btc-100k', seq: 18, side: 'ask', price: 0.66, quantity: 195 },
-  ],
-  'mkt-fed-rates': [
-    { marketId: 'mkt-fed-rates', seq: 2, side: 'bid', price: 0.42, quantity: 155 },
-    { marketId: 'mkt-fed-rates', seq: 3, side: 'ask', price: 0.43, quantity: 270 },
-    { marketId: 'mkt-fed-rates', seq: 4, side: 'bid', price: 0.415, quantity: 305 },
-    { marketId: 'mkt-fed-rates', seq: 5, side: 'ask', price: 0.435, quantity: 115 },
-    { marketId: 'mkt-fed-rates', seq: 6, side: 'bid', price: 0.41, quantity: 95 },
-    { marketId: 'mkt-fed-rates', seq: 7, side: 'bid', price: 0.42, quantity: 190 },
-    { marketId: 'mkt-fed-rates', seq: 8, side: 'ask', price: 0.44, quantity: 360 },
-    { marketId: 'mkt-fed-rates', seq: 9, side: 'ask', price: 0.43, quantity: 220 },
-    { marketId: 'mkt-fed-rates', seq: 10, side: 'bid', price: 0.405, quantity: 340 },
-    { marketId: 'mkt-fed-rates', seq: 11, side: 'ask', price: 0.445, quantity: 165 },
-    { marketId: 'mkt-fed-rates', seq: 12, side: 'bid', price: 0.41, quantity: 130 },
-    { marketId: 'mkt-fed-rates', seq: 13, side: 'bid', price: 0.42, quantity: 175 },
-    { marketId: 'mkt-fed-rates', seq: 14, side: 'ask', price: 0.435, quantity: 145 },
-    { marketId: 'mkt-fed-rates', seq: 15, side: 'bid', price: 0.40, quantity: 195 },
-    { marketId: 'mkt-fed-rates', seq: 16, side: 'ask', price: 0.44, quantity: 385 },
-    { marketId: 'mkt-fed-rates', seq: 17, side: 'bid', price: 0.415, quantity: 275 },
-    { marketId: 'mkt-fed-rates', seq: 18, side: 'ask', price: 0.43, quantity: 255 },
-    { marketId: 'mkt-fed-rates', seq: 19, side: 'bid', price: 0.395, quantity: 70 },
-    { marketId: 'mkt-fed-rates', seq: 20, side: 'ask', price: 0.45, quantity: 240 },
-  ],
+function generateSnapshot(contractId: string, yesPrice: number): OrderbookSnapshot {
+  const rand = seededRandom(hashString(contractId))
+  const clamp = (v: number) => Math.round(Math.max(0.01, Math.min(0.99, v)) * 1000) / 1000
+
+  const step = yesPrice >= 0.1 ? 0.005 + rand() * 0.01 : 0.005
+  const levels = 8
+
+  const bids: { price: number; quantity: number }[] = []
+  const asks: { price: number; quantity: number }[] = []
+
+  const bestBid = clamp(yesPrice - step * 0.5)
+  const bestAsk = clamp(yesPrice + step * 0.5)
+
+  for (let i = 0; i < levels; i++) {
+    const bidPrice = clamp(bestBid - i * step)
+    const askPrice = clamp(bestAsk + i * step)
+    if (bidPrice >= 0.01) {
+      bids.push({ price: Math.round(bidPrice * 1000) / 1000, quantity: 50 + Math.round(rand() * 450) })
+    }
+    if (askPrice <= 0.99) {
+      asks.push({ price: Math.round(askPrice * 1000) / 1000, quantity: 50 + Math.round(rand() * 450) })
+    }
+  }
+
+  bids.sort((a, b) => b.price - a.price)
+  asks.sort((a, b) => a.price - b.price)
+
+  return { marketId: contractId, bids, asks, seq: 1 }
+}
+
+function generateDeltas(contractId: string, snapshot: OrderbookSnapshot): OrderbookDelta[] {
+  const rand = seededRandom(hashString(contractId + '-deltas'))
+  const count = 12 + Math.round(rand() * 8)
+  const deltas: OrderbookDelta[] = []
+
+  const allPrices = [...snapshot.bids.map((l) => ({ price: l.price, side: 'bid' as const })), ...snapshot.asks.map((l) => ({ price: l.price, side: 'ask' as const }))]
+  if (allPrices.length === 0) return deltas
+
+  for (let i = 0; i < count; i++) {
+    const pick = allPrices[Math.floor(rand() * allPrices.length)]
+    deltas.push({
+      marketId: contractId,
+      seq: i + 2,
+      side: pick.side,
+      price: pick.price,
+      quantity: 30 + Math.round(rand() * 470),
+    })
+  }
+
+  return deltas
+}
+
+export const orderbookSnapshots: Record<string, OrderbookSnapshot> = {}
+export const orderbookDeltas: Record<string, OrderbookDelta[]> = {}
+
+for (const event of events) {
+  for (const contract of event.contracts) {
+    const yp = contract.yesPrice
+    if (yp <= 0.01 || yp >= 0.99) continue
+
+    const snap = generateSnapshot(contract.id, yp)
+    orderbookSnapshots[contract.id] = snap
+    orderbookDeltas[contract.id] = generateDeltas(contract.id, snap)
+  }
 }

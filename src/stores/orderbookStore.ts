@@ -10,9 +10,9 @@ interface OrderbookState {
   deltaIndex: number
   isRunning: boolean
 
-  loadSnapshot: (marketId: string) => void
+  loadSnapshot: (id: string) => void
   applyNextDelta: () => void
-  startDeltaStream: (marketId: string) => void
+  startDeltaStream: (id: string) => void
   stopDeltaStream: () => void
   simulateReconnect: () => void
 }
@@ -27,17 +27,17 @@ export const useOrderbookStore = create<OrderbookState>((set, get) => ({
   deltaIndex: 0,
   isRunning: false,
 
-  loadSnapshot: (marketId) => {
-    const snapshot = orderbookSnapshots[marketId]
+  loadSnapshot: (id) => {
+    const snapshot = orderbookSnapshots[id]
     if (!snapshot) {
-      set({ bids: [], asks: [], lastSeq: 0, currentMarketId: marketId, deltaIndex: 0 })
+      set({ bids: [], asks: [], lastSeq: 0, currentMarketId: id, deltaIndex: 0 })
       return
     }
     set({
       bids: [...snapshot.bids],
       asks: [...snapshot.asks],
       lastSeq: snapshot.seq,
-      currentMarketId: marketId,
+      currentMarketId: id,
       deltaIndex: 0,
     })
   },
@@ -64,11 +64,11 @@ export const useOrderbookStore = create<OrderbookState>((set, get) => ({
     }
   },
 
-  startDeltaStream: (marketId) => {
+  startDeltaStream: (id) => {
     const state = get()
     if (state.isRunning) state.stopDeltaStream()
 
-    get().loadSnapshot(marketId)
+    get().loadSnapshot(id)
     set({ isRunning: true })
 
     deltaTimer = setInterval(() => {

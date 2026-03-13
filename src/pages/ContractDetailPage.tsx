@@ -13,24 +13,14 @@ import QuickOrderPanel from '../components/QuickOrderPanel'
 import LimitOrderPanel from '../components/LimitOrderPanel'
 import type { Market, OrderSide } from '../types'
 
-const CONTRACT_TO_MARKET_MAP: Record<string, string> = {
-  'ctr-fed-q1': 'mkt-fed-rates',
-  'ctr-fed-h1': 'mkt-fed-rates',
-  'ctr-fed-eoy': 'mkt-fed-rates',
-  'ctr-btc-100k-mar': 'mkt-btc-100k',
-  'ctr-btc-100k-jun': 'mkt-btc-100k',
-  'ctr-btc-150k-eoy': 'mkt-btc-100k',
-}
-
 function useLegacyMarket(contractId: string): Market | null {
   const result = getContractById(contractId)
   if (!result) return null
 
   const { event, contract } = result
-  const legacyId = CONTRACT_TO_MARKET_MAP[contractId] ?? contractId
 
   return {
-    id: legacyId,
+    id: contractId,
     title: `${event.title} — ${contract.label}`,
     description: event.description,
     category: event.category,
@@ -68,10 +58,10 @@ export default function ContractDetailPage() {
   const isOpen = legacyMarket?.status === 'OPEN'
 
   useEffect(() => {
-    if (!legacyMarket?.id || !isOpen) return
-    useOrderbookStore.getState().startDeltaStream(legacyMarket.id)
+    if (!contractId || !isOpen) return
+    useOrderbookStore.getState().startDeltaStream(contractId)
     return () => { useOrderbookStore.getState().stopDeltaStream() }
-  }, [legacyMarket?.id, isOpen])
+  }, [contractId, isOpen])
 
   const handlePriceClick = useCallback((price: number, side: OrderSide) => {
     setPrefillPrice(price)
@@ -187,25 +177,28 @@ export default function ContractDetailPage() {
           )}
         </div>
 
-        {/* Right column — unified Market/Limit panel */}
+        {/* Right column — unified Market/Limit panel + orderbook */}
         <div className="hidden md:block w-80 shrink-0">
-          <div className="sticky top-24 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
-            <OrderTabBar current={orderTab} onChange={setOrderTab} />
-            {orderTab === 'market' ? (
-              <QuickOrderPanel
-                market={legacyMarket}
-                contractId={contractId}
-                className="border-0 bg-transparent p-0"
-              />
-            ) : (
-              <LimitOrderPanel
-                market={legacyMarket}
-                contractId={contractId}
-                prefillPrice={prefillPrice}
-                prefillSide={prefillSide}
-                onOrderPlaced={handleLimitOrderPlaced}
-              />
-            )}
+          <div className="sticky top-24 space-y-4">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
+              <OrderTabBar current={orderTab} onChange={setOrderTab} />
+              {orderTab === 'market' ? (
+                <QuickOrderPanel
+                  market={legacyMarket}
+                  contractId={contractId}
+                  className="border-0 bg-transparent p-0"
+                />
+              ) : (
+                <LimitOrderPanel
+                  market={legacyMarket}
+                  contractId={contractId}
+                  prefillPrice={prefillPrice}
+                  prefillSide={prefillSide}
+                  onOrderPlaced={handleLimitOrderPlaced}
+                />
+              )}
+            </div>
+            <Orderbook isOpen={!!isOpen} onPriceClick={isOpen ? handlePriceClick : undefined} compact />
           </div>
         </div>
       </div>

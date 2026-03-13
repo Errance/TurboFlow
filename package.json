@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "figma:export": "node scripts/export-figma-copy.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
