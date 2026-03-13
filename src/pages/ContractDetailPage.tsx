@@ -148,7 +148,7 @@ export default function ContractDetailPage() {
 
           <div>
             <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">Orderbook</h3>
-            <Orderbook isOpen={!!isOpen} onPriceClick={isOpen ? handlePriceClick : undefined} />
+            <Orderbook isOpen={!!isOpen} side={prefillSide ?? 'YES'} onPriceClick={isOpen ? handlePriceClick : undefined} />
           </div>
 
           {recentTrades.length > 0 && (
@@ -177,28 +177,25 @@ export default function ContractDetailPage() {
           )}
         </div>
 
-        {/* Right column — unified Market/Limit panel + orderbook */}
+        {/* Right column — unified Market/Limit panel */}
         <div className="hidden md:block w-80 shrink-0">
-          <div className="sticky top-24 space-y-4">
-            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
-              <OrderTabBar current={orderTab} onChange={setOrderTab} />
-              {orderTab === 'market' ? (
-                <QuickOrderPanel
-                  market={legacyMarket}
-                  contractId={contractId}
-                  className="border-0 bg-transparent p-0"
-                />
-              ) : (
-                <LimitOrderPanel
-                  market={legacyMarket}
-                  contractId={contractId}
-                  prefillPrice={prefillPrice}
-                  prefillSide={prefillSide}
-                  onOrderPlaced={handleLimitOrderPlaced}
-                />
-              )}
-            </div>
-            <Orderbook isOpen={!!isOpen} onPriceClick={isOpen ? handlePriceClick : undefined} compact />
+          <div className="sticky top-24 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
+            <OrderTabBar current={orderTab} onChange={setOrderTab} />
+            {orderTab === 'market' ? (
+              <QuickOrderPanel
+                market={legacyMarket}
+                contractId={contractId}
+                className="border-0 bg-transparent p-0"
+              />
+            ) : (
+              <LimitOrderPanel
+                market={legacyMarket}
+                contractId={contractId}
+                prefillPrice={prefillPrice}
+                prefillSide={prefillSide}
+                onOrderPlaced={handleLimitOrderPlaced}
+              />
+            )}
           </div>
         </div>
       </div>

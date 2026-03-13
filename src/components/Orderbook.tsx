@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useOrderbookStore } from '../stores/orderbookStore'
 import DepthChart from './DepthChart'
-import type { OrderSide } from '../types'
+import type { OrderSide, OrderbookLevel } from '../types'
 
 interface Props {
   isOpen: boolean
+  side?: OrderSide
   className?: string
   onPriceClick?: (price: number, side: OrderSide) => void
   compact?: boolean
@@ -14,17 +15,34 @@ function fmtUsdc(v: number): string {
   return v.toFixed(2)
 }
 
-export default function Orderbook({ isOpen, className, onPriceClick, compact }: Props) {
-  const bids = useOrderbookStore((s) => s.bids)
-  const asks = useOrderbookStore((s) => s.asks)
+function mirrorLevels(levels: OrderbookLevel[]): OrderbookLevel[] {
+  return levels
+    .map((l) => ({ price: Math.round((1 - l.price) * 100) / 100, quantity: l.quantity }))
+    .filter((l) => l.price > 0 && l.price < 1)
+}
+
+export default function Orderbook({ isOpen, side = 'YES', className, onPriceClick, compact }: Props) {
+  const rawBids = useOrderbookStore((s) => s.bids)
+  const rawAsks = useOrderbookStore((s) => s.asks)
   const lastSeq = useOrderbookStore((s) => s.lastSeq)
+
+  const isNo = side === 'NO'
+  const bids = useMemo(() => {
+    const src = isNo ? mirrorLevels(rawAsks) : rawBids
+    return [...src].sort((a, b) => b.price - a.price)
+  }, [rawBids, rawAsks, isNo])
+
+  const asks = useMemo(() => {
+    const src = isNo ? mirrorLevels(rawBids) : rawAsks
+    return [...src].sort((a, b) => a.price - b.price)
+  }, [rawBids, rawAsks, isNo])
 
   const [showAll, setShowAll] = useState(false)
   const [viewMode, setViewMode] = useState<'levels' | 'depth'>('levels')
   const defaultDepth = compact ? 5 : 8
 
   const displayAsks = useMemo(
-    () => [...asks].sort((a, b) => a.price - b.price).slice(0, defaultDepth).reverse(),
+    () => asks.slice(0, defaultDepth).reverse(),
     [asks, defaultDepth],
   )
 
@@ -43,6 +61,9 @@ export default function Orderbook({ isOpen, className, onPriceClick, compact }: 
   const bestBid = displayBids[0]?.price ?? 0
   const bestAsk = displayAsks[displayAsks.length - 1]?.price ?? 0
   const spread = bestAsk > 0 && bestBid > 0 ? bestAsk - bestBid : 0
+
+  const bidColor = side === 'YES' ? '#2DD4BF' : '#E85A7E'
+  const askColor = side === 'YES' ? '#E85A7E' : '#2DD4BF'
 
   return (
     <div className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden relative ${className ?? ''}`}>
@@ -66,7 +87,7 @@ export default function Orderbook({ isOpen, className, onPriceClick, compact }: 
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            Book
+            {side} Book
           </button>
           <button
             onClick={() => setViewMode('depth')}
@@ -98,14 +119,14 @@ export default function Orderbook({ isOpen, className, onPriceClick, compact }: 
                   ? 'cursor-pointer hover:bg-[var(--border)]/50'
                   : 'cursor-default'
               }`}
-              onClick={() => isOpen && onPriceClick?.(level.price, 'NO')}
+              onClick={() => isOpen && onPriceClick?.(level.price, side)}
             >
               <div
-                className="absolute inset-y-0 right-0 bg-[#E85A7E]/10"
-                style={{ width: `${(level.quantity / maxQty) * 100}%` }}
+                className="absolute inset-y-0 right-0"
+                style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${askColor}1A` }}
               />
               <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono text-[#E85A7E] tabular-nums">{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-sm font-mono tabular-nums" style={{ color: askColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
@@ -124,14 +145,14 @@ export default function Orderbook({ isOpen, className, onPriceClick, compact }: 
                   ? 'cursor-pointer hover:bg-[var(--border)]/50'
                   : 'cursor-default'
               }`}
-              onClick={() => isOpen && onPriceClick?.(level.price, 'YES')}
+              onClick={() => isOpen && onPriceClick?.(level.price, side)}
             >
               <div
-                className="absolute inset-y-0 right-0 bg-[#2DD4BF]/10"
-                style={{ width: `${(level.quantity / maxQty) * 100}%` }}
+                className="absolute inset-y-0 right-0"
+                style={{ width: `${(level.quantity / maxQty) * 100}%`, backgroundColor: `${bidColor}1A` }}
               />
               <span className="relative text-xs text-[var(--text-secondary)] tabular-nums">{level.quantity}</span>
-              <span className="relative text-sm font-mono text-[#2DD4BF] tabular-nums">{fmtUsdc(level.price)} USDC</span>
+              <span className="relative text-sm font-mono tabular-nums" style={{ color: bidColor }}>{fmtUsdc(level.price)} USDC</span>
             </div>
           ))}
 
@@ -151,7 +172,7 @@ export default function Orderbook({ isOpen, className, onPriceClick, compact }: 
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-1.5 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[var(--text-secondary)]">Bids · Asks</span>
+          <span className="text-xs text-[var(--text-secondary)]">{side} Bids · Asks</span>
           <span
             className="text-[var(--text-secondary)] cursor-help"
             title="YES bid X USDC = NO ask (1−X) USDC. Binary market equivalence."

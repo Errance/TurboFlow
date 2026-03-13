@@ -671,6 +671,7 @@ export default function EventDetailPage() {
           {selectedContractId && (
             <Orderbook
               isOpen={event.status === 'OPEN'}
+              side={selectedSide ?? 'YES'}
               compact
             />
           )}
