@@ -10,6 +10,8 @@ import EventContractPage from './pages/EventContractPage'
 import CopyTradingPage from './pages/CopyTradingPage'
 import CopyTraderDetailPage from './pages/CopyTraderDetailPage'
 import MyCopyPage from './pages/MyCopyPage'
+import SoccerPage from './pages/SoccerPage'
+import SoccerMatchPage from './pages/SoccerMatchPage'
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="/game/:eventId" element={<SportsGamePage />} />
           <Route path="/contract/:contractId" element={<ContractDetailPage />} />
           <Route path="/events" element={<EventContractPage />} />
+          <Route path="/soccer" element={<SoccerPage />} />
+          <Route path="/soccer/match/:matchId" element={<SoccerMatchPage />} />
           <Route path="/copy" element={<CopyTradingPage />} />
           <Route path="/copy/my" element={<MyCopyPage />} />
           <Route path="/copy/trader/:id" element={<CopyTraderDetailPage />} />

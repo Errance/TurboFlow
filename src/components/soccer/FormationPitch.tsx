@@ -1,0 +1,151 @@
+import { useState } from 'react'
+import type { MatchLineup } from '../../data/soccer/types'
+
+interface Props {
+  homeLineup: MatchLineup
+  awayLineup: MatchLineup
+  homeShort: string
+  awayShort: string
+}
+
+export default function FormationPitch({ homeLineup, awayLineup, homeShort, awayShort }: Props) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const lineup = activeIndex === 0 ? homeLineup : awayLineup
+  const label = activeIndex === 0 ? homeShort : awayShort
+
+  const maxRow = Math.max(...lineup.players.map((p) => p.gridRow))
+
+  const rowGroups: Record<number, typeof lineup.players> = {}
+  for (const p of lineup.players) {
+    if (!rowGroups[p.gridRow]) rowGroups[p.gridRow] = []
+    rowGroups[p.gridRow].push(p)
+  }
+
+  return (
+    <div className="relative select-none">
+      {/* Pitch */}
+      <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '4/5' }}>
+        {/* Grass background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a5c2a] via-[#1e6b31] to-[#1a5c2a]" />
+
+        {/* Grass stripes */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute left-0 right-0"
+            style={{
+              top: `${(i / 8) * 100}%`,
+              height: `${100 / 8}%`,
+              background: i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+            }}
+          />
+        ))}
+
+        {/* Field lines */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 500" fill="none">
+          {/* Outer boundary */}
+          <rect x="20" y="15" width="360" height="470" rx="2" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          {/* Center line */}
+          <line x1="20" y1="250" x2="380" y2="250" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          {/* Center circle */}
+          <circle cx="200" cy="250" r="50" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <circle cx="200" cy="250" r="3" fill="rgba(255,255,255,0.3)" />
+          {/* Top penalty area */}
+          <rect x="110" y="15" width="180" height="75" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <rect x="150" y="15" width="100" height="30" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <circle cx="200" cy="68" r="3" fill="rgba(255,255,255,0.3)" />
+          {/* Bottom penalty area */}
+          <rect x="110" y="410" width="180" height="75" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <rect x="150" y="455" width="100" height="30" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <circle cx="200" cy="432" r="3" fill="rgba(255,255,255,0.3)" />
+          {/* Corner arcs */}
+          <path d="M20 25 A10 10 0 0 1 30 15" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <path d="M370 15 A10 10 0 0 1 380 25" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <path d="M20 475 A10 10 0 0 0 30 485" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <path d="M370 485 A10 10 0 0 0 380 475" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+        </svg>
+
+        {/* Players */}
+        <div className="absolute inset-0 flex flex-col justify-between py-[8%] px-[5%]">
+          {Array.from({ length: maxRow + 1 }).map((_, rowIdx) => {
+            const rowPlayers = rowGroups[rowIdx] ?? []
+            return (
+              <div key={rowIdx} className="flex justify-around items-center">
+                {rowPlayers.map((player) => (
+                  <div key={player.number} className="flex flex-col items-center gap-0.5">
+                    <div className="relative">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold
+                        ${activeIndex === 0
+                          ? 'bg-[#1d6b35] text-white border-2 border-white/60'
+                          : 'bg-[#1a3a6b] text-white border-2 border-white/60'
+                        }`}
+                      >
+                        {player.number}
+                      </div>
+                      {player.isCaptain && (
+                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-yellow-400 rounded-full text-[7px] font-bold text-black flex items-center justify-center">
+                          C
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[9px] text-white/90 font-medium text-center leading-tight max-w-[60px] truncate">
+                      {player.name.split(' ').pop()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Formation label */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-white/50 font-medium">
+          {label} {lineup.formation}
+        </div>
+      </div>
+
+      {/* Manager row */}
+      <div className="flex items-center justify-between px-3 py-2 mt-1">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span>{lineup.manager}</span>
+        </div>
+        <span className="text-[10px] text-[var(--text-secondary)]/60">Manager</span>
+      </div>
+
+      {/* Carousel controls */}
+      <div className="flex items-center justify-center gap-3 py-2">
+        <button
+          onClick={() => setActiveIndex(0)}
+          className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div className="flex gap-1.5">
+          {[0, 1].map((i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`h-1.5 rounded-full transition-all ${
+                i === activeIndex ? 'w-4 bg-[#2DD4BF]' : 'w-1.5 bg-[var(--text-secondary)]/30'
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          onClick={() => setActiveIndex(1)}
+          className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}

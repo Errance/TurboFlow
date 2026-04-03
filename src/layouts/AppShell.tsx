@@ -6,7 +6,8 @@ import ParlaySlip from '../components/ParlaySlip'
 
 const navItems = [
   { to: '/', label: 'Explore' },
-  { to: '/events', label: 'Events', badge: 'NEW' },
+  { to: '/soccer', label: '足球', badge: 'NEW' },
+  { to: '/events', label: 'Events' },
   { to: '/copy', label: '跟单' },
   { to: '/portfolio', label: 'Portfolio' },
   { to: '/leaderboard', label: 'Leaderboard' },

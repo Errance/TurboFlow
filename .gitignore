@@ -26,3 +26,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Research / docs / tools (not deployed)
+Stake足球盘口研究/
+prototype/
+tools/
+docs/事件合约体验金需求描述.md
+docs/事件合约返佣需求描述.md
+docs/copy-trading/规则重构-审阅稿.md
