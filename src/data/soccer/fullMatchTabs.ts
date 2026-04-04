@@ -1,11 +1,5 @@
-import type { MatchTab, Market } from './types'
-import {
-  anytimeGoalscorerPlayers, firstGoalscorerPlayers, lastGoalscorerPlayers,
-  assistPlayers, cardPlayers, shotsOnTargetPlayers, shotPlayers,
-} from './playerData'
-
-const H = 'RJ博塔弗戈'
-const A = '米拉索尔'
+import type { MatchTab, Market, MatchLineup } from './types'
+import { createPlayerMarkets } from './playerData'
 
 type BGOpt = [string, number]
 const bg = (title: string, opts: BGOpt[]): Market => ({
@@ -29,7 +23,9 @@ const plm = (title: string, tiers: string[], players: { name: string; odds: numb
   type: 'playerList', title, tiers, players,
 })
 
-// ──────────────────────── Shared markets ────────────────────────
+export function createFullMatchTabs(H: string, A: string, homeLineup?: MatchLineup, awayLineup?: MatchLineup): MatchTab[] {
+
+const pm = homeLineup && awayLineup ? createPlayerMarkets(homeLineup, awayLineup) : null
 
 const m_1x2 = bg('胜平负', [[H, 2.24], ['平局', 3.45], [A, 3.20]])
 const m_doubleChance = bg('双胜彩', [[`${H} 或 ${A}`, 1.33], [`平局或 ${A}`, 1.64], [`${H} 或平局`, 1.36]])
@@ -68,13 +64,13 @@ const m_multiscores = cgm('Multiscores', ['主胜组', '客胜组', '平局/其�
   ['其他主队胜', 126.00], ['其他客队胜', 251.00], ['平局', 3.45],
 ])
 
-const m_anytimeScorer = plm('任何时间进球队员', [''], anytimeGoalscorerPlayers)
-const m_firstScorer = plm('1st 进球队员', [''], firstGoalscorerPlayers)
-const m_lastScorer = plm('最后进球队员', [''], lastGoalscorerPlayers)
-const m_assists = plm('球员助攻 (包含加时)', ['1+', '2+'], assistPlayers)
-const m_cards = plm('球员被罚牌（含加时）', ['1+'], cardPlayers)
-const m_shotsOnTarget = plm('球员射中次数', ['1+', '2+', '3+', '4+', '5+'], shotsOnTargetPlayers)
-const m_shots = plm('球员射门 (包含加时)', ['1+', '2+', '3+', '4+', '5+', '6+'], shotPlayers)
+const m_anytimeScorer = plm('任何时间进球队员', [''], pm?.anytimeGoalscorer ?? [])
+const m_firstScorer = plm('1st 进球队员', [''], pm?.firstGoalscorer ?? [])
+const m_lastScorer = plm('最后进球队员', [''], pm?.lastGoalscorer ?? [])
+const m_assists = plm('球员助攻 (包含加时)', ['1+', '2+'], pm?.assists ?? [])
+const m_cards = plm('球员被罚牌（含加时）', ['1+'], pm?.cards ?? [])
+const m_shotsOnTarget = plm('球员射中次数', ['1+', '2+', '3+', '4+', '5+'], pm?.shotsOnTarget ?? [])
+const m_shots = plm('球员射门 (包含加时)', ['1+', '2+', '3+', '4+', '5+', '6+'], pm?.shots ?? [])
 
 const m_totalGoals = rb('总进球数', [['0', 10.00], ['1', 4.20], ['2', 3.25], ['3', 3.90], ['4', 5.80], ['5+', 7.00]])
 
@@ -452,7 +448,7 @@ const minutesMarkets: Market[] = [
   ]),
 ]
 
-export const fullMatchTabs: MatchTab[] = [
+return [
   { id: 'home', label: '主页', markets: homeMarkets },
   { id: 'bet-builder', label: '同场赛复式投注', markets: betBuilderMarkets },
   { id: 'goals', label: '进球', markets: goalsMarkets },
@@ -464,4 +460,6 @@ export const fullMatchTabs: MatchTab[] = [
   { id: 'players', label: '球员', markets: [m_anytimeScorer, m_assists, m_cards, m_shotsOnTarget, m_shots] },
   { id: 'specials', label: '特殊投注', markets: specialsMarkets },
   { id: 'minutes', label: '分钟盘', markets: minutesMarkets },
-]
+] satisfies MatchTab[]
+
+} // end createFullMatchTabs
