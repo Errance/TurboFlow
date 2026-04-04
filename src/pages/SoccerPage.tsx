@@ -1,9 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { leagues, matches } from '../data/soccer/mockData'
 import MatchListCard from '../components/soccer/MatchListCard'
 
 export default function SoccerPage() {
-  const [selectedLeague, setSelectedLeague] = useState<string>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedLeague, setSelectedLeague] = useState<string>(() => searchParams.get('league') ?? 'all')
+
+  useEffect(() => {
+    const leagueParam = searchParams.get('league')
+    if (leagueParam && leagueParam !== selectedLeague) {
+      setSelectedLeague(leagueParam)
+    }
+  }, [searchParams])
+
+  const handleLeagueChange = (id: string) => {
+    setSelectedLeague(id)
+    if (id === 'all') {
+      setSearchParams({})
+    } else {
+      setSearchParams({ league: id })
+    }
+  }
 
   const filteredMatches = selectedLeague === 'all'
     ? matches
@@ -31,7 +49,7 @@ export default function SoccerPage() {
 
           <div className="space-y-0.5">
             <button
-              onClick={() => setSelectedLeague('all')}
+              onClick={() => handleLeagueChange('all')}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                 selectedLeague === 'all'
                   ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'
@@ -53,7 +71,7 @@ export default function SoccerPage() {
               return (
                 <button
                   key={league.id}
-                  onClick={() => setSelectedLeague(league.id)}
+                  onClick={() => handleLeagueChange(league.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                     selectedLeague === league.id
                       ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'

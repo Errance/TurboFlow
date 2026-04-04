@@ -1,4 +1,16 @@
-import type { SoccerLeague, SoccerMatch } from './types'
+import type { SoccerLeague, SoccerMatch, Market, MyBetItem } from './types'
+
+function markMarketStatus(match: SoccerMatch, titlePattern: string, status: Market['status'], extra?: Partial<Pick<Market, 'settlementResult' | 'winningSelection'>>) {
+  for (const tab of match.tabs) {
+    for (const market of tab.markets) {
+      if (market.title.includes(titlePattern)) {
+        market.status = status
+        if (extra?.settlementResult) market.settlementResult = extra.settlementResult
+        if (extra?.winningSelection) market.winningSelection = extra.winningSelection
+      }
+    }
+  }
+}
 import { createFullMatchTabs } from './fullMatchTabs'
 import {
   botafogoLineup, mirassolLineup, botafogoMirassolH2H,
@@ -241,6 +253,98 @@ export const matches: SoccerMatch[] = [
     awayLineup: getafeLineup,
     headToHead: valenciaGetafeH2H,
     tabs: createFullMatchTabs('瓦伦西亚', '赫塔费', valenciaLineup, getafeLineup),
+  },
+]
+
+// Live matches: mark a couple of markets as suspended
+const arsCheLive = matches.find(m => m.id === 'arsenal-chelsea')
+if (arsCheLive) {
+  markMarketStatus(arsCheLive, '两队都得分', 'suspended')
+  markMarketStatus(arsCheLive, '正确进球', 'suspended')
+}
+const flaCorLive = matches.find(m => m.id === 'flamengo-corinthians')
+if (flaCorLive) {
+  markMarketStatus(flaCorLive, '任何时间进球', 'suspended')
+}
+
+// Finished matches: mark first few markets as settled
+const livMciFinished = matches.find(m => m.id === 'liverpool-mancity')
+if (livMciFinished) {
+  markMarketStatus(livMciFinished, '胜平负', 'settled', { settlementResult: 'win', winningSelection: '利物浦' })
+  markMarketStatus(livMciFinished, '两队都得分', 'settled', { settlementResult: 'win', winningSelection: '是' })
+  markMarketStatus(livMciFinished, '总进球数', 'settled', { settlementResult: 'win', winningSelection: '3' })
+}
+const newBhaFinished = matches.find(m => m.id === 'newcastle-brighton')
+if (newBhaFinished) {
+  markMarketStatus(newBhaFinished, '胜平负', 'settled', { settlementResult: 'win', winningSelection: '纽卡斯尔' })
+  markMarketStatus(newBhaFinished, '两队都得分', 'settled', { settlementResult: 'loss' })
+  markMarketStatus(newBhaFinished, '平局返还', 'settled', { settlementResult: 'void' })
+}
+
+// Finished match: add more loss examples for visual contrast
+const vasAMGFinished = matches.find(m => m.id === 'vasco-atletico-mg')
+if (vasAMGFinished) {
+  markMarketStatus(vasAMGFinished, '胜平负', 'settled', { settlementResult: 'loss' })
+  markMarketStatus(vasAMGFinished, '两队都得分', 'settled', { settlementResult: 'win', winningSelection: '否' })
+}
+
+// Live match: add a void market example
+if (flaCorLive) {
+  markMarketStatus(flaCorLive, '1st 进球队员', 'void')
+}
+
+// Scheduled match: add upcoming market example
+const botMirScheduled = matches.find(m => m.id === 'botafogo-mirassol')
+if (botMirScheduled) {
+  markMarketStatus(botMirScheduled, '任何时间进球队员', 'upcoming')
+}
+
+// Scheduled match: add cancelled market example
+const palGreScheduled = matches.find(m => m.id === 'palmeiras-gremio')
+if (palGreScheduled) {
+  markMarketStatus(palGreScheduled, '1st 进球队员', 'cancelled')
+}
+
+export const myBets: MyBetItem[] = [
+  {
+    id: 'bet-1',
+    matchLabel: '利物浦 vs 曼城',
+    marketTitle: '胜平负',
+    selection: '利物浦',
+    odds: 2.24,
+    amount: 50,
+    result: 'win',
+    payout: 112,
+  },
+  {
+    id: 'bet-2',
+    matchLabel: '纽卡斯尔 vs 布莱顿',
+    marketTitle: '两队都得分',
+    selection: '是',
+    odds: 1.83,
+    amount: 30,
+    result: 'loss',
+    payout: 0,
+  },
+  {
+    id: 'bet-3',
+    matchLabel: '瓦斯科达伽马 vs 米内罗竞技',
+    marketTitle: '平局返还',
+    selection: '瓦斯科达伽马',
+    odds: 1.60,
+    amount: 20,
+    result: 'push',
+    payout: 20,
+  },
+  {
+    id: 'bet-4',
+    matchLabel: '马德里竞技 vs 皇家社会',
+    marketTitle: '亚洲让分盘',
+    selection: '马德里竞技 -0.5',
+    odds: 2.23,
+    amount: 40,
+    result: 'win',
+    payout: 89.20,
   },
 ]
 

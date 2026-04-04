@@ -5,22 +5,36 @@ interface Props {
   match: SoccerMatch
 }
 
-const timeSlots = ['HT', '(2x45 Min) FT', "15'", "30'", "45'", "60'", "75'", "90'"]
+const timeSlots = ["15'", "30'", 'HT', "45'", "60'", "75'", 'FT', "90'"]
+
+function getSlotMinute(label: string): number {
+  if (label === 'HT') return 45
+  if (label === 'FT') return 90
+  return parseInt(label)
+}
 
 export default function MatchHeader({ match }: Props) {
+  const statusBadge = (() => {
+    switch (match.status) {
+      case 'live': return <Badge variant="danger">LIVE</Badge>
+      case 'scheduled': return <Badge variant="success">即将开赛</Badge>
+      case 'finished': return <Badge variant="neutral">ENDED</Badge>
+      case 'interrupted': return <Badge variant="warning">中断</Badge>
+      case 'abandoned': return <Badge variant="warning">腰斩</Badge>
+      case 'postponed': return <Badge variant="warning">延期</Badge>
+      case 'cancelled': return <Badge variant="neutral">取消</Badge>
+      case 'corrected': return <Badge variant="neutral">已更正</Badge>
+      default: return null
+    }
+  })()
+
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        {match.status === 'live' && (
-          <>
-            <Badge variant="danger">LIVE</Badge>
-            {match.currentMinute && (
-              <span className="text-xs font-mono text-red-400 animate-pulse">{match.currentMinute}'</span>
-            )}
-          </>
+        {statusBadge}
+        {match.status === 'live' && match.currentMinute && (
+          <span className="text-xs font-mono text-red-400 animate-pulse">{match.currentMinute}'</span>
         )}
-        {match.status === 'scheduled' && <Badge variant="success">即将开赛</Badge>}
-        {match.status === 'finished' && <Badge variant="neutral">ENDED</Badge>}
         <span className="text-xs text-[var(--text-secondary)]">{match.league}</span>
         {match.venue && (
           <>
@@ -68,19 +82,31 @@ export default function MatchHeader({ match }: Props) {
       <div className="mt-4 pt-3 border-t border-[var(--border)]">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {timeSlots.map((label) => {
-            const isActive = match.status === 'live' && match.currentMinute && (
-              (label === 'HT' && match.currentMinute >= 45 && match.currentMinute <= 45) ||
-              (label.endsWith("'") && parseInt(label) <= match.currentMinute)
-            )
+            const slotMin = getSlotMinute(label)
+            const isFinished = match.status === 'finished'
+            const isLiveCurrent = match.status === 'live' && match.currentMinute &&
+              slotMin <= match.currentMinute &&
+              (label === 'HT'
+                ? match.currentMinute >= 45 && match.currentMinute < 60
+                : true)
+
+            let cls = 'text-[var(--text-secondary)] bg-[var(--bg-control)]'
+            if (isFinished) {
+              cls = 'text-[var(--text-secondary)]/50 bg-[var(--bg-control)]/60'
+            } else if (isLiveCurrent) {
+              cls = 'bg-red-500/20 text-red-400 font-medium'
+            }
+
             return (
               <span
                 key={label}
-                className={`text-[10px] whitespace-nowrap px-2 py-1 rounded transition-colors
-                  ${isActive
-                    ? 'bg-[#2DD4BF]/20 text-[#2DD4BF] font-medium'
-                    : 'text-[var(--text-secondary)] bg-[var(--bg-control)]'
-                  }`}
+                className={`text-[10px] whitespace-nowrap px-2 py-1 rounded transition-colors ${cls}`}
               >
+                {isLiveCurrent && match.currentMinute && slotMin === Math.max(
+                  ...timeSlots.map(getSlotMinute).filter(m => m <= match.currentMinute!)
+                ) && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-pulse" />
+                )}
                 {label}
               </span>
             )

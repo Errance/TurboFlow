@@ -89,7 +89,12 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
         <div className="space-y-1.5">
           {h2h.matches.slice(0, 5).map((m, i) => (
             <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-[var(--bg-control)]/50 text-xs">
-              <span className="text-[var(--text-secondary)] w-20 shrink-0">{m.date.slice(0, 10)}</span>
+              <div className="shrink-0 w-20">
+                <div className="text-[var(--text-secondary)]">{m.date.slice(0, 10)}</div>
+                {m.competition && (
+                  <div className="text-[9px] text-[var(--text-secondary)]/50 truncate">{m.competition}</div>
+                )}
+              </div>
               <span className="text-[var(--text-primary)] flex-1 text-center truncate">
                 {m.homeTeam} <span className="font-bold font-mono">{m.score.home} - {m.score.away}</span> {m.awayTeam}
               </span>

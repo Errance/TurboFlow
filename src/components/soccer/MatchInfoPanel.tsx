@@ -36,7 +36,7 @@ export default function MatchInfoPanel({ match }: Props) {
   const tabs: { id: InfoTab; label: string; available: boolean }[] = [
     { id: 'lineups', label: '阵容', available: hasLineups },
     { id: 'h2h', label: 'H2H', available: hasH2H },
-    { id: 'stats', label: '统计', available: hasStats || hasEvents },
+    { id: 'stats', label: '统计', available: (hasStats || hasEvents) && match.status !== 'scheduled' },
   ]
 
   return (
@@ -78,17 +78,36 @@ export default function MatchInfoPanel({ match }: Props) {
         </div>
 
         {/* Status line */}
-        <div className="flex items-center justify-center gap-2">
-          {match.status === 'live' && (
-            <>
-              <Badge variant="danger">LIVE</Badge>
-              {match.currentMinute && (
-                <span className="text-xs text-[var(--text-secondary)] font-mono">{match.currentMinute}'</span>
-              )}
-            </>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            {match.status === 'live' && (
+              <>
+                <Badge variant="danger">LIVE</Badge>
+                {match.currentMinute && (
+                  <span className="text-xs text-[var(--text-secondary)] font-mono">{match.currentMinute}'</span>
+                )}
+              </>
+            )}
+            {match.status === 'finished' && <Badge variant="neutral">ENDED</Badge>}
+            {match.status === 'scheduled' && <Badge variant="success">即将开赛</Badge>}
+            {match.status === 'interrupted' && <Badge variant="warning">中断</Badge>}
+            {match.status === 'abandoned' && <Badge variant="warning">腰斩</Badge>}
+            {match.status === 'postponed' && <Badge variant="warning">延期</Badge>}
+            {match.status === 'cancelled' && <Badge variant="neutral">取消</Badge>}
+            {match.status === 'corrected' && <Badge variant="neutral">已更正</Badge>}
+          </div>
+          {match.status === 'abandoned' && (
+            <span className="text-[10px] text-[var(--text-secondary)]">比赛异常结束，所有盘口按规则结算</span>
           )}
-          {match.status === 'finished' && <Badge variant="neutral">ENDED</Badge>}
-          {match.status === 'scheduled' && <Badge variant="success">即将开赛</Badge>}
+          {match.status === 'interrupted' && (
+            <span className="text-[10px] text-[var(--text-secondary)]">比赛中断，等待恢复或官方决定</span>
+          )}
+          {match.status === 'postponed' && (
+            <span className="text-[10px] text-[var(--text-secondary)]">比赛延期，新日期待定</span>
+          )}
+          {match.status === 'cancelled' && (
+            <span className="text-[10px] text-[var(--text-secondary)]">比赛已取消，所有盘口作废退款</span>
+          )}
         </div>
 
         {/* Timeline bar */}

@@ -48,9 +48,9 @@ export default function MatchListCard({ match }: Props) {
       </div>
 
       <div className="hidden sm:flex items-center gap-1 shrink-0">
-        {oneXTwo?.type === 'buttonGroup' && oneXTwo.options.map((opt) => (
+        {oneXTwo?.type === 'buttonGroup' && oneXTwo.options.map((opt, i) => (
           <div key={opt.label} className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-            <span className="text-[9px] text-[var(--text-secondary)] block">{opt.label.length > 4 ? '1' : opt.label === '平局' ? 'X' : '2'}</span>
+            <span className="text-[9px] text-[var(--text-secondary)] block">{i === 0 ? '1' : i === 1 ? 'X' : '2'}</span>
             <span className="text-xs font-mono font-medium text-[var(--text-primary)]">{opt.odds.toFixed(2)}</span>
           </div>
         ))}

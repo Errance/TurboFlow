@@ -62,7 +62,7 @@ export interface SoccerMatch {
   awayTeam: SoccerTeam
   date: string
   time: string
-  status: 'scheduled' | 'live' | 'finished'
+  status: 'scheduled' | 'live' | 'finished' | 'interrupted' | 'abandoned' | 'postponed' | 'cancelled' | 'corrected'
   score?: { home: number; away: number }
   currentMinute?: number
   tabs: MatchTab[]
@@ -89,20 +89,29 @@ export type Market =
   | ComboGridMarket
   | RangeButtonsMarket
 
-export interface ButtonGroupMarket {
+export type MarketStatus = 'open' | 'upcoming' | 'suspended' | 'settled' | 'void' | 'cancelled' | 'corrected' | 'hidden'
+export type SettlementResult = 'win' | 'loss' | 'void' | 'push'
+
+interface MarketBase {
+  status?: MarketStatus
+  settlementResult?: SettlementResult
+  winningSelection?: string
+}
+
+export interface ButtonGroupMarket extends MarketBase {
   type: 'buttonGroup'
   title: string
   options: { label: string; odds: number }[]
 }
 
-export interface OddsTableMarket {
+export interface OddsTableMarket extends MarketBase {
   type: 'oddsTable'
   title: string
   columns: string[]
   rows: { line: string; odds: number[] }[]
 }
 
-export interface ScoreGridMarket {
+export interface ScoreGridMarket extends MarketBase {
   type: 'scoreGrid'
   title: string
   homeRange: number[]
@@ -110,14 +119,14 @@ export interface ScoreGridMarket {
   odds: Record<string, number>
 }
 
-export interface PlayerListMarket {
+export interface PlayerListMarket extends MarketBase {
   type: 'playerList'
   title: string
   tiers: string[]
   players: { name: string; odds: number[] }[]
 }
 
-export interface ComboGridMarket {
+export interface ComboGridMarket extends MarketBase {
   type: 'comboGrid'
   title: string
   rowHeaders: string[]
@@ -125,7 +134,7 @@ export interface ComboGridMarket {
   cells: { label: string; odds: number }[]
 }
 
-export interface RangeButtonsMarket {
+export interface RangeButtonsMarket extends MarketBase {
   type: 'rangeButtons'
   title: string
   options: { label: string; odds: number }[]
@@ -145,4 +154,15 @@ export interface BetSlipItem {
   marketTitle: string
   selection: string
   odds: number
+}
+
+export interface MyBetItem {
+  id: string
+  matchLabel: string
+  marketTitle: string
+  selection: string
+  odds: number
+  amount: number
+  result: 'win' | 'loss' | 'push'
+  payout: number
 }
