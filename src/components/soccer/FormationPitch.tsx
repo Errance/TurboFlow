@@ -23,6 +23,26 @@ export default function FormationPitch({ homeLineup, awayLineup, homeShort, away
 
   return (
     <div className="relative select-none">
+      {/* Team switcher tabs */}
+      <div className="flex mb-2">
+        {[
+          { idx: 0, tabLabel: homeShort },
+          { idx: 1, tabLabel: awayShort },
+        ].map(({ idx, tabLabel }) => (
+          <button
+            key={idx}
+            onClick={() => setActiveIndex(idx)}
+            className={`flex-1 py-2 text-xs font-medium text-center transition-colors border-b-2 ${
+              activeIndex === idx
+                ? 'text-[var(--text-primary)] border-[#2DD4BF]'
+                : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {tabLabel}
+          </button>
+        ))}
+      </div>
+
       {/* Pitch */}
       <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '4/5' }}>
         {/* Grass background */}
@@ -116,36 +136,6 @@ export default function FormationPitch({ homeLineup, awayLineup, homeShort, away
         <span className="text-[10px] text-[var(--text-secondary)]/60">Manager</span>
       </div>
 
-      {/* Carousel controls */}
-      <div className="flex items-center justify-center gap-3 py-2">
-        <button
-          onClick={() => setActiveIndex(0)}
-          className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <div className="flex gap-1.5">
-          {[0, 1].map((i) => (
-            <button
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === activeIndex ? 'w-4 bg-[#2DD4BF]' : 'w-1.5 bg-[var(--text-secondary)]/30'
-              }`}
-            />
-          ))}
-        </div>
-        <button
-          onClick={() => setActiveIndex(1)}
-          className="w-6 h-6 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
-      </div>
     </div>
   )
 }
