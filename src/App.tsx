@@ -12,6 +12,8 @@ import CopyTraderDetailPage from './pages/CopyTraderDetailPage'
 import MyCopyPage from './pages/MyCopyPage'
 import SoccerPage from './pages/SoccerPage'
 import SoccerMatchPage from './pages/SoccerMatchPage'
+import ClobPage from './pages/ClobPage'
+import ClobMatchPage from './pages/ClobMatchPage'
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
           <Route path="/events" element={<EventContractPage />} />
           <Route path="/soccer" element={<SoccerPage />} />
           <Route path="/soccer/match/:matchId" element={<SoccerMatchPage />} />
+          <Route path="/clob" element={<ClobPage />} />
+          <Route path="/clob/match/:matchId" element={<ClobMatchPage />} />
           <Route path="/copy" element={<CopyTradingPage />} />
           <Route path="/copy/my" element={<MyCopyPage />} />
           <Route path="/copy/trader/:id" element={<CopyTraderDetailPage />} />
