@@ -20,7 +20,7 @@ export default function AppShell() {
   const { theme, toggleTheme } = useThemeStore()
 
   return (
-    <div className="min-h-dvh bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col overflow-x-hidden">
+    <div className="min-h-dvh bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col overflow-x-clip">
       {/* Desktop top nav */}
       <header className="hidden md:flex items-center h-14 px-6 border-b border-[var(--border)] bg-[var(--bg-base)] sticky top-0 z-30">
         <div className="flex items-center gap-2 mr-8">

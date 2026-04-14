@@ -197,6 +197,53 @@ function convertMarket(m: Market): ClobMarket[] {
   }
 }
 
+// ============ Post-processing: merge duplicate BinaryMarkets ============
+
+function mergeDuplicateBinaries(markets: ClobMarket[]): ClobMarket[] {
+  const binaryGroups = new Map<string, BinaryMarket[]>()
+  for (const m of markets) {
+    if (m.type === 'binary') {
+      const arr = binaryGroups.get(m.groupTitle)
+      if (arr) arr.push(m)
+      else binaryGroups.set(m.groupTitle, [m])
+    }
+  }
+
+  const result: ClobMarket[] = []
+  const emitted = new Set<string>()
+
+  for (const m of markets) {
+    if (m.type !== 'binary') { result.push(m); continue }
+    if (emitted.has(m.groupTitle)) continue
+    emitted.add(m.groupTitle)
+
+    const group = binaryGroups.get(m.groupTitle)!
+    if (group.length === 1) {
+      result.push(group[0])
+    } else {
+      const outcomes: Outcome[] = group.map(b => ({
+        id: b.id,
+        label: b.question,
+        yesPrice: b.yesPrice,
+        noPrice: b.noPrice,
+        volume: b.volume,
+        volume24h: b.volume24h,
+        lastTradePrice: b.lastTradePrice,
+        orderBook: b.orderBook,
+      }))
+      result.push({
+        type: 'negRisk',
+        id: uid('neg'),
+        title: m.groupTitle,
+        groupTitle: m.groupTitle,
+        outcomes,
+        status: 'open',
+      })
+    }
+  }
+  return result
+}
+
 // ============ Tab Builder ============
 
 const DELETED_TABS = new Set(['bet-builder', 'goalscorer', 'players', 'minutes'])
@@ -241,11 +288,12 @@ export function buildClobTabs(oldTabs: MatchTab[]): ClobTab[] {
       markets.push(...goalscorerBinaries)
     }
 
-    if (markets.length > 0) {
+    const merged = mergeDuplicateBinaries(markets)
+    if (merged.length > 0) {
       clobTabs.push({
         id: tabId,
         label: TAB_LABELS[tabId] ?? oldTab?.label ?? tabId,
-        markets,
+        markets: merged,
       })
     }
   }
