@@ -122,20 +122,20 @@ function shouldDeleteMarket(title: string): boolean {
 
 function convertOddsTable(m: OTM): ClobMarket[] {
   if (m.columns.length === 3) return []
+  if (m.columns.length !== 2) return []
 
-  const results: ClobMarket[] = []
+  const options: { label: string; odds: number }[] = []
   for (const row of m.rows) {
-    const lineParts = row.line.split('/')
-    const mainLine = lineParts[0].trim()
-
-    if (m.columns.length === 2) {
-      if (!isStrictHalfLine(mainLine) && !isHalfLine(mainLine)) continue
-
-      const question = `${m.title} ${row.line}`
-      results.push(makeBinary(question, m.title, row.odds[0]))
-    }
+    const mainLine = row.line.split('/')[0].trim()
+    if (!isStrictHalfLine(mainLine) && !isHalfLine(mainLine)) continue
+    options.push({ label: row.line, odds: row.odds[0] })
   }
-  return results
+
+  if (options.length === 0) return []
+  if (options.length === 1) {
+    return [makeBinary(`${m.title} ${options[0].label}`, m.title, options[0].odds)]
+  }
+  return [makeNegRisk(m.title, m.title, options)]
 }
 
 function convertScoreGrid(m: SGM): NegRiskEvent {
@@ -203,7 +203,7 @@ const DELETED_TABS = new Set(['bet-builder', 'goalscorer', 'players', 'minutes']
 
 const TAB_ORDER = ['home', 'goals', 'halves', 'asian', 'corners', 'cards', 'specials']
 const TAB_LABELS: Record<string, string> = {
-  home: '主页', goals: '进球', halves: '上半场/下半场',
+  home: '热门', goals: '进球', halves: '上半场/下半场',
   asian: '亚洲盘', corners: '角球', cards: '罚牌', specials: '特殊投注',
 }
 

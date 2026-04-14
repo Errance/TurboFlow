@@ -449,7 +449,7 @@ const minutesMarkets: Market[] = [
 ]
 
 return [
-  { id: 'home', label: '主页', markets: homeMarkets },
+  { id: 'home', label: '热门', markets: homeMarkets },
   { id: 'bet-builder', label: '同场赛复式投注', markets: betBuilderMarkets },
   { id: 'goals', label: '进球', markets: goalsMarkets },
   { id: 'asian', label: '亚洲盘', markets: asianMarkets },

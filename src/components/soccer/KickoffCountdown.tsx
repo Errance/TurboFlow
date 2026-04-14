@@ -31,14 +31,14 @@ export default function KickoffCountdown({ kickoffDate }: Props) {
 
   return (
     <div className="text-center py-3">
-      <p className="text-[10px] text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Kickoff time</p>
-      <div className="flex items-center justify-center gap-2">
+      <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Kickoff time</p>
+      <div className="flex items-center justify-center gap-3">
         {blocks.map(([value, label]) => (
           <div key={label} className="flex flex-col items-center">
-            <div className="w-10 h-10 rounded-lg bg-[#1a2332] border border-[var(--border)] flex items-center justify-center">
-              <span className="text-base font-bold font-mono text-[var(--text-primary)]">{value}</span>
+            <div className="w-14 h-14 rounded-lg bg-[#0f1923] border border-[var(--border)]/60 flex items-center justify-center">
+              <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">{value}</span>
             </div>
-            <span className="text-[9px] text-[var(--text-secondary)] mt-1">{label}</span>
+            <span className="text-[11px] text-[var(--text-secondary)] mt-1">{label}</span>
           </div>
         ))}
       </div>
