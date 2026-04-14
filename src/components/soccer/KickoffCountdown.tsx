@@ -36,7 +36,7 @@ export default function KickoffCountdown({ kickoffDate }: Props) {
         {blocks.map(([value, label]) => (
           <div key={label} className="flex flex-col items-center">
             <div className="w-14 h-14 rounded-lg bg-[#0f1923] border border-[var(--border)]/60 flex items-center justify-center">
-              <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">{value}</span>
+              <span className="text-2xl font-bold font-mono text-white">{value}</span>
             </div>
             <span className="text-[11px] text-[var(--text-secondary)] mt-1">{label}</span>
           </div>
