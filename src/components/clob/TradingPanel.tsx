@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { TradingSelection, OrderSide, OrderType } from '../../data/clob/types'
 import { useClobStore } from '../../stores/clobStore'
-import OrderBookMini from './OrderBookMini'
-import type { OrderBook } from '../../data/clob/types'
 
 interface Props {
   selection: TradingSelection | null
 }
 
 export default function TradingPanel({ selection }: Props) {
-  const { balance, placeOrder, getMarket, getOutcome } = useClobStore()
+  const { balance, placeOrder } = useClobStore()
   const [side, setSide] = useState<OrderSide>('yes')
   const [orderType, setOrderType] = useState<OrderType>('market')
   const [price, setPrice] = useState('')
@@ -45,17 +43,6 @@ export default function TradingPanel({ selection }: Props) {
       setTotal(newTotal > 0 ? newTotal.toFixed(2) : '')
     }
   }, [price, shares, total])
-
-  let currentBook: OrderBook | null = null
-  if (selection) {
-    if (selection.outcomeId) {
-      const result = getOutcome(selection.marketId, selection.outcomeId)
-      if (result) currentBook = result.outcome.orderBook
-    } else {
-      const market = getMarket(selection.marketId)
-      if (market) currentBook = market.orderBook
-    }
-  }
 
   const numPrice = parseFloat(price) || 0
   const numShares = parseFloat(shares) || 0
@@ -254,14 +241,6 @@ export default function TradingPanel({ selection }: Props) {
           </span>
         </div>
       </div>
-
-      {/* Order Book */}
-      {currentBook && (
-        <div className="pt-2 border-t border-[var(--border)]">
-          <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">订单簿</p>
-          <OrderBookMini book={currentBook} depth={5} />
-        </div>
-      )}
 
       {/* Submit */}
       <button

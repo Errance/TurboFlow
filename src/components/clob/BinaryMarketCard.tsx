@@ -12,6 +12,7 @@ interface Props {
 export default function BinaryMarketCard({ market, selection, onSelect }: Props) {
   const isYesSelected = selection?.marketId === market.id && selection.side === 'yes'
   const isNoSelected = selection?.marketId === market.id && selection.side === 'no'
+  const isSelected = isYesSelected || isNoSelected
 
   const handleClick = (side: 'yes' | 'no') => {
     onSelect({
@@ -47,6 +48,12 @@ export default function BinaryMarketCard({ market, selection, onSelect }: Props)
           <span className="font-mono">${(market.volume / 1000).toFixed(0)}k vol</span>
         </div>
         <OrderBookMini book={market.orderBook} compact />
+        {isSelected && (
+          <div className="pt-2 border-t border-[var(--border)]">
+            <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">订单簿</p>
+            <OrderBookMini book={market.orderBook} depth={5} />
+          </div>
+        )}
       </div>
     </MarketCard>
   )
