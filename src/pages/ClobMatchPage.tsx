@@ -116,10 +116,12 @@ export default function ClobMatchPage() {
         </div>
 
         {/* Right sidebar */}
-        <div className="w-[380px] shrink-0 sticky top-20 self-start space-y-4">
+        <div className="w-[380px] shrink-0 space-y-4">
           {hasInfoPanel && <MatchInfoPanel match={fakeOldMatch} />}
-          <TradingPanel selection={selection} />
-          <PositionsPanel />
+          <div className="sticky top-20 space-y-4">
+            <TradingPanel selection={selection} />
+            <PositionsPanel />
+          </div>
         </div>
       </div>
     </div>
