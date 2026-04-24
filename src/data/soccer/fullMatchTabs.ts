@@ -23,6 +23,63 @@ const plm = (title: string, tiers: string[], players: { name: string; odds: numb
   type: 'playerList', title, tiers, players,
 })
 
+// ─────────────────────────────────────────────────────────────
+// Lean mode: 精简盘口白名单
+// 只保留 6 类核心盘口：胜平负 / 合计进球 0-5+ / 让球（亚盘+欧盘） / 比分 / 大小球 / 开球权（novelty）
+// 设为 false 即可恢复完整盘口
+// ─────────────────────────────────────────────────────────────
+const LEAN_MODE = true
+const LEAN_VISIBLE_TITLES = new Set<string>([
+  '胜平负',
+  '总进球数',
+  '亚洲让分盘',
+  '正确进球',
+  '合计',
+  '开球权',
+])
+const LEAN_VISIBLE_PREFIXES = ['让分']
+const LEAN_MARKET_ORDER = [
+  '胜平负',
+  '开球权',
+  '亚洲让分盘',
+  '让分0:1', '让分0:2', '让分1:0', '让分2:0',
+  '总进球数',
+  '合计',
+  '正确进球',
+]
+
+function leanMatches(title: string): boolean {
+  if (LEAN_VISIBLE_TITLES.has(title)) return true
+  return LEAN_VISIBLE_PREFIXES.some((p) => title.startsWith(p))
+}
+
+function filterLean(tabs: MatchTab[]): MatchTab[] {
+  return tabs
+    .map((tab) => ({ ...tab, markets: tab.markets.filter((m) => leanMatches(m.title)) }))
+    .filter((tab) => tab.markets.length > 0)
+}
+
+function collapseTabs(tabs: MatchTab[]): MatchTab[] {
+  const seen = new Set<string>()
+  const merged: Market[] = []
+  for (const tab of tabs) {
+    for (const m of tab.markets) {
+      if (seen.has(m.title)) continue
+      seen.add(m.title)
+      merged.push(m)
+    }
+  }
+  merged.sort((a, b) => {
+    const ia = LEAN_MARKET_ORDER.indexOf(a.title)
+    const ib = LEAN_MARKET_ORDER.indexOf(b.title)
+    if (ia === -1 && ib === -1) return 0
+    if (ia === -1) return 1
+    if (ib === -1) return -1
+    return ia - ib
+  })
+  return [{ id: 'all', label: '所有盘口', markets: merged }]
+}
+
 export function createFullMatchTabs(H: string, A: string, homeLineup?: MatchLineup, awayLineup?: MatchLineup): MatchTab[] {
 
 const pm = homeLineup && awayLineup ? createPlayerMarkets(homeLineup, awayLineup) : null
@@ -30,6 +87,7 @@ const pm = homeLineup && awayLineup ? createPlayerMarkets(homeLineup, awayLineup
 const m_1x2 = bg('胜平负', [[H, 2.24], ['平局', 3.45], [A, 3.20]])
 const m_doubleChance = bg('双胜彩', [[`${H} 或 ${A}`, 1.33], [`平局或 ${A}`, 1.64], [`${H} 或平局`, 1.36]])
 const m_btts = bg('两队都得分', [['是', 1.83], ['否', 1.94]])
+const m_kickoff = bg('开球权', [[H, 1.92], [A, 1.92]])
 
 const m_correctScore = sgm('正确进球', [0, 1, 2, 3, 4], [0, 1, 2, 3, 4], {
   '0:0': 10.00, '1:0': 5.80, '2:0': 8.60, '3:0': 17.00, '4:0': 40.00,
@@ -196,6 +254,7 @@ const handicap2h: Market[] = [
 
 const homeMarkets: Market[] = [
   m_1x2,
+  m_kickoff,
   bg('平局返还', [[H, 1.60], [A, 2.25]]),
   m_doubleChance,
   ot('合计', ['高于', '低于'], [
@@ -448,7 +507,7 @@ const minutesMarkets: Market[] = [
   ]),
 ]
 
-return [
+const TABS: MatchTab[] = [
   { id: 'home', label: '热门', markets: homeMarkets },
   { id: 'bet-builder', label: '同场赛复式投注', markets: betBuilderMarkets },
   { id: 'goals', label: '进球', markets: goalsMarkets },
@@ -460,6 +519,8 @@ return [
   { id: 'players', label: '球员', markets: [m_anytimeScorer, m_assists, m_cards, m_shotsOnTarget, m_shots] },
   { id: 'specials', label: '特殊投注', markets: specialsMarkets },
   { id: 'minutes', label: '分钟盘', markets: minutesMarkets },
-] satisfies MatchTab[]
+]
+
+return LEAN_MODE ? collapseTabs(filterLean(TABS)) : TABS
 
 } // end createFullMatchTabs

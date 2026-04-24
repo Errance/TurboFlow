@@ -93,22 +93,45 @@ export default function SoccerPage() {
             })}
           </div>
 
-          <div className="mt-6 border-t border-[var(--border)] pt-4">
-            <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">即将开赛</h3>
-            <div className="space-y-1">
-              {matches.filter((m) => m.status === 'live').slice(0, 3).map((m) => (
-                <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[#E85A7E]/5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse shrink-0" />
-                  <span className="text-[10px] text-[var(--text-primary)] truncate">
-                    {m.homeTeam.shortName} vs {m.awayTeam.shortName}
-                  </span>
-                  <span className="text-[10px] text-[#E85A7E] font-mono ml-auto shrink-0">
-                    {m.score?.home}-{m.score?.away}
-                  </span>
-                </div>
-              ))}
+          {matches.some((m) => m.status === 'live') && (
+            <div className="mt-6 border-t border-[var(--border)] pt-4">
+              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">正在直播</h3>
+              <div className="space-y-1">
+                {matches.filter((m) => m.status === 'live').slice(0, 3).map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[#E85A7E]/5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse shrink-0" />
+                    <span className="text-[10px] text-[var(--text-primary)] truncate">
+                      {m.homeTeam.shortName} vs {m.awayTeam.shortName}
+                    </span>
+                    {m.score && (
+                      <span className="text-[10px] text-[#E85A7E] font-mono ml-auto shrink-0">
+                        {m.score.home}-{m.score.away}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {matches.some((m) => m.status === 'scheduled') && (
+            <div className="mt-4 border-t border-[var(--border)] pt-4">
+              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">即将开赛</h3>
+              <div className="space-y-1">
+                {matches.filter((m) => m.status === 'scheduled').slice(0, 3).map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[var(--bg-control)]/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)]/50 shrink-0" />
+                    <span className="text-[10px] text-[var(--text-primary)] truncate">
+                      {m.homeTeam.shortName} vs {m.awayTeam.shortName}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-mono ml-auto shrink-0">
+                      {m.time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Main content - Match list */}
