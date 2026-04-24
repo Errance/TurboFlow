@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getMatchById, myBets } from '../data/soccer/mockData'
-import type { BetSlipItem } from '../data/soccer/types'
 import Tabs from '../components/ui/Tabs'
 import MatchHeader from '../components/soccer/MatchHeader'
 import MarketRenderer from '../components/soccer/MarketRenderer'
@@ -9,6 +8,9 @@ import SoccerBetSlip from '../components/soccer/SoccerBetSlip'
 import MyBetsPanel from '../components/soccer/MyBetsPanel'
 import MatchInfoPanel from '../components/soccer/MatchInfoPanel'
 import Button from '../components/ui/Button'
+import { useSoccerBetSlipStore } from '../stores/soccerBetSlipStore'
+
+const ENDED_STATUSES = new Set(['finished', 'abandoned', 'cancelled', 'corrected'])
 
 export default function SoccerMatchPage() {
   const { matchId } = useParams<{ matchId: string }>()
@@ -16,29 +18,52 @@ export default function SoccerMatchPage() {
   const match = getMatchById(matchId ?? '')
 
   const [activeTab, setActiveTab] = useState('home')
-  const [betSlip, setBetSlip] = useState<BetSlipItem[]>([])
 
-  const endedStatuses = new Set(['finished', 'abandoned', 'cancelled', 'corrected'])
+  const toggleItem = useSoccerBetSlipStore((s) => s.toggleItem)
+  const purgeVoid = useSoccerBetSlipStore((s) => s.purgeVoid)
+  const allItems = useSoccerBetSlipStore((s) => s.items)
 
-  const handleSelect = useCallback((marketTitle: string, selection: string, odds: number) => {
-    if (!match || endedStatuses.has(match.status)) return
-    const id = `${match.id}|${marketTitle}|${selection}`
-    setBetSlip((prev) => {
-      const exists = prev.find((item) => item.id === id)
-      if (exists) return prev.filter((item) => item.id !== id)
-      const withoutSameMarket = prev.filter((item) => item.marketTitle !== marketTitle)
-      return [...withoutSameMarket, {
-        id,
+  const handleSelect = useCallback(
+    (marketTitle: string, selection: string, odds: number) => {
+      if (!match || ENDED_STATUSES.has(match.status)) return
+      toggleItem({
         matchId: match.id,
         matchLabel: `${match.homeTeam.name} vs ${match.awayTeam.name}`,
         marketTitle,
         selection,
         odds,
-      }]
-    })
+      })
+    },
+    [match, toggleItem]
+  )
+
+  const selectedKeys = useMemo(() => {
+    if (!match) return new Set<string>()
+    const keys = new Set<string>()
+    for (const it of allItems) {
+      if (it.matchId === match.id) keys.add(`${it.marketTitle}|${it.selection}`)
+    }
+    return keys
+  }, [allItems, match])
+
+  const { suspendedMarkets, voidMarkets } = useMemo(() => {
+    const suspended = new Set<string>()
+    const voided = new Set<string>()
+    if (match) {
+      for (const tab of match.tabs) {
+        for (const m of tab.markets) {
+          if (m.status === 'suspended') suspended.add(m.title)
+          if (m.status === 'void') voided.add(m.title)
+        }
+      }
+    }
+    return { suspendedMarkets: suspended, voidMarkets: voided }
   }, [match])
 
-  const selectedKeys = new Set(betSlip.map((item) => `${item.marketTitle}|${item.selection}`))
+  useEffect(() => {
+    if (!match) return
+    purgeVoid(match.id, voidMarkets)
+  }, [match, voidMarkets, purgeVoid])
 
   if (!match) {
     return (
@@ -54,26 +79,6 @@ export default function SoccerMatchPage() {
   const currentTab = match.tabs.find((t) => t.id === activeTab) ?? match.tabs[0]
   const tabItems = match.tabs.map((t) => ({ id: t.id, label: t.label }))
   const hasInfoPanel = !!(match.homeLineup || match.headToHead || match.stats)
-
-  const { suspendedMarkets, voidMarkets } = useMemo(() => {
-    const suspended = new Set<string>()
-    const voided = new Set<string>()
-    for (const tab of match.tabs) {
-      for (const m of tab.markets) {
-        if (m.status === 'suspended') suspended.add(m.title)
-        if (m.status === 'void') voided.add(m.title)
-      }
-    }
-    return { suspendedMarkets: suspended, voidMarkets: voided }
-  }, [match])
-
-  useEffect(() => {
-    if (voidMarkets.size === 0) return
-    setBetSlip(prev => {
-      const filtered = prev.filter(item => !voidMarkets.has(item.marketTitle))
-      return filtered.length === prev.length ? prev : filtered
-    })
-  }, [voidMarkets])
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -120,9 +125,7 @@ export default function SoccerMatchPage() {
           {hasInfoPanel && <MatchInfoPanel match={match} />}
 
           <SoccerBetSlip
-            items={betSlip}
-            onRemove={(id) => setBetSlip((prev) => prev.filter((item) => item.id !== id))}
-            onClear={() => setBetSlip([])}
+            currentMatchId={match.id}
             suspendedMarkets={suspendedMarkets}
             matchStatus={match.status}
           />
