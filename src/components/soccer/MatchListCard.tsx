@@ -7,7 +7,7 @@ interface Props {
 
 export default function MatchListCard({ match }: Props) {
   const navigate = useNavigate()
-  const homeTab = match.tabs.find((t) => t.id === 'home')
+  const homeTab = match.tabs.find((t) => t.id === 'home') ?? match.tabs.find((t) => t.id === 'all') ?? match.tabs[0]
   const markets = homeTab?.markets ?? []
 
   const oneXTwo = markets.find((m) => m.type === 'buttonGroup' && m.title === '胜平负')
