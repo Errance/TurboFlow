@@ -28,9 +28,48 @@ function matchWith(status: SoccerMatch['status'], overrides: Partial<SoccerMatch
 
 const allMarkets = sourceMatch.tabs.flatMap((tab) => tab.markets)
 
-function marketByTitle(title: string): Market {
+const demoPlayerMarket: Market = {
+  type: 'playerList',
+  title: '任何时间进球队员',
+  tiers: [''],
+  players: [
+    { name: 'Pedro', odds: [2.45] },
+    { name: 'Gabriel Barbosa', odds: [2.80] },
+    { name: 'Bruno Henrique', odds: [3.20] },
+    { name: 'Arrascaeta', odds: [4.10] },
+  ],
+}
+
+const demoComboMarket: Market = {
+  type: 'comboGrid',
+  title: '1x2 & 合计',
+  rowHeaders: ['主胜', '平局', '客胜'],
+  colHeaders: ['低于 2.5', '高于 2.5'],
+  cells: [
+    { label: '主胜 & <2.5', odds: 4.60 },
+    { label: '主胜 & >2.5', odds: 3.55 },
+    { label: '平局 & <2.5', odds: 3.95 },
+    { label: '平局 & >2.5', odds: 13.00 },
+    { label: '客胜 & <2.5', odds: 6.20 },
+    { label: '客胜 & >2.5', odds: 5.20 },
+  ],
+}
+
+const demoCornerMarket: Market = {
+  type: 'oddsTable',
+  title: '角球总数',
+  columns: ['高于', '低于'],
+  rows: [
+    { line: '8.5', odds: [1.86, 1.94] },
+    { line: '9.5', odds: [2.10, 1.74] },
+    { line: '10.5', odds: [2.42, 1.56] },
+  ],
+}
+
+function marketByTitle(title: string, fallback?: Market): Market {
   const market = allMarkets.find((item) => item.title === title)
-  if (!market) throw new Error(`Design board market not found: ${title}`)
+  if (!market && fallback) return clone(fallback)
+  if (!market) return clone(marketByTitle('胜平负'))
   return clone(market)
 }
 
@@ -88,8 +127,8 @@ const marketTypeScenarios: Array<{ label: string; note: string; market: Market; 
   { label: '按钮组', note: '用于胜平负、是否、单双等少量选项。', market: marketByTitle('胜平负'), selected: true },
   { label: '赔率表', note: '用于大小球、让球等带线值盘口。', market: marketByTitle('合计') },
   { label: '比分网格', note: '用于正确比分。', market: marketByTitle('正确进球') },
-  { label: '球员列表', note: '用于任意时间、首个、最后进球队员。', market: marketByTitle('任何时间进球队员') },
-  { label: '组合网格', note: '用于赛果和总进球等组合判断。', market: marketByTitle('1x2 & 合计') },
+  { label: '球员列表', note: '用于任意时间、首个、最后进球队员。', market: marketByTitle('任何时间进球队员', demoPlayerMarket) },
+  { label: '组合网格', note: '用于赛果和总进球等组合判断。', market: marketByTitle('1x2 & 合计', demoComboMarket) },
   { label: '范围按钮', note: '用于总进球数、进球范围、首球时间。', market: marketByTitle('总进球数') },
 ]
 
@@ -331,7 +370,7 @@ export default function SoccerDesignBoardPage() {
             <MarketRenderer market={marketWith('合计', { status: 'suspended' })} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} />
           </StateCard>
           <StateCard title="非进球盘口" description="角球总数和红黄牌总数按自身状态处理。">
-            <MarketRenderer market={marketByTitle('角球总数')} displayTitle="角球总数" matchId={liveSourceMatch.id} onSelect={noop} />
+            <MarketRenderer market={marketByTitle('角球总数', demoCornerMarket)} displayTitle="角球总数" matchId={liveSourceMatch.id} onSelect={noop} />
           </StateCard>
         </div>
       </BoardSection>
