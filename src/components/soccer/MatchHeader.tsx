@@ -25,9 +25,9 @@ export default function MatchHeader({ match }: Props) {
 
   const statusBadge = (() => {
     switch (match.status) {
-      case 'live': return <Badge variant="danger">LIVE</Badge>
+      case 'live': return <Badge variant="danger">进行中</Badge>
       case 'scheduled': return <Badge variant="success">即将开赛</Badge>
-      case 'finished': return <Badge variant="neutral">ENDED</Badge>
+      case 'finished': return <Badge variant="neutral">已结束</Badge>
       case 'interrupted': return <Badge variant="warning">中断</Badge>
       case 'abandoned': return <Badge variant="warning">腰斩</Badge>
       case 'postponed': return <Badge variant="warning">延期</Badge>

@@ -21,11 +21,11 @@ export interface SystemBetProjection {
 }
 
 const SYSTEM_META: Record<SystemType, { label: string; requiredLegs: number; sizes: number[] }> = {
-  patent: { label: 'Patent', requiredLegs: 3, sizes: [1, 2, 3] },
-  trixie: { label: 'Trixie', requiredLegs: 3, sizes: [2, 3] },
-  yankee: { label: 'Yankee', requiredLegs: 4, sizes: [2, 3, 4] },
-  lucky15: { label: 'Lucky 15', requiredLegs: 4, sizes: [1, 2, 3, 4] },
-  heinz: { label: 'Heinz', requiredLegs: 6, sizes: [2, 3, 4, 5, 6] },
+  patent: { label: '三项全包复式', requiredLegs: 3, sizes: [1, 2, 3] },
+  trixie: { label: '三项复式', requiredLegs: 3, sizes: [2, 3] },
+  yankee: { label: '四项复式', requiredLegs: 4, sizes: [2, 3, 4] },
+  lucky15: { label: '四项全包复式', requiredLegs: 4, sizes: [1, 2, 3, 4] },
+  heinz: { label: '六项复式', requiredLegs: 6, sizes: [2, 3, 4, 5, 6] },
 }
 
 function combinations<T>(items: T[], size: number): T[][] {

@@ -164,7 +164,7 @@ export default function DepthChart({ className }: { className?: string }) {
   if (bids.length === 0 && asks.length === 0) {
     return (
       <div className={`flex items-center justify-center h-[200px] text-sm text-[var(--text-secondary)] ${className ?? ''}`}>
-        No depth data
+        暂无深度数据
       </div>
     )
   }

@@ -105,8 +105,8 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {sports.status === 'live' && <Badge variant="danger">LIVE</Badge>}
-          {isCancelled && <Badge variant="neutral">Cancelled</Badge>}
+          {sports.status === 'live' && <Badge variant="danger">进行中</Badge>}
+          {isCancelled && <Badge variant="neutral">已取消</Badge>}
           <span className="text-xs text-[var(--text-secondary)]">
             {sports.status === 'scheduled' ? formatGameTime(sports.gameTime) : sports.league}
           </span>
@@ -139,9 +139,9 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
 
       {!isCancelled && (
         <div className="border-t border-[var(--border)] pt-2 space-y-0.5">
-          <BettingLine label="ML" contracts={moneyline} onTrade={handleTrade} disabled={isDisabled} />
-          <BettingLine label="Spread" contracts={spread} onTrade={handleTrade} disabled={isDisabled} />
-          <BettingLine label="Total" contracts={total} onTrade={handleTrade} disabled={isDisabled} />
+          <BettingLine label="胜负盘" contracts={moneyline} onTrade={handleTrade} disabled={isDisabled} />
+          <BettingLine label="让分盘" contracts={spread} onTrade={handleTrade} disabled={isDisabled} />
+          <BettingLine label="大小盘" contracts={total} onTrade={handleTrade} disabled={isDisabled} />
         </div>
       )}
 
@@ -152,7 +152,7 @@ export default function SportsGameCard({ event }: { event: PredictionEvent }) {
       )}
 
       <div className="flex justify-end mt-2">
-        <span className="text-[10px] text-[#2DD4BF]">Game View →</span>
+        <span className="text-[10px] text-[#2DD4BF]">查看比赛 →</span>
       </div>
     </div>
   )

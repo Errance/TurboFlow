@@ -20,7 +20,7 @@ function formatVolume(v: number): string {
 }
 
 function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function statusBadgeVariant(status: PredictionEvent['status']): 'success' | 'warning' | 'danger' | 'neutral' {
@@ -53,9 +53,9 @@ function ContractRow({ contract, onYes, onNo, isMutuallyExclusive }: {
     <div className="flex items-center justify-between gap-2 py-1.5">
       <span className="text-xs text-[var(--text-secondary)] truncate flex-1">{contract.label}</span>
       <div className="flex gap-1.5">
-        <ProbabilityButton label="Yes" probability={contract.probability} variant="yes" onClick={onYes} />
-        <ProbabilityButton label="No" probability={Math.round((1 - contract.yesPrice) * 100)} variant="no" onClick={onNo}
-          tooltip={isMutuallyExclusive ? `Buy NO: Betting "${contract.label}" will NOT be the final result` : undefined} />
+        <ProbabilityButton label="是" probability={contract.probability} variant="yes" onClick={onYes} />
+        <ProbabilityButton label="否" probability={Math.round((1 - contract.yesPrice) * 100)} variant="no" onClick={onNo}
+          tooltip={isMutuallyExclusive ? `选择“否”表示判断“${contract.label}”不会成为最终结果` : undefined} />
       </div>
     </div>
   )
@@ -328,6 +328,18 @@ const ASSET_CLASS_LABELS: Record<string, string> = {
   stocks: '股票',
   commodities: '大宗商品',
   forex: '外汇',
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  All: '全部',
+  Live: '实时预测',
+  Politics: '政治',
+  Economics: '经济',
+  Crypto: '加密资产',
+  Finance: '金融',
+  Tech: '科技',
+  Culture: '文化',
+  Sports: '体育',
 }
 
 function LiveSidebar({ allInstantEvents, assetClassFilter, setAssetClassFilter, liveStatusFilter, setLiveStatusFilter }: {
@@ -756,7 +768,7 @@ export default function EventsPage() {
               selectedCategory === cat ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
             }`}>
             {cat === 'Live' && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" /></span>}
-            {cat}
+            {CATEGORY_LABELS[cat] ?? cat}
           </button>
         ))}
       </div>
@@ -822,7 +834,7 @@ export default function EventsPage() {
           <div className="fixed inset-0 bg-[var(--overlay-bg)]" onClick={() => setMobileFilterOpen(false)} />
           <div className="fixed top-0 left-0 bottom-0 w-72 z-50 bg-[var(--bg-base)] border-r border-[var(--border)] overflow-y-auto animate-[slide-in-from-left_0.25s_ease-out]">
             <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Filters</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">筛选</span>
               <button onClick={() => setMobileFilterOpen(false)} className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>

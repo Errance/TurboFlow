@@ -14,7 +14,7 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
       {/* Previous meetings */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">Previous Meetings</h4>
+          <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">历史交锋</h4>
           <span className="text-[10px] text-[var(--text-secondary)]">
             {Math.ceil((h2h.homeWins + h2h.draws + h2h.awayWins) / 3)}/{Math.ceil(total / 3)}
           </span>
@@ -22,15 +22,15 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <p className="text-3xl font-bold text-emerald-400">{h2h.homeWins}</p>
-            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">Wins</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">胜</p>
           </div>
           <div className="flex-1 text-center">
             <p className="text-3xl font-bold text-[var(--text-secondary)]">{h2h.draws}</p>
-            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">Draws</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">平</p>
           </div>
           <div className="flex-1 text-center">
             <p className="text-3xl font-bold text-emerald-400">{h2h.awayWins}</p>
-            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">Wins</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase">胜</p>
           </div>
         </div>
         {/* Team labels */}
@@ -42,13 +42,13 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
 
       {/* Average Goals */}
       <div>
-        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Average Goals</h4>
+        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">场均进球</h4>
 
         {/* Scored */}
         <div className="mb-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-bold text-emerald-400">{h2h.avgGoals.homeScored}</span>
-            <span className="text-[10px] text-[var(--text-secondary)] uppercase">Scored</span>
+            <span className="text-[10px] text-[var(--text-secondary)] uppercase">进球</span>
             <span className="text-sm font-bold text-emerald-400">{h2h.avgGoals.awayScored}</span>
           </div>
           <div className="flex h-2 rounded-full overflow-hidden bg-[var(--bg-control)]">
@@ -67,7 +67,7 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-bold text-red-400">{h2h.avgGoals.homeConceded}</span>
-            <span className="text-[10px] text-[var(--text-secondary)] uppercase">Conceded</span>
+            <span className="text-[10px] text-[var(--text-secondary)] uppercase">失球</span>
             <span className="text-sm font-bold text-red-400">{h2h.avgGoals.awayConceded}</span>
           </div>
           <div className="flex h-2 rounded-full overflow-hidden bg-[var(--bg-control)]">
@@ -85,7 +85,7 @@ export default function HeadToHeadPanel({ h2h, homeShort, awayShort }: Props) {
 
       {/* Recent matches list */}
       <div>
-        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-2">Recent Results</h4>
+        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-2">近期赛果</h4>
         <div className="space-y-1.5">
           {h2h.matches.slice(0, 5).map((m, i) => (
             <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-[var(--bg-control)]/50 text-xs">

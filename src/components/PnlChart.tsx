@@ -26,10 +26,10 @@ function formatDate(timeStr: string, range: PnlRange): string {
   if (range === '1D' && timeStr.includes(' ')) {
     const [datePart, timePart] = timeStr.split(' ')
     const d = new Date(datePart)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + timePart
+    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + timePart
   }
   const d = new Date(timeStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 interface Props {
@@ -149,7 +149,7 @@ export default function PnlChart({ className, portfolioValue }: Props) {
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: isPositive ? '#2DD4BF' : '#E85A7E' }}
             />
-            <span className="text-xs font-medium text-[var(--text-secondary)]">P&L</span>
+            <span className="text-xs font-medium text-[var(--text-secondary)]">盈亏</span>
           </div>
           <div className="flex gap-1 bg-[var(--bg-control)] rounded-lg p-0.5">
             {RANGES.map((r) => (
@@ -183,7 +183,7 @@ export default function PnlChart({ className, portfolioValue }: Props) {
 
       {/* Footer: Portfolio Value */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
-        <span className="text-xs text-[var(--text-secondary)]">Portfolio Value</span>
+        <span className="text-xs text-[var(--text-secondary)]">资产总值</span>
         <span className="text-sm font-bold font-mono tabular-nums text-[var(--text-primary)]">
           ${portfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>

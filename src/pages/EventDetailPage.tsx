@@ -91,6 +91,22 @@ function actionLabel(action: string): string {
   return map[action] ?? action
 }
 
+function eventStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    OPEN: '开放',
+    CLOSED: '已关闭',
+    RESOLVING: '结算中',
+    SETTLED: '已结算',
+    CANCELLED: '已取消',
+    VOIDED: '已作废',
+    normal: '正常',
+    paused: '已暂停',
+    disputed: '争议处理中',
+    delayed: '延迟处理',
+  }
+  return map[status] ?? status
+}
+
 // ── RulesSummaryCard ────────────────────────────────────────────
 
 function RulesSummaryCard({ event }: { event: PredictionEvent }) {
@@ -216,7 +232,7 @@ function EventSummaryCard({ event }: { event: PredictionEvent }) {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full text-left"
       >
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Summary & Key Points</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">事件摘要与要点</h3>
         <svg
           className={`w-4 h-4 text-[var(--text-secondary)] transition-transform ${expanded ? 'rotate-180' : ''}`}
           viewBox="0 0 16 16" fill="none"
@@ -231,7 +247,7 @@ function EventSummaryCard({ event }: { event: PredictionEvent }) {
           )}
           {event.keyPoints && event.keyPoints.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-[#2DD4BF] mb-1.5">Key Points</p>
+              <p className="text-xs font-semibold text-[#2DD4BF] mb-1.5">关键要点</p>
               <ul className="space-y-1.5">
                 {event.keyPoints.map((point, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-[#C0C0D0]">
@@ -255,8 +271,8 @@ function OutcomeModelHint({ event }: { event: PredictionEvent }) {
   return (
     <div className="bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2 mb-4">
       <p className="text-xs text-[var(--text-secondary)]">
-        <span className="text-[#F59E0B] font-medium">Mutually exclusive: </span>
-        Only one option will settle YES; all others settle NO.
+        <span className="text-[#F59E0B] font-medium">唯一结果市场：</span>
+        仅一个选项会按“是”结算，其余选项按“否”结算。
         因买卖价差存在，“是”方向概率合计可能不等于 100%。
       </p>
     </div>
@@ -307,7 +323,7 @@ function ContractTableRow({
         <p className="text-sm text-[var(--text-primary)] truncate">{contract.label}</p>
         {contract.settlementResult && (
           <Badge variant={contract.settlementResult === 'YES' ? 'success' : 'danger'} className="mt-0.5">
-            {contract.settlementResult}
+            {contract.settlementResult === 'YES' ? '是' : '否'}
           </Badge>
         )}
       </div>
@@ -334,7 +350,7 @@ function ContractTableRow({
         <button
           onClick={() => !disabled && onSelect(contract.id, 'NO')}
           disabled={disabled}
-          title={isMutuallyExclusive ? `Buy NO: Betting "${contract.label}" will NOT be the final result` : undefined}
+          title={isMutuallyExclusive ? `选择“否”表示判断“${contract.label}”不会成为最终结果` : undefined}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] min-w-[56px] transition-colors ${
             disabled
               ? 'bg-[var(--border)] text-[var(--text-secondary)] cursor-not-allowed'
@@ -401,13 +417,11 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
             <path d="M6.5 10l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="text-sm font-semibold text-[var(--text-primary)]">
-            {type === 'settle' ? 'Settlement Request Submitted' : 'Issue Report Submitted'}
+            {type === 'settle' ? '结算申请已提交' : '问题反馈已提交'}
           </span>
         </div>
         <p className="text-xs text-[var(--text-secondary)]">
-          Your {type === 'settle' ? 'settlement request' : 'issue report'} has been recorded.
-          Our team will review it and update the event status accordingly.
-          Expected response time: 24-48 hours.
+          我们已记录你的{type === 'settle' ? '结算申请' : '问题反馈'}，团队会完成复核并更新事件状态。预计 24-48 小时内给出处理结果。
         </p>
       </div>
     )
@@ -415,7 +429,7 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Request Action</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">申请处理</h3>
       <div className="flex gap-2 mb-3">
         <button
           onClick={() => setType('settle')}
@@ -425,7 +439,7 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
               : 'bg-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Request Settlement
+          申请结算
         </button>
         <button
           onClick={() => setType('issue')}
@@ -435,31 +449,31 @@ function RequestSettlePanel({ event }: { event: PredictionEvent }) {
               : 'bg-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Report Issue
+          反馈问题
         </button>
       </div>
       <p className="text-xs text-[var(--text-secondary)] mb-3">
         {type === 'settle'
-          ? 'If you believe this event has a clear outcome, you can request settlement. Provide evidence or a reference link below.'
-          : 'Report an issue with this event (e.g., incorrect resolution source, delayed data, rule discrepancy).'}
+          ? '如果你认为事件结果已经明确，可以提交结算申请，并在下方提供证据或参考链接。'
+          : '如果该事件存在结算来源错误、数据延迟或规则口径不一致等问题，可以在下方反馈。'}
       </p>
       <textarea
         className="w-full bg-[#0D0D19] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
         rows={3}
-        placeholder={type === 'settle' ? 'Provide evidence or reference link...' : 'Describe the issue...'}
+        placeholder={type === 'settle' ? '请输入证据或参考链接' : '请描述你遇到的问题'}
         value={details}
         onChange={(e) => setDetails(e.target.value)}
       />
       <div className="flex items-center justify-between mt-3">
         <span className="text-[10px] text-[var(--text-secondary)]">
-          Event status: {event.status} / {event.statusInfo.subStatus}
+          当前状态：{eventStatusLabel(event.status)} / {eventStatusLabel(event.statusInfo.subStatus)}
         </span>
         <Button
           variant="primary"
           size="sm"
           onClick={() => setSubmitted(true)}
         >
-          Submit
+          提交
         </Button>
       </div>
     </div>
@@ -635,7 +649,7 @@ export default function EventDetailPage() {
           {/* Probability chart */}
           {event.contracts.length > 0 && (
             <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Probability History</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">概率走势</h3>
               <PriceChart
                 marketId={selectedContractId || event.contracts[0].id}
                 className=""
@@ -651,14 +665,14 @@ export default function EventDetailPage() {
           {hasDispute && (
             <div className="mb-6">
               <Button variant="secondary" size="sm" onClick={() => setDisputeDrawerOpen(true)}>
-                View Dispute Details
+                查看争议详情
               </Button>
             </div>
           )}
 
           {/* Market context below trading actions */}
           <div className="mt-2">
-            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Market Context</p>
+            <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">市场说明</p>
             <RulesSummaryCard event={event} />
             <TimelinePayoutCard event={event} />
             <EventSummaryCard event={event} />
@@ -695,7 +709,7 @@ export default function EventDetailPage() {
       <SideDrawer
         isOpen={disputeDrawerOpen}
         onClose={() => setDisputeDrawerOpen(false)}
-        title="Dispute Details"
+        title="争议详情"
       >
         <DisputePanel statusInfo={event.statusInfo} onClose={() => setDisputeDrawerOpen(false)} />
       </SideDrawer>
@@ -704,7 +718,7 @@ export default function EventDetailPage() {
       <SideDrawer
         isOpen={appealDrawerOpen}
         onClose={() => setAppealDrawerOpen(false)}
-        title="Submit Appeal"
+        title="提交申诉"
       >
         <div className="space-y-4">
           {appealSubmitted ? (
@@ -714,22 +728,20 @@ export default function EventDetailPage() {
                   <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M6.5 10l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-sm font-semibold text-[#2DD4BF]">Appeal Submitted</span>
+                <span className="text-sm font-semibold text-[#2DD4BF]">申诉已提交</span>
               </div>
               <p className="text-xs text-[var(--text-secondary)]">
-                Your appeal has been recorded. The review team will evaluate your submission
-                and respond within 24-48 hours.
+                我们已记录你的申诉，复核团队会评估提交内容，并在 24-48 小时内回复。
               </p>
             </div>
           ) : (
             <>
               <p className="text-xs text-[var(--text-secondary)]">
-                If you believe the settlement result is incorrect, provide your reasoning and
-                any supporting evidence below.
+                如果你认为结算结果有误，请在下方说明原因并提供相关证据。
               </p>
               <div className="bg-[var(--bg-base)] rounded-lg p-3">
-                <p className="text-xs text-[var(--text-secondary)] mb-1">Current status</p>
-                <p className="text-sm text-[var(--text-primary)]">{event.statusInfo.status} — {event.statusInfo.subStatus}</p>
+                <p className="text-xs text-[var(--text-secondary)] mb-1">当前状态</p>
+                <p className="text-sm text-[var(--text-primary)]">{eventStatusLabel(event.statusInfo.status)} — {eventStatusLabel(event.statusInfo.subStatus)}</p>
                 {event.statusInfo.reason && (
                   <p className="text-xs text-[var(--text-secondary)] mt-1">{event.statusInfo.reason}</p>
                 )}
@@ -737,13 +749,13 @@ export default function EventDetailPage() {
               <textarea
                 className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
                 rows={4}
-                placeholder="Describe your appeal and provide evidence..."
+                placeholder="请描述申诉原因并提供证据"
                 value={appealText}
                 onChange={(e) => setAppealText(e.target.value)}
               />
               <div className="flex gap-2">
                 <Button variant="ghost" fullWidth size="sm" onClick={() => setAppealDrawerOpen(false)}>
-                  Cancel
+                  取消
                 </Button>
                 <Button
                   variant="primary"
@@ -752,10 +764,10 @@ export default function EventDetailPage() {
                   disabled={!appealText.trim()}
                   onClick={() => {
                     setAppealSubmitted(true)
-                    addToast({ type: 'success', message: 'Appeal submitted successfully' })
+                    addToast({ type: 'success', message: '申诉已提交' })
                   }}
                 >
-                  Submit Appeal
+                  提交申诉
                 </Button>
               </div>
             </>

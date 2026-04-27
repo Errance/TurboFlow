@@ -30,14 +30,14 @@ export default function ClobMatchListCard({ match }: Props) {
       <div className="w-12 shrink-0 text-center">
         {match.status === 'live' ? (
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] font-mono text-[#E85A7E] font-medium">LIVE</span>
+            <span className="text-[10px] font-mono text-[#E85A7E] font-medium">进行中</span>
             <span className="text-xs font-mono font-bold text-[var(--text-primary)]">
               {match.score?.home}-{match.score?.away}
             </span>
           </div>
         ) : match.status === 'finished' ? (
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] font-mono text-[var(--text-secondary)] font-medium">FT</span>
+            <span className="text-[10px] font-mono text-[var(--text-secondary)] font-medium">完赛</span>
             <span className="text-xs font-mono font-bold text-[var(--text-secondary)]">
               {match.score?.home}-{match.score?.away}
             </span>
@@ -66,10 +66,10 @@ export default function ClobMatchListCard({ match }: Props) {
         <PriceCell label="2" price={match.moneyline.away} />
       </div>
 
-      {/* O/U */}
+      {/* Total */}
       <div className="hidden md:flex items-center gap-1 shrink-0">
-        <PriceCell label={`O ${match.totalLine.line}`} price={match.totalLine.overPrice} />
-        <PriceCell label={`U ${match.totalLine.line}`} price={match.totalLine.underPrice} />
+        <PriceCell label={`高于 ${match.totalLine.line}`} price={match.totalLine.overPrice} />
+        <PriceCell label={`低于 ${match.totalLine.line}`} price={match.totalLine.underPrice} />
       </div>
 
       {/* Asian */}

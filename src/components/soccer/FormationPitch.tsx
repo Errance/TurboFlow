@@ -133,7 +133,7 @@ export default function FormationPitch({ homeLineup, awayLineup, homeShort, away
           </svg>
           <span>{lineup.manager}</span>
         </div>
-        <span className="text-[10px] text-[var(--text-secondary)]/60">Manager</span>
+        <span className="text-[10px] text-[var(--text-secondary)]/60">主教练</span>
       </div>
 
       {/* Substitutes */}

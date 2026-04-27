@@ -63,7 +63,7 @@ export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerPr
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-[var(--text-secondary)]">开始处理时间</span>
-            <span className="text-[var(--text-primary)]">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="text-[var(--text-primary)]">{new Date().toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
       )}

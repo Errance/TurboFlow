@@ -25,13 +25,13 @@ export default function MatchListCard({ match }: Props) {
           <div className="flex flex-col items-center gap-0.5">
             <span className="flex items-center gap-1 text-[10px] font-mono text-[#E85A7E] font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse" />
-              LIVE
+              进行中
             </span>
             <span className="text-xs font-mono font-bold text-[var(--text-primary)]">{match.score?.home}-{match.score?.away}</span>
           </div>
         ) : match.status === 'finished' ? (
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] font-mono text-[var(--text-secondary)] font-medium">FT</span>
+            <span className="text-[10px] font-mono text-[var(--text-secondary)] font-medium">完赛</span>
             <span className="text-xs font-mono font-bold text-[var(--text-secondary)]">{match.score?.home}-{match.score?.away}</span>
           </div>
         ) : (
@@ -63,11 +63,11 @@ export default function MatchListCard({ match }: Props) {
         {totalsRow && (
           <>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">O 2.5</span>
+              <span className="text-[9px] text-[var(--text-secondary)]">高于 2.5</span>
               <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[0].toFixed(2)}</span>
             </div>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">U 2.5</span>
+              <span className="text-[9px] text-[var(--text-secondary)]">低于 2.5</span>
               <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[1].toFixed(2)}</span>
             </div>
           </>

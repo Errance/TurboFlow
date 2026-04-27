@@ -32,9 +32,9 @@ export default function SportsSidebar({
   liveCountBySport,
 }: SportsSidebarProps) {
   const tabs: { id: SportsTab; label: string }[] = [
-    { id: 'upcoming', label: 'Upcoming' },
-    { id: 'live', label: 'Live' },
-    { id: 'results', label: 'Results' },
+    { id: 'upcoming', label: '即将开始' },
+    { id: 'live', label: '进行中' },
+    { id: 'results', label: '赛果' },
   ]
 
   return (
@@ -64,7 +64,7 @@ export default function SportsSidebar({
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
           }`}
         >
-          <span>All Sports</span>
+          <span>全部体育</span>
         </button>
 
         {sportTypes.filter((s) => s !== 'All').map((sport) => {
@@ -97,7 +97,7 @@ export default function SportsSidebar({
                 </div>
                 <div className="flex items-center gap-1.5">
                   {liveCount > 0 && (
-                    <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} live</span>
+                    <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} 场进行中</span>
                   )}
                   <span className="text-[10px] text-[var(--text-secondary)] font-mono">{count}</span>
                 </div>
@@ -113,7 +113,7 @@ export default function SportsSidebar({
                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
                     }`}
                   >
-                    All {sport}
+                    全部 {sport}
                   </button>
                   {leagues.map((league) => {
                     const leagueCount = eventCountByLeague[`${sport}:${league}`] ?? 0

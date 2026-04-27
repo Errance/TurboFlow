@@ -9,10 +9,10 @@ interface DisputePanelProps {
 }
 
 const MOCK_DISPUTE_TIMELINE = [
-  { label: 'Dispute Filed', date: 'Mar 16, 2026 08:00', done: true },
-  { label: 'Evidence Collection', date: 'Mar 16–18', done: true },
-  { label: 'Community Review', date: 'Mar 18–19', done: false },
-  { label: 'Final Resolution', date: 'Expected Mar 20', done: false },
+  { label: '争议已提交', date: '2026年3月16日 08:00', done: true },
+  { label: '证据收集中', date: '3月16日-18日', done: true },
+  { label: '社区复核中', date: '3月18日-19日', done: false },
+  { label: '最终处理结果', date: '预计3月20日', done: false },
 ]
 
 export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps) {
@@ -25,8 +25,8 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
       {/* Status */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="danger">Dispute Active</Badge>
-          <span className="text-xs text-[var(--text-secondary)]">Updated {statusInfo.updatedAt ? new Date(statusInfo.updatedAt).toLocaleDateString() : 'recently'}</span>
+          <Badge variant="danger">争议处理中</Badge>
+          <span className="text-xs text-[var(--text-secondary)]">更新时间：{statusInfo.updatedAt ? new Date(statusInfo.updatedAt).toLocaleDateString('zh-CN') : '最近更新'}</span>
         </div>
         <p className="text-sm text-[var(--text-primary)]">{statusInfo.reason}</p>
         {statusInfo.reasonDetail && (
@@ -36,7 +36,7 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
 
       {/* Timeline */}
       <div>
-        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-3">Dispute Timeline</h4>
+        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-3">争议处理进度</h4>
         <div className="space-y-0">
           {MOCK_DISPUTE_TIMELINE.map((step, i) => (
             <div key={step.label} className="flex gap-3">
@@ -57,15 +57,15 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
 
       {/* Arguments summary */}
       <div>
-        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">Dispute Arguments</h4>
+        <h4 className="text-sm font-medium text-[var(--text-primary)] mb-2">争议观点</h4>
         <div className="space-y-2">
           <div className="bg-[var(--bg-base)] rounded-lg p-3">
-            <p className="text-xs text-[var(--text-secondary)] mb-1">Original Resolution (YES)</p>
-            <p className="text-xs text-[var(--text-primary)]">Reports confirm a US military operation occurred near the target area on March 15, 2026.</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-1">原结算结果（是）</p>
+            <p className="text-xs text-[var(--text-primary)]">已有报告确认 2026 年 3 月 15 日目标区域附近发生军事行动。</p>
           </div>
           <div className="bg-[var(--bg-base)] rounded-lg p-3">
-            <p className="text-xs text-[var(--text-secondary)] mb-1">Dispute Argument (NO)</p>
-            <p className="text-xs text-[var(--text-primary)]">Multiple sources indicate the strike targeted a proxy site on Iraqi territory, not Iranian soil as specified in the contract rules.</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-1">争议观点（否）</p>
+            <p className="text-xs text-[var(--text-primary)]">多方来源显示打击目标位于伊拉克境内代理设施，并非合约规则所述的伊朗本土。</p>
           </div>
         </div>
       </div>
@@ -78,22 +78,22 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
               <path d="M5.5 8l2 2 3.5-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-xs font-medium text-[#2DD4BF]">Evidence Submitted</span>
+            <span className="text-xs font-medium text-[#2DD4BF]">证据已提交</span>
           </div>
-          <p className="text-xs text-[var(--text-secondary)]">Your evidence has been recorded and will be reviewed during the community review phase.</p>
+          <p className="text-xs text-[var(--text-secondary)]">我们已记录你的证据，并会在社区复核阶段一并查看。</p>
         </div>
       ) : showEvidenceForm ? (
         <div className="space-y-3">
           <textarea
             className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#2DD4BF]/50 resize-none"
             rows={3}
-            placeholder="Provide your evidence or reference links..."
+            placeholder="请提供证据或参考链接"
             value={evidenceText}
             onChange={(e) => setEvidenceText(e.target.value)}
           />
           <div className="flex gap-2">
             <Button variant="ghost" fullWidth size="sm" onClick={() => setShowEvidenceForm(false)}>
-              Cancel
+              取消
             </Button>
             <Button
               variant="primary"
@@ -102,17 +102,17 @@ export default function DisputePanel({ statusInfo, onClose }: DisputePanelProps)
               disabled={!evidenceText.trim()}
               onClick={() => setEvidenceSubmitted(true)}
             >
-              Submit
+              提交
             </Button>
           </div>
         </div>
       ) : (
         <div className="flex gap-2">
           <Button variant="secondary" fullWidth size="sm" onClick={() => setShowEvidenceForm(true)}>
-            Submit Evidence
+            提交证据
           </Button>
           <Button variant="ghost" fullWidth size="sm" onClick={onClose}>
-            Close
+            关闭
           </Button>
         </div>
       )}

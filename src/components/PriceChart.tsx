@@ -59,14 +59,14 @@ export default function PriceChart({ marketId, className }: Props) {
     const yesSeries = chart.addSeries(LineSeries, {
       color: '#2DD4BF',
       lineWidth: 2,
-      title: 'YES',
+      title: '是',
       priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(2)}` },
     })
 
     const noSeries = chart.addSeries(LineSeries, {
       color: '#E85A7E',
       lineWidth: 2,
-      title: 'NO',
+      title: '否',
       priceFormat: { type: 'custom', formatter: (p: number) => `${p.toFixed(2)}` },
     })
 
@@ -95,8 +95,8 @@ export default function PriceChart({ marketId, className }: Props) {
   return (
     <div className={className}>
       <div className="flex items-center gap-4 mb-2">
-        <span className="text-xs font-medium text-[#2DD4BF]">● YES</span>
-        <span className="text-xs font-medium text-[#E85A7E]">● NO</span>
+        <span className="text-xs font-medium text-[#2DD4BF]">● 是</span>
+        <span className="text-xs font-medium text-[#E85A7E]">● 否</span>
       </div>
       <div
         ref={containerRef}

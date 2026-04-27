@@ -67,8 +67,8 @@ interface HistoryItem {
 
 function formatTime(iso: string): string {
   const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-    ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
 function HistoryTab() {
@@ -157,7 +157,7 @@ function HistoryTab() {
   const grouped = useMemo(() => {
     const groups: Record<string, HistoryItem[]> = {}
     for (const item of filtered) {
-      const dateKey = new Date(item.timestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      const dateKey = new Date(item.timestamp).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', year: 'numeric' })
       if (!groups[dateKey]) groups[dateKey] = []
       groups[dateKey].push(item)
     }
@@ -231,7 +231,7 @@ function HistoryTab() {
                       className="grid grid-cols-2 md:grid-cols-8 gap-2 px-4 py-3 text-sm border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--border)]/30 transition-colors"
                     >
                       <span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
-                        {new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <span><Badge variant={kb.variant}>{kb.label}</Badge></span>
                       <span>
@@ -584,8 +584,8 @@ function ParlayGroupCard({
                 1 ÷ ({parlay.legs.map((l) => l.price.toFixed(2)).join(' × ')}) = {parlay.combinedOdds.toFixed(2)}x
               </p>
               <p className="text-[10px] text-[var(--text-secondary)]">
-                提交时间 {new Date(parlay.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{' '}
-                {new Date(parlay.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                提交时间 {new Date(parlay.createdAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}{' '}
+                {new Date(parlay.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           )}
@@ -669,7 +669,7 @@ function PositionDetailContent({ position, onClose }: { position: Position; onCl
                   </span>
                 </div>
                 <span className="text-xs text-[var(--text-secondary)]">
-                  {new Date(t.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(t.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             ))}

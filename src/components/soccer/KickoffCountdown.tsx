@@ -23,15 +23,15 @@ export default function KickoffCountdown({ kickoffDate }: Props) {
   }, [kickoffDate])
 
   const blocks: [string, string][] = [
-    [String(time.days), 'Days'],
-    [String(time.hours).padStart(2, '0'), 'Hrs'],
-    [String(time.mins).padStart(2, '0'), 'Mins'],
-    [String(time.secs).padStart(2, '0'), 'Secs'],
+    [String(time.days), '天'],
+    [String(time.hours).padStart(2, '0'), '小时'],
+    [String(time.mins).padStart(2, '0'), '分钟'],
+    [String(time.secs).padStart(2, '0'), '秒'],
   ]
 
   return (
     <div className="text-center py-3">
-      <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Kickoff time</p>
+      <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wider">距离开赛</p>
       <div className="flex items-center justify-center gap-3">
         {blocks.map(([value, label]) => (
           <div key={label} className="flex flex-col items-center">

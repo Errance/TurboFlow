@@ -22,7 +22,7 @@ export default function MatchStatsBar({ stats, homeShort, awayShort }: Props) {
     <div className="px-3 py-4 space-y-3">
       <div className="flex items-center justify-between text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
         <span>{homeShort}</span>
-        <span>Statistics</span>
+        <span>比赛统计</span>
         <span>{awayShort}</span>
       </div>
 

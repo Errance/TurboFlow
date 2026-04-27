@@ -122,9 +122,9 @@ export default function MarketRenderer({
               market.settlementResult === 'loss' ? 'text-red-400' : 'text-emerald-400'
             }`}>
               {market.settlementResult === 'loss' && '未命中'}
-              {market.settlementResult === 'win' && `结算: ${market.winningSelection}`}
+              {market.settlementResult === 'win' && `结算结果：${market.winningSelection}`}
               {market.settlementResult === 'void' && '作废退款'}
-              {market.settlementResult === 'push' && '退款 (Push)'}
+              {market.settlementResult === 'push' && '走盘退款'}
               {!market.settlementResult && '已结算'}
             </span>
           </div>
@@ -133,7 +133,7 @@ export default function MarketRenderer({
         {status === 'corrected' && market.winningSelection && (
           <div className="mt-2 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <span className="text-xs text-amber-400 font-medium">
-              结果已修正: {market.winningSelection}
+              结果已修正：{market.winningSelection}
             </span>
           </div>
         )}

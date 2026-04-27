@@ -118,9 +118,9 @@ export default function SportsGamePage() {
   if (!event || !event.sports) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
-        <p className="text-[var(--text-secondary)]">Game not found</p>
+        <p className="text-[var(--text-secondary)]">未找到该场比赛</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
-          Back to Sports
+          返回体育赛事
         </Button>
       </div>
     )
@@ -237,29 +237,29 @@ export default function SportsGamePage() {
           {/* Betting lines */}
           <div className="space-y-3">
             <BettingLineRow label="胜负盘" contracts={moneyline} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
-            <BettingLineRow label="Spread" contracts={spread} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
-            <BettingLineRow label="Total" contracts={total} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="让分盘" contracts={spread} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="大小盘" contracts={total} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             {other.length > 0 && (
-              <BettingLineRow label="Other Props" contracts={other} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+              <BettingLineRow label="其他玩法" contracts={other} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             )}
           </div>
 
           {/* Rules (collapsed) */}
           <details className="mt-4">
             <summary className="text-xs text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors py-2">
-              Rules & Settlement
+              规则与结算
             </summary>
             <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mt-1 space-y-2">
               <div className="flex gap-2">
-                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">Measurement</span>
+                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">判定口径</span>
                 <span className="text-xs text-[var(--text-primary)]">{event.rulesMeasurement}</span>
               </div>
               <div className="flex gap-2">
-                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">Closing</span>
+                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">关闭时间</span>
                 <span className="text-xs text-[var(--text-primary)]">{event.rulesClosing}</span>
               </div>
               <div className="flex gap-2">
-                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">Source</span>
+                <span className="text-xs text-[var(--text-secondary)] shrink-0 w-20">结算来源</span>
                 <span className="text-xs text-[var(--text-primary)]">{event.resolutionSource}</span>
               </div>
               {event.rulesDetail && (

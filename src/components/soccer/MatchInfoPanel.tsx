@@ -35,7 +35,7 @@ export default function MatchInfoPanel({ match }: Props) {
 
   const tabs: { id: InfoTab; label: string; available: boolean }[] = [
     { id: 'lineups', label: '阵容', available: hasLineups },
-    { id: 'h2h', label: 'H2H', available: hasH2H },
+    { id: 'h2h', label: '交锋', available: hasH2H },
     { id: 'stats', label: '统计', available: (hasStats || hasEvents) && match.status !== 'scheduled' },
   ]
 
@@ -82,13 +82,13 @@ export default function MatchInfoPanel({ match }: Props) {
           <div className="flex items-center gap-2">
             {match.status === 'live' && (
               <>
-                <Badge variant="danger">LIVE</Badge>
+                <Badge variant="danger">进行中</Badge>
                 {match.currentMinute && (
                   <span className="text-xs text-[var(--text-secondary)] font-mono">{match.currentMinute}'</span>
                 )}
               </>
             )}
-            {match.status === 'finished' && <Badge variant="neutral">ENDED</Badge>}
+            {match.status === 'finished' && <Badge variant="neutral">已结束</Badge>}
             {match.status === 'scheduled' && <Badge variant="success">即将开赛</Badge>}
             {match.status === 'interrupted' && <Badge variant="warning">中断</Badge>}
             {match.status === 'abandoned' && <Badge variant="warning">腰斩</Badge>}
@@ -158,7 +158,7 @@ export default function MatchInfoPanel({ match }: Props) {
       {/* Referee info */}
       {match.referee && (
         <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-          <span>Referee: {match.referee}</span>
+          <span>主裁判：{match.referee}</span>
         </div>
       )}
 

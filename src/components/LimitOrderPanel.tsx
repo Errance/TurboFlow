@@ -97,7 +97,7 @@ export default function LimitOrderPanel({
     )
     useToastStore.getState().addToast({
       type: 'success',
-      message: `Limit order placed: ${side} ${Math.round(sharesNum)} @ ${fmt(priceNum)} USDC`,
+      message: `限价委托已提交：${side === 'YES' ? '是' : '否'}，${Math.round(sharesNum)} 份，价格 ${fmt(priceNum)} USDC`,
     })
     setPrice('')
     setShares('')
@@ -115,12 +115,12 @@ export default function LimitOrderPanel({
       <div className="space-y-3">
         {/* Direction */}
         <div>
-          <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Direction</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1.5">方向</label>
           <SegmentedControl
             variant="yes-no"
             options={[
-              { id: 'YES', label: 'YES' },
-              { id: 'NO', label: 'NO' },
+              { id: 'YES', label: '是' },
+              { id: 'NO', label: '否' },
             ]}
             value={side}
             onChange={(v) => setSide(v as OrderSide)}
@@ -129,13 +129,13 @@ export default function LimitOrderPanel({
 
         {/* Market price reference */}
         <div className="flex justify-between text-xs">
-          <span className="text-[var(--text-secondary)]">Market price</span>
+          <span className="text-[var(--text-secondary)]">市场参考价</span>
           <span className="text-[var(--text-primary)] font-mono">{fmt(marketPrice)} USDC</span>
         </div>
 
         {/* Price per share */}
         <div>
-          <label className="block text-xs text-[var(--text-secondary)] mb-1">Price per share</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">每份价格</label>
           <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
             <input
               type="number"
@@ -153,7 +153,7 @@ export default function LimitOrderPanel({
 
         {/* Shares */}
         <div>
-          <label className="block text-xs text-[var(--text-secondary)] mb-1">Shares</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">份额</label>
           <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
             <input
               type="number"
@@ -164,7 +164,7 @@ export default function LimitOrderPanel({
               min="1"
               step="1"
             />
-            <span className="text-xs text-[var(--text-secondary)]">shares</span>
+            <span className="text-xs text-[var(--text-secondary)]">份</span>
           </div>
           <div className="flex gap-1.5 mt-1.5">
             {[25, 50, 75, 100].map((pct) => (
@@ -173,7 +173,7 @@ export default function LimitOrderPanel({
                 onClick={() => handlePercentClick(pct)}
                 className="flex-1 py-1 text-xs text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
               >
-                {pct === 100 ? 'Max' : `${pct}%`}
+                {pct === 100 ? '最大' : `${pct}%`}
               </button>
             ))}
           </div>
@@ -181,7 +181,7 @@ export default function LimitOrderPanel({
 
         {/* Total Cost */}
         <div>
-          <label className="block text-xs text-[var(--text-secondary)] mb-1">Total cost</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1">总成本</label>
           <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
             <span className="text-sm text-[var(--text-secondary)]">$</span>
             <input
@@ -199,7 +199,7 @@ export default function LimitOrderPanel({
 
         {/* Available balance */}
         <div className="flex justify-between text-xs">
-          <span className="text-[var(--text-secondary)]">Available</span>
+          <span className="text-[var(--text-secondary)]">可用余额</span>
           <span className="text-[var(--text-primary)] font-mono">{fmt(MOCK_BALANCE)} USDC</span>
         </div>
 
@@ -209,7 +209,7 @@ export default function LimitOrderPanel({
           className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
           <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▸</span>
-          Advanced: {tif}
+          高级设置：{tif}
         </button>
         {showAdvanced && (
           <select
@@ -217,8 +217,8 @@ export default function LimitOrderPanel({
             onChange={(e) => setTif(e.target.value)}
             className="w-full h-8 px-2 text-xs bg-[var(--bg-control)] text-[var(--text-primary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
           >
-            <option value="GTC">GTC (Good til Cancel)</option>
-            <option value="IOC">IOC (Immediate or Cancel)</option>
+            <option value="GTC">撤销前有效</option>
+            <option value="IOC">立即成交或取消</option>
           </select>
         )}
 
@@ -226,15 +226,15 @@ export default function LimitOrderPanel({
         {isValid && (
           <div className="bg-[var(--bg-base)] rounded-lg p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Est. payout</span>
+              <span className="text-[var(--text-secondary)]">预计返还</span>
               <span className="text-[#2DD4BF] font-mono">{fmt(sharesNum * 1)} USDC</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Total cost</span>
+              <span className="text-[var(--text-secondary)]">总成本</span>
               <span className="text-[var(--text-primary)] font-mono">{fmt(priceNum * sharesNum)} USDC</span>
             </div>
             <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
-              <span className="text-[var(--text-secondary)]">Est. profit</span>
+              <span className="text-[var(--text-secondary)]">预计净盈利</span>
               <span className={`font-mono font-medium ${(sharesNum - priceNum * sharesNum) >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                 {(sharesNum - priceNum * sharesNum) >= 0 ? '+' : ''}{fmt(sharesNum - priceNum * sharesNum)} USDC
               </span>
@@ -249,20 +249,20 @@ export default function LimitOrderPanel({
           onClick={handleSubmit}
         >
           {isValid
-            ? `Limit ${side} — ${Math.round(sharesNum)} @ ${fmt(priceNum)}`
-            : 'Place Limit Order'}
+            ? `提交${side === 'YES' ? '是' : '否'}限价委托 — ${Math.round(sharesNum)} 份 @ ${fmt(priceNum)}`
+            : '请输入价格和份额'}
         </Button>
       </div>
 
-      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Confirm Limit Order">
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="确认限价委托">
         <div className="space-y-4">
           <div className="space-y-2 text-sm">
             {[
-              ['Side', side, side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
-              ['Price', `${price} USDC`, 'text-[var(--text-primary)]'],
-              ['Shares', String(Math.round(sharesNum)), 'text-[var(--text-primary)]'],
-              ['Total', `${fmt(priceNum * sharesNum)} USDC`, 'text-[var(--text-primary)]'],
-              ['Time in Force', tif, 'text-[var(--text-primary)]'],
+              ['方向', side === 'YES' ? '是' : '否', side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
+              ['价格', `${price} USDC`, 'text-[var(--text-primary)]'],
+              ['份额', String(Math.round(sharesNum)), 'text-[var(--text-primary)]'],
+              ['总成本', `${fmt(priceNum * sharesNum)} USDC`, 'text-[var(--text-primary)]'],
+              ['有效期', tif === 'GTC' ? '撤销前有效' : '立即成交或取消', 'text-[var(--text-primary)]'],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between">
                 <span className="text-[var(--text-secondary)]">{label}</span>
@@ -272,10 +272,10 @@ export default function LimitOrderPanel({
           </div>
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" fullWidth onClick={() => setShowConfirm(false)}>
-              Cancel
+              取消
             </Button>
             <Button variant={side === 'YES' ? 'primary' : 'danger'} fullWidth onClick={handleConfirm}>
-              Confirm
+              确认
             </Button>
           </div>
         </div>

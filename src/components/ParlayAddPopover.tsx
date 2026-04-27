@@ -38,7 +38,7 @@ export default function ParlayAddPopover({ yesPrice, noPrice, probability, inPar
             ? 'bg-[#2DD4BF]/20 text-[#2DD4BF]'
             : 'text-[var(--text-secondary)] hover:text-[#2DD4BF] hover:bg-[var(--border)]'
         }`}
-        title={inParlay ? 'In Parlay — click to change' : 'Add to Parlay'}
+        title={inParlay ? '已加入串关，点击可调整' : '加入串关'}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           {inParlay ? (
@@ -51,19 +51,19 @@ export default function ParlayAddPopover({ yesPrice, noPrice, probability, inPar
 
       {open && (
         <div className="absolute bottom-full right-0 mb-1 z-50 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg shadow-xl p-1 min-w-[140px] animate-[fade-in_0.1s_ease-out]">
-          <p className="text-[10px] text-[var(--text-secondary)] px-2 py-1">Add to Parlay</p>
+          <p className="text-[10px] text-[var(--text-secondary)] px-2 py-1">加入串关</p>
           <button
             onClick={() => handleAdd('YES')}
             className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs hover:bg-[#2DD4BF]/10 transition-colors"
           >
-            <span className="text-[#2DD4BF] font-medium">YES</span>
+            <span className="text-[#2DD4BF] font-medium">是</span>
             <span className="text-[var(--text-secondary)] font-mono">{probability}% · {yesPrice.toFixed(2)}</span>
           </button>
           <button
             onClick={() => handleAdd('NO')}
             className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs hover:bg-[#E85A7E]/10 transition-colors"
           >
-            <span className="text-[#E85A7E] font-medium">NO</span>
+            <span className="text-[#E85A7E] font-medium">否</span>
             <span className="text-[var(--text-secondary)] font-mono">{noProb}% · {noPrice.toFixed(2)}</span>
           </button>
         </div>

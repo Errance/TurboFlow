@@ -163,7 +163,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
   const handlePrimaryClick = () => {
     if (stake < BETTING_LIMITS.minStake) {
-      addToast({ type: 'error', message: `单注不得低于 ${BETTING_LIMITS.minStake} USDT` })
+      addToast({ type: 'error', message: `投注金额需不低于 ${BETTING_LIMITS.minStake} USDT` })
       return
     }
     const shouldConfirm =
@@ -230,9 +230,9 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
     { id: 'system', label: '复式' },
   ]
   const systemTypes: { id: SystemType; label: string }[] = [
-    { id: 'trixie', label: 'Trixie' },
-    { id: 'patent', label: 'Patent' },
-    { id: 'yankee', label: 'Yankee' },
+    { id: 'trixie', label: '三项复式' },
+    { id: 'patent', label: '三项全包' },
+    { id: 'yankee', label: '四项复式' },
   ]
 
   return (
@@ -467,7 +467,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                                   <line x1="12" y1="8" x2="12" y2="12" />
                                   <line x1="12" y1="16" x2="12.01" y2="16" />
                                 </svg>
-                                {matchEnded ? '比赛不可用' : '盘口已关闭'}
+                                {matchEnded ? '该比赛暂不支持投注' : '盘口已关闭'}
                               </div>
                             )}
                           </div>

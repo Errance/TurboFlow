@@ -77,7 +77,7 @@ export default function ContractDetailPage() {
   if (!result || !legacyMarket || !contractId) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
-        <p className="text-[var(--text-secondary)]">Contract not found</p>
+        <p className="text-[var(--text-secondary)]">未找到该合约</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
           返回探索
         </Button>
@@ -128,7 +128,9 @@ export default function ContractDetailPage() {
           <span className={`text-sm font-mono ${contract.change24h >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
             {contract.change24h >= 0 ? '+' : ''}{contract.change24h.toFixed(1)}%
           </span>
-          <Badge variant={contract.status === 'OPEN' ? 'success' : 'neutral'}>{contract.status}</Badge>
+          <Badge variant={contract.status === 'OPEN' ? 'success' : 'neutral'}>
+            {contract.status === 'OPEN' ? '开放' : contract.status === 'CLOSED' ? '已关闭' : contract.status === 'RESOLVING' ? '结算中' : contract.status === 'SETTLED' ? '已结算' : contract.status === 'CANCELLED' ? '已取消' : contract.status === 'VOIDED' ? '已作废' : contract.status}
+          </Badge>
         </div>
       </div>
 

@@ -87,7 +87,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            {side} Book
+            {side === 'YES' ? '是' : '否'} 订单簿
           </button>
           <button
             onClick={() => setViewMode('depth')}
@@ -97,13 +97,13 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            Depth
+            深度
           </button>
         </div>
         {viewMode === 'levels' && (
           <div className="flex gap-6 text-xs font-medium text-[var(--text-secondary)]">
-            <span>Qty</span>
-            <span>Price</span>
+            <span>数量</span>
+            <span>价格</span>
           </div>
         )}
       </div>
@@ -132,7 +132,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
 
           {/* Spread divider */}
           <div className="flex items-center justify-between px-3 py-1.5 border-y border-[var(--border)] bg-[var(--bg-base)]">
-            <span className="text-xs text-[var(--text-secondary)]">Spread</span>
+            <span className="text-xs text-[var(--text-secondary)]">买卖价差</span>
             <span className="text-sm text-[var(--text-secondary)] font-mono font-medium tabular-nums">{fmtUsdc(spread)} USDC</span>
           </div>
 
@@ -161,7 +161,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
               onClick={() => setShowAll((v) => !v)}
               className="w-full text-center min-h-[44px] text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors border-t border-[var(--border)]"
             >
-              {showAll ? 'Show Less' : `Show All (${bids.length})`}
+              {showAll ? '收起' : `查看全部（${bids.length}）`}
             </button>
           )}
         </>
@@ -172,10 +172,10 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
       {/* Footer */}
       <div className="flex items-center justify-between px-3 min-h-[44px] border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[var(--text-secondary)]">{side} Bids · Asks</span>
+          <span className="text-xs text-[var(--text-secondary)]">{side === 'YES' ? '是' : '否'} 买盘 · 卖盘</span>
           <span
             className="text-[var(--text-secondary)] cursor-help p-2 -m-2"
-            title="YES bid X USDC = NO ask (1−X) USDC. Binary market equivalence."
+            title="二元合约中，“是”的买价 X USDC 等同于“否”的卖价（1-X）USDC。"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
@@ -183,7 +183,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
             </svg>
           </span>
         </div>
-        <span className="text-sm text-[var(--text-secondary)] font-medium tabular-nums font-mono">Seq: {lastSeq}</span>
+        <span className="text-sm text-[var(--text-secondary)] font-medium tabular-nums font-mono">序号：{lastSeq}</span>
       </div>
     </div>
   )
