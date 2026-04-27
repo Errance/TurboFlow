@@ -97,7 +97,7 @@ export default function TradingPanel({ selection }: Props) {
         {selection.outcomeLabel && <span className="text-[var(--text-primary)] ml-1">· {selection.outcomeLabel}</span>}
       </div>
 
-      {/* Yes/No toggle */}
+      {/* 是/否切换 */}
       <div className="flex gap-1 p-0.5 bg-[var(--bg-control)] rounded-lg">
         <button
           onClick={() => {
@@ -110,7 +110,7 @@ export default function TradingPanel({ selection }: Props) {
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Yes {selection.currentYesPrice}¢
+          是 {selection.currentYesPrice}¢
         </button>
         <button
           onClick={() => {
@@ -123,7 +123,7 @@ export default function TradingPanel({ selection }: Props) {
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          No {selection.currentNoPrice}¢
+          否 {selection.currentNoPrice}¢
         </button>
       </div>
 
@@ -172,7 +172,7 @@ export default function TradingPanel({ selection }: Props) {
 
       {/* Shares */}
       <div>
-        <label className="text-[10px] text-[var(--text-secondary)] mb-1 block">份额 (Shares)</label>
+        <label className="text-[10px] text-[var(--text-secondary)] mb-1 block">份额</label>
         <input
           type="number"
           min="1"
@@ -258,7 +258,7 @@ export default function TradingPanel({ selection }: Props) {
       >
         {submitted
           ? '✓ 订单已提交'
-          : `${side === 'yes' ? '买入 Yes' : '买入 No'} · $${numTotal > 0 ? numTotal.toFixed(2) : '0.00'}`
+          : `${side === 'yes' ? '买入是' : '买入否'} · $${numTotal > 0 ? numTotal.toFixed(2) : '0.00'}`
         }
       </button>
     </div>

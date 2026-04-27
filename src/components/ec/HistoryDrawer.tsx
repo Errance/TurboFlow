@@ -94,7 +94,7 @@ function DragonBallChart({ bets }: { bets: ECBet[] }) {
                     height: `${CELL_SIZE}px`,
                     borderRight: ci === cols - 1 ? 'none' : undefined,
                   }}
-                  title={bet ? `${bet.status === 'won' ? 'Win' : 'Loss'} ${bet.pnl?.toFixed(2) ?? ''}` : ''}
+                  title={bet ? `${bet.status === 'won' ? '赢' : '输'} ${bet.pnl?.toFixed(2) ?? ''}` : ''}
                 >
                   {bet && (
                     <div
@@ -141,7 +141,7 @@ export default function HistoryDrawer({
       <div className="relative w-full max-w-lg max-h-[80vh] bg-[var(--bg-card)] border border-[var(--border)] rounded-t-2xl md:rounded-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <h3 className="text-sm font-semibold">History</h3>
+          <h3 className="text-sm font-semibold">历史记录</h3>
           <button
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[var(--border)] text-[var(--text-secondary)] transition-colors"
@@ -155,7 +155,7 @@ export default function HistoryDrawer({
         {/* Summary */}
         <div className="grid grid-cols-3 gap-3 px-4 py-3 border-b border-[var(--border)]">
           <div className="text-center">
-            <div className="text-[10px] text-[var(--text-tertiary)]">Total P&L</div>
+            <div className="text-[10px] text-[var(--text-tertiary)]">总盈亏</div>
             <div
               className={`text-sm font-bold tabular-nums ${
                 totalPnl >= 0 ? 'text-[#2DD4BF]' : 'text-[#F87171]'
@@ -165,11 +165,11 @@ export default function HistoryDrawer({
             </div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[var(--text-tertiary)]">Win Rate</div>
+            <div className="text-[10px] text-[var(--text-tertiary)]">胜率</div>
             <div className="text-sm font-bold text-[var(--text-primary)]">{winRate}%</div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-[var(--text-tertiary)]">W / L</div>
+            <div className="text-[10px] text-[var(--text-tertiary)]">赢 / 输</div>
             <div className="text-sm font-bold text-[var(--text-primary)]">
               <span className="text-[#2DD4BF]">{wins}</span>
               {' / '}
@@ -187,7 +187,7 @@ export default function HistoryDrawer({
         <div className="flex-1 overflow-y-auto px-4">
           {settledBets.length === 0 ? (
             <div className="text-center py-10 text-sm text-[var(--text-tertiary)]">
-              No settled bets yet
+              暂无已结算记录
             </div>
           ) : (
             settledBets.map((bet) => <HistoryRow key={bet.id} bet={bet} />)

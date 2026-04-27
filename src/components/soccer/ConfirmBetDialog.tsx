@@ -63,9 +63,9 @@ export default function ConfirmBetDialog({
     <Modal isOpen={isOpen} onClose={onClose} title="确认投注">
       <div className="space-y-3">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[var(--text-secondary)]">类型</span>
+          <span className="text-[var(--text-secondary)]">投注方式</span>
           <span className="text-[var(--text-primary)] font-medium">
-            {systemLabel ?? BET_TYPE_LABEL[betType]} · {items.length} 腿
+            {systemLabel ?? BET_TYPE_LABEL[betType]} · {items.length} 项
           </span>
         </div>
 

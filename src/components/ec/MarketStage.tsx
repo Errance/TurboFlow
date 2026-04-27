@@ -314,7 +314,7 @@ function MomentumBadge({ asset }: { asset: ECAsset }) {
   }, [price])
 
   const label =
-    momentum === 'bullish' ? 'Bullish' : momentum === 'bearish' ? 'Bearish' : 'Neutral'
+    momentum === 'bullish' ? '偏强' : momentum === 'bearish' ? '偏弱' : '平稳'
   const color =
     momentum === 'bullish'
       ? 'text-[#2DD4BF]'

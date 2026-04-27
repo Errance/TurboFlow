@@ -50,7 +50,7 @@ const RESULT_LABEL: Partial<Record<SettlementResult, string>> = {
   void: '作废',
   half_win: '半赢',
   half_loss: '半输',
-  dead_heat: 'Dead Heat',
+  dead_heat: '平分奖金',
 }
 
 function StatusBadge({ bet }: { bet: MyBetItem }) {
@@ -65,7 +65,7 @@ function StatusBadge({ bet }: { bet: MyBetItem }) {
       </span>
     )
   if (status === 'cashed_out')
-    return <Badge variant="warning">已兑付</Badge>
+    return <Badge variant="warning">已提前结清</Badge>
   if (status === 'corrected')
     return <Badge variant="warning">已修正</Badge>
   // settled
@@ -114,7 +114,7 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
               <span className="text-[10px] text-[var(--text-secondary)]">
                 {bet.betType === 'accumulator'
                   ? '串关'
-                  : `${bet.systemType ? getSystemMeta(bet.systemType).label : '复式'}${bet.systemLineCount ? ` · ${bet.systemLineCount} 注` : ''}`} · {legs.length} 腿
+                  : `${bet.systemType ? getSystemMeta(bet.systemType).label : '复式'}${bet.systemLineCount ? ` · ${bet.systemLineCount} 注` : ''}`} · {legs.length} 项
               </span>
             )}
           </div>
@@ -162,7 +162,7 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
                 </span>
               )}
             </span>
-            <span>{expanded ? '收起明细' : `展开 ${legs.length} 腿`}</span>
+            <span>{expanded ? '收起明细' : `展开 ${legs.length} 项`}</span>
           </button>
           {expanded && (
             <div className="space-y-1.5 border-t border-[var(--border)] pt-2">
@@ -211,7 +211,7 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
       <div className="border-t border-[var(--border)] pt-2 grid grid-cols-2 gap-2 text-[10px]">
         <KV label="投注" value={`${fmtMoney(bet.stake ?? bet.amount)} USDT`} />
         <KV
-          label={bet.status === 'cashed_out' ? '已兑付' : bet.status === 'settled' ? '返还' : '可能返还'}
+              label={bet.status === 'cashed_out' ? '已提前结清' : bet.status === 'settled' ? '返还' : '可能返还'}
           value={
             bet.status === 'cashed_out'
               ? `${fmtMoney(bet.payout)} USDT`
@@ -244,8 +244,8 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
               className="flex-1 !py-1.5 !text-xs"
               onClick={() => onCashOut(bet)}
             >
-              Cash Out {bet.cashout ? fmtMoney(bet.cashout.availablePrice) : ''}
-              {bet.cashout?.isSimulated ? ' · 模拟' : ''}
+              提前结清 {bet.cashout ? fmtMoney(bet.cashout.availablePrice) : ''}
+              {bet.cashout?.isSimulated ? ' · 参考报价' : ''}
             </Button>
           )}
           {showReplay && onReplay && (

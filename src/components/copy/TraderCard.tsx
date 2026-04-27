@@ -35,7 +35,7 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
     onCopyClick?.(trader.id, trader.copyButton)
   }
 
-  const buttonText = trader.copyButton === 'Copy' ? 'Copy' : trader.copyButton === 'Full' ? 'Full' : 'Copying'
+  const buttonText = trader.copyButton === 'Copy' ? '跟单' : trader.copyButton === 'Full' ? '名额已满' : '跟单中'
 
   return (
     <div
@@ -71,7 +71,7 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
             type="button"
             className="p-1 text-[var(--text-secondary)] hover:opacity-80"
             onClick={(e) => e.stopPropagation()}
-            aria-label="Starred"
+            aria-label="已收藏"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -83,7 +83,7 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
       {/* 180D PNL - large teal (Figma 24px) */}
       <div className="px-4 pt-1">
         <p className="text-xs font-medium" style={{ color: LABEL_GRAY }}>
-          180D PNL
+          180 日盈亏
         </p>
         <p
           className="text-2xl font-semibold leading-tight"
@@ -96,7 +96,7 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
       {/* 30D ROI (Figma 12px teal) */}
       <div className="px-4 pt-1">
         <p className="text-xs font-medium" style={{ color: LABEL_GRAY }}>
-          30D ROI:
+          30 日收益率
         </p>
         <p
           className="text-xs font-medium"
@@ -110,19 +110,19 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
       <div className="px-4 pt-3 flex flex-wrap gap-x-6 gap-y-0.5">
         <div>
           <p className="text-xs font-medium underline" style={{ color: LABEL_GRAY }}>
-            AUM
+            管理规模
           </p>
           <p className="text-xs font-medium text-white">{trader.aum}</p>
         </div>
         <div>
           <p className="text-xs font-medium underline" style={{ color: LABEL_GRAY }}>
-            30D MDD
+            30 日最大回撤
           </p>
           <p className="text-xs font-medium text-white">{trader.mdd30d}</p>
         </div>
         <div>
           <p className="text-xs font-medium underline" style={{ color: LABEL_GRAY }}>
-            Sharpe Ratio
+            夏普比率
           </p>
           <p className="text-xs font-medium text-white">{trader.sharpe}</p>
         </div>
@@ -146,7 +146,7 @@ export default function TraderCard({ trader, onCopyClick }: TraderCardProps) {
         <button
           type="button"
           onClick={handleCopyClick}
-          disabled={trader.copyButton === 'Copying'}
+          disabled={trader.copyButton === 'Copying' || trader.copyButton === 'Full'}
           className="w-full h-10 rounded-lg font-medium text-base text-white text-center transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ backgroundColor: TEAL }}
         >

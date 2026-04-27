@@ -58,7 +58,7 @@ export default function PositionsPanel() {
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
                       pos.side === 'yes' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[#E85A7E]/10 text-[#E85A7E]'
                     }`}>
-                      {pos.side === 'yes' ? 'YES' : 'NO'}
+                      {pos.side === 'yes' ? '是' : '否'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-[10px]">
@@ -97,7 +97,7 @@ export default function PositionsPanel() {
                     <p className="text-[10px] text-[var(--text-secondary)] truncate">{ord.marketQuestion}</p>
                     <p className="text-xs font-mono">
                       <span className={ord.side === 'yes' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}>
-                        {ord.side.toUpperCase()}
+                        {ord.side === 'yes' ? '是' : '否'}
                       </span>
                       {' '}
                       <span className="text-[var(--text-primary)]">{ord.shares - ord.filledShares}份</span>
@@ -127,7 +127,7 @@ export default function PositionsPanel() {
                   <span className={`w-6 text-center font-medium ${
                     t.side === 'yes' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'
                   }`}>
-                    {t.side === 'yes' ? 'Y' : 'N'}
+                    {t.side === 'yes' ? '是' : '否'}
                   </span>
                   <span className="flex-1 text-[var(--text-secondary)] truncate">{t.marketQuestion}</span>
                   <span className="font-mono text-[var(--text-primary)]">{t.shares}@{t.price}¢</span>
@@ -154,11 +154,11 @@ export default function PositionsPanel() {
                           ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
                           : 'bg-[#E85A7E]/10 text-[#E85A7E]'
                     }`}>
-                      {pos.settlementResult === 'void' ? 'VOID' : (pos.finalPnl ?? 0) >= 0 ? 'WIN' : 'LOSS'}
+                      {pos.settlementResult === 'void' ? '作废' : (pos.finalPnl ?? 0) >= 0 ? '赢' : '输'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-[10px]">
-                    <span className="text-[var(--text-secondary)]">{pos.shares}份 {pos.side.toUpperCase()}</span>
+                    <span className="text-[var(--text-secondary)]">{pos.shares} 份 {pos.side === 'yes' ? '是' : '否'}</span>
                     <span className={`font-mono font-medium ml-auto ${
                       (pos.finalPnl ?? 0) >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'
                     }`}>

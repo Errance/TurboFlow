@@ -82,11 +82,11 @@ function EventCard({ event }: { event: PredictionEvent }) {
         <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--border)] px-1.5 py-0.5 rounded">{event.category}</span>
         {event.incentive && <Badge variant="info" className="text-[10px]">{event.incentive.label}</Badge>}
         {event.outcomeModel === 'mutually-exclusive' && (
-          <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--border)] px-1.5 py-0.5 rounded">Winner Takes All</span>
+          <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--border)] px-1.5 py-0.5 rounded">唯一结果</span>
         )}
         <div className="ml-auto">
           <Badge variant={statusBadgeVariant(event.status)}>
-            {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status === 'RESOLVING' ? 'Resolving' : event.status === 'SETTLED' ? 'Settled' : event.status === 'CANCELLED' ? 'Cancelled' : 'Open'}
+            {event.statusInfo.subStatus === 'paused' ? '已暂停' : event.status === 'RESOLVING' ? '结算中' : event.status === 'SETTLED' ? '已结算' : event.status === 'CANCELLED' ? '已取消' : '开放'}
           </Badge>
         </div>
       </div>
@@ -104,19 +104,19 @@ function EventCard({ event }: { event: PredictionEvent }) {
             isMutuallyExclusive={event.outcomeModel === 'mutually-exclusive'} />
         ))}
       </div>
-      {hasMore && <p className="text-[10px] text-[var(--text-secondary)] mb-2">+{event.contracts.length - displayContracts.length} more contracts</p>}
+      {hasMore && <p className="text-[10px] text-[var(--text-secondary)] mb-2">还有 {event.contracts.length - displayContracts.length} 个合约</p>}
 
       {/* Meta footer */}
       <div className="border-t border-[var(--border)] pt-2 space-y-1">
         <div className="flex items-center gap-2 text-[10px] text-[var(--text-secondary)]">
-          <span>Closes {formatShortDate(event.timeline.closeDate)}</span>
+          <span>关闭时间 {formatShortDate(event.timeline.closeDate)}</span>
           <span className="text-[var(--border)]">·</span>
-          <span className="truncate">Source: {event.resolutionSource}</span>
+          <span className="truncate">来源：{event.resolutionSource}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)] font-mono tabular-nums">
-          <span>{formatVolume(event.totalVolume)} vol</span>
-          <span>{event.contracts.length} contracts</span>
-          <span className="ml-auto text-[10px] font-sans">1 USDC/share</span>
+          <span>{formatVolume(event.totalVolume)} 成交量</span>
+          <span>{event.contracts.length} 个合约</span>
+          <span className="ml-auto text-[10px] font-sans">1 USDC/份</span>
         </div>
       </div>
     </Card>
@@ -177,28 +177,28 @@ function FeaturedBanner({ events }: { events: PredictionEvent[] }) {
         <div className="bg-gradient-to-r from-[#2DD4BF]/10 to-[var(--bg-card)] border border-[#2DD4BF]/20 rounded-xl p-4 md:p-6 cursor-pointer hover:border-[#2DD4BF]/40 transition-colors"
           onClick={() => navigate(`/event/${slide.event.id}`)} role="button">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="info">Featured</Badge>
+            <Badge variant="info">精选</Badge>
             {slide.event.incentive && <Badge variant="warning">{slide.event.incentive.label}</Badge>}
           </div>
           <h2 className="text-lg md:text-xl font-bold text-[var(--text-primary)] mb-1">{slide.event.title}</h2>
           <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">{slide.event.description}</p>
           <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-            <span className="font-mono">{formatVolume(slide.event.totalVolume)} vol</span>
-            <span>{slide.event.contracts.length} contracts</span>
+            <span className="font-mono">{formatVolume(slide.event.totalVolume)} 成交量</span>
+            <span>{slide.event.contracts.length} 个合约</span>
           </div>
         </div>
       ) : (
         <div className="bg-gradient-to-r from-[#6366F1]/10 to-[var(--bg-card)] border border-[#6366F1]/20 rounded-xl p-4 md:p-6 cursor-pointer hover:border-[#6366F1]/40 transition-colors"
           onClick={() => { useEventStore.getState().setSelectedCategory('Sports'); window.history.replaceState(null, '', '/?category=Sports') }} role="button">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="info">Sports</Badge>
-            {liveCount > 0 && <Badge variant="danger">{liveCount} LIVE</Badge>}
+            <Badge variant="info">体育</Badge>
+            {liveCount > 0 && <Badge variant="danger">{liveCount} 场进行中</Badge>}
           </div>
-          <h2 className="text-lg md:text-xl font-bold text-[var(--text-primary)] mb-1">Sports Markets</h2>
-          <p className="text-sm text-[var(--text-secondary)] mb-3">Football, Basketball, Esports, Tennis & more — {sportsEvts.length} events</p>
+          <h2 className="text-lg md:text-xl font-bold text-[var(--text-primary)] mb-1">体育市场</h2>
+          <p className="text-sm text-[var(--text-secondary)] mb-3">覆盖足球、篮球、电竞、网球等赛事，共 {sportsEvts.length} 个事件。</p>
           <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-            <span className="font-mono">{formatVolume(sportsEvts.reduce((sum, e) => sum + e.totalVolume, 0))} total vol</span>
-            <span>View all matches →</span>
+            <span className="font-mono">{formatVolume(sportsEvts.reduce((sum, e) => sum + e.totalVolume, 0))} 总成交量</span>
+            <span>查看全部比赛 →</span>
           </div>
         </div>
       )}
@@ -222,7 +222,7 @@ function TrendingSidebar({ events }: { events: PredictionEvent[] }) {
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-bold text-[var(--text-primary)]">Trending</span>
+        <span className="text-sm font-bold text-[var(--text-primary)]">热门市场</span>
         <span className="w-2 h-2 rounded-full bg-[#2DD4BF] animate-pulse" />
       </div>
       <div className="divide-y divide-[var(--border)]">
@@ -244,7 +244,7 @@ function TopMoversSidebar({ events }: { events: PredictionEvent[] }) {
   if (movers.length === 0) return null
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-3"><span className="text-sm font-bold text-[var(--text-primary)]">Top Movers (24h)</span></div>
+      <div className="flex items-center gap-2 mb-3"><span className="text-sm font-bold text-[var(--text-primary)]">24 小时波动榜</span></div>
       <div className="space-y-1">
         {movers.map(({ event, contract }) => (
           <div key={contract.id} onClick={() => navigate(`/event/${event.id}`)}
@@ -282,27 +282,27 @@ function CategorySidebar({ events, statusFilter, setStatusFilter, tagFilter, set
   return (
     <nav className="space-y-4">
       <div>
-        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Status</p>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">状态</p>
         <div className="space-y-0.5">
           {statusOptions.map((s) => (
             <button key={s} onClick={() => setStatusFilter(s)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 statusFilter === s ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
               }`}>
-              {s}
+              {s === 'All' ? '全部' : s === 'Open' ? '开放' : s === 'Resolving' ? '结算中' : '已结算'}
             </button>
           ))}
         </div>
       </div>
       {tagCounts.length > 0 && (
         <div>
-          <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Topics</p>
+          <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">主题</p>
           <div className="space-y-0.5">
             <button onClick={() => setTagFilter('All')}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${
                 tagFilter === 'All' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
               }`}>
-              All topics
+              全部主题
             </button>
             {tagCounts.map(([tag, count]) => (
               <button key={tag} onClick={() => setTagFilter(tag)}
@@ -323,11 +323,11 @@ function CategorySidebar({ events, statusFilter, setStatusFilter, tagFilter, set
 // ── Live sidebar (asset class + status) ─────────────────────────
 
 const ASSET_CLASS_LABELS: Record<string, string> = {
-  All: 'All',
-  crypto: 'Crypto',
-  stocks: 'Stocks',
-  commodities: 'Commodities',
-  forex: 'Forex',
+  All: '全部',
+  crypto: '加密资产',
+  stocks: '股票',
+  commodities: '大宗商品',
+  forex: '外汇',
 }
 
 function LiveSidebar({ allInstantEvents, assetClassFilter, setAssetClassFilter, liveStatusFilter, setLiveStatusFilter }: {
@@ -361,7 +361,7 @@ function LiveSidebar({ allInstantEvents, assetClassFilter, setAssetClassFilter, 
   return (
     <nav className="space-y-4">
       <div>
-        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Asset Class</p>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">资产类别</p>
         <div className="space-y-0.5">
           {assetClasses.map((cls) => (
             <button key={cls} onClick={() => setAssetClassFilter(cls)}
@@ -376,14 +376,14 @@ function LiveSidebar({ allInstantEvents, assetClassFilter, setAssetClassFilter, 
         </div>
       </div>
       <div>
-        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Status</p>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">状态</p>
         <div className="space-y-0.5">
           {['All', 'Active', 'Settled'].map((s) => (
             <button key={s} onClick={() => setLiveStatusFilter(s)}
               className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 liveStatusFilter === s ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
               }`}>
-              <span>{s}</span>
+              <span>{s === 'All' ? '全部' : s === 'Active' ? '进行中' : '已结算'}</span>
               {s !== 'All' && <span className="text-[10px] font-mono shrink-0 ml-2">{statusCounts[s as keyof typeof statusCounts] ?? 0}</span>}
               {s === 'All' && <span className="text-[10px] font-mono shrink-0 ml-2">{allInstantEvents.length}</span>}
             </button>
@@ -627,13 +627,13 @@ export default function EventsPage() {
                 className={`flex-1 px-2 py-2 text-xs font-medium rounded-lg transition-colors ${
                   sportsTab === tab ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
                 }`}>
-                {tab === 'upcoming' ? 'Upcoming' : tab === 'live' ? 'Live' : 'Results'}
+                {tab === 'upcoming' ? '即将开始' : tab === 'live' ? '进行中' : '赛果'}
               </button>
             ))}
           </div>
           {sportFilter !== 'All' && (
             <div className="flex items-center gap-1.5 mb-4 text-xs">
-              <button onClick={handleSelectAll} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">All</button>
+              <button onClick={handleSelectAll} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">全部</button>
               <span className="text-[var(--border)]">/</span>
               <span className={leagueFilter === 'All' ? 'text-[#2DD4BF]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer'}
                 onClick={() => setLeagueFilter('All')}>{sportFilter}</span>
@@ -641,7 +641,7 @@ export default function EventsPage() {
             </div>
           )}
           {sportsFiltered.length === 0 ? (
-            <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">No {sportsTab} games found</p></div>
+            <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">暂无符合条件的比赛</p></div>
           ) : (
             <div className="space-y-6">
               {sportsGroupedByDate.map(([date, events]) => (
@@ -676,14 +676,14 @@ export default function EventsPage() {
       return (
         <>
           {liveFilteredEvents.length === 0 ? (
-            <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">No live predictions match your filters</p></div>
+            <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">暂无符合筛选条件的实时预测</p></div>
           ) : (
             <>
               {activeEvents.length > 0 && groupByClass(activeEvents).map((g) => (
                 <div key={g.key} className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-medium">{g.label}</h3>
-                    <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded-full font-mono">{g.events.length} active</span>
+                    <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded-full font-mono">{g.events.length} 个进行中</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {g.events.map((e) => <InstantMarketCard key={e.id} event={e} />)}
@@ -693,7 +693,7 @@ export default function EventsPage() {
               {settledEvents.length > 0 && (
                 <>
                   <div className="border-t border-[var(--border)] pt-4 mb-3">
-                    <h3 className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Recent Results</h3>
+                    <h3 className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">近期结果</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60">
                     {settledEvents.map((e) => <InstantMarketCard key={e.id} event={e} />)}
@@ -708,7 +708,7 @@ export default function EventsPage() {
 
     // Standard category
     return categoryEvents.length === 0
-      ? <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">No events found</p></div>
+      ? <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">暂无符合条件的事件</p></div>
       : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{categoryEvents.map((e) => <EventCard key={e.id} event={e} />)}</div>
   }
 
@@ -723,14 +723,14 @@ export default function EventsPage() {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M5 10h10M7 15h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </button>
           )}
-          <h1 className="text-xl font-bold">Explore</h1>
+          <h1 className="text-xl font-bold">探索</h1>
         </div>
         <div className="flex items-center gap-2">
           {searchOpen && (
             <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-1.5 animate-[fadeScaleIn_0.15s_ease-out]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
               <input ref={searchRef} type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search events..." className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none w-40 md:w-56" />
+                placeholder="搜索事件..." className="bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none w-40 md:w-56" />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-w-[24px] min-h-[24px] flex items-center justify-center">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
@@ -740,7 +740,7 @@ export default function EventsPage() {
           )}
           <button onClick={() => { if (searchOpen) { setSearchOpen(false); setSearchQuery('') } else setSearchOpen(true) }}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors rounded-lg hover:bg-[var(--border)]"
-            aria-label={searchOpen ? 'Close search' : 'Search'}>
+            aria-label={searchOpen ? '关闭搜索' : '搜索'}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               {searchOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></>}
             </svg>
@@ -771,10 +771,10 @@ export default function EventsPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--text-primary)]">
-                  <span className="w-2 h-2 rounded-full bg-[#E85A7E] animate-pulse" />Live Predictions
+                  <span className="w-2 h-2 rounded-full bg-[#E85A7E] animate-pulse" />实时预测
                 </span>
                 <button onClick={() => handleCategoryChange('Live')} className="text-xs text-[#2DD4BF] hover:underline">
-                  View all live →
+                  查看全部实时预测 →
                 </button>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
@@ -787,7 +787,7 @@ export default function EventsPage() {
           <div className="flex gap-6">
             <div className="flex-1 min-w-0">
               {categoryEvents.length === 0
-                ? <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">No events found</p></div>
+                ? <div className="text-center py-16"><p className="text-[var(--text-secondary)] text-sm">暂无符合条件的事件</p></div>
                 : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{categoryEvents.map((e) => <EventCard key={e.id} event={e} />)}</div>}
             </div>
             <div className="hidden lg:flex flex-col gap-4 w-[300px] shrink-0">

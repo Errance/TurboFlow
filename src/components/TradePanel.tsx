@@ -44,39 +44,39 @@ function TradeConfirmModal({
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
               <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">Trade Confirmed</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">交易已确认</h3>
           </div>
           <div className="bg-[var(--bg-base)] rounded-xl p-4 mb-4 space-y-2">
             <p className="text-xs text-[var(--text-secondary)]">{event.title}</p>
             <p className="text-sm font-medium text-[var(--text-primary)]">{result.contractLabel}</p>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Side</span>
-              <span className={result.side === 'YES' ? 'text-[#2DD4BF] font-medium' : 'text-[#E85A7E] font-medium'}>{result.side}</span>
+              <span className="text-[var(--text-secondary)]">方向</span>
+              <span className={result.side === 'YES' ? 'text-[#2DD4BF] font-medium' : 'text-[#E85A7E] font-medium'}>{result.side === 'YES' ? '是' : '否'}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Price</span>
+              <span className="text-[var(--text-secondary)]">价格</span>
               <span className="text-[var(--text-primary)] font-mono">{formatUsdc(result.price)} USDC</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Shares</span>
+              <span className="text-[var(--text-secondary)]">份额</span>
               <span className="text-[var(--text-primary)] font-mono">{result.shares.toFixed(1)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Total cost</span>
+              <span className="text-[var(--text-secondary)]">总成本</span>
               <span className="text-[var(--text-primary)] font-mono">{formatUsdc(result.total)} USDC</span>
             </div>
             <div className="flex justify-between text-xs border-t border-[var(--border)] pt-2">
-              <span className="text-[var(--text-secondary)]">Potential profit</span>
+              <span className="text-[var(--text-secondary)]">可能净盈利</span>
               <span className="text-[#2DD4BF] font-mono font-medium">+{formatUsdc(result.profit)} USDC</span>
             </div>
           </div>
 
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth size="sm" onClick={onBuyMore}>
-              Buy More
+              继续买入
             </Button>
             <Button variant="primary" fullWidth size="sm" onClick={onClose}>
-              Done
+              完成
             </Button>
           </div>
         </div>
@@ -126,13 +126,14 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     return (
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
         <p className="text-sm text-[var(--text-secondary)] text-center py-8">
-          Select a contract's Yes or No button to start trading
+          请选择合约的“是”或“否”后开始交易。
         </p>
       </div>
     )
   }
 
   const isYes = selectedSide === 'YES'
+  const selectedSideLabel = isYes ? '是' : '否'
   const price = isYes ? contract.yesPrice : contract.noPrice
   const probability = isYes ? contract.probability : Math.round((1 - contract.yesPrice) * 100)
 
@@ -217,7 +218,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     if (context === 'list') {
       addToast({
         type: 'success',
-        message: `${selectedSide} ${result.shares.toFixed(1)} shares of "${contract!.label}" at ${formatUsdc(tradePrice)} USDC`,
+        message: `已买入 ${result.shares.toFixed(1)} 份“${contract!.label} - ${selectedSideLabel}”，成交价 ${formatUsdc(tradePrice)} USDC`,
       })
       resetFields()
       closeTradePanel()
@@ -242,14 +243,14 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     if (context === 'list') {
       addToast({
         type: 'success',
-        message: `Limit order placed — ${selectedSide} ${lShares} shares at ${formatUsdc(lPrice)} USDC`,
+        message: `限价委托已提交：${selectedSideLabel}，${lShares} 份，价格 ${formatUsdc(lPrice)} USDC`,
       })
       resetFields()
       closeTradePanel()
     } else {
       addToast({
         type: 'success',
-        message: `Limit order placed — view in Portfolio`,
+        message: '限价委托已提交，可在资产页查看',
       })
       resetFields()
     }
@@ -274,7 +275,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
       {/* Header */}
       <div className="mb-4">
-        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Trading</p>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">交易</p>
         <p className="text-sm font-medium text-[var(--text-primary)] truncate">{event.title}</p>
         <p className="text-xs text-[var(--text-secondary)] truncate">{contract.label}</p>
       </div>
@@ -287,7 +288,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
             isYes ? 'bg-[#2DD4BF] text-[#0B0B0F]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Yes {contract.probability}%
+          是 {contract.probability}%
         </button>
         <button
           onClick={() => openTradePanel(contract.id, 'NO')}
@@ -295,7 +296,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
             !isYes ? 'bg-[#E85A7E] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          No {Math.round((1 - contract.yesPrice) * 100)}%
+          否 {Math.round((1 - contract.yesPrice) * 100)}%
         </button>
       </div>
 
@@ -303,7 +304,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       {event.outcomeModel === 'mutually-exclusive' && selectedSide === 'NO' && (
         <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg px-3 py-2 mb-4">
           <p className="text-[10px] text-[#F59E0B]">
-            You're betting: NOT "{contract.label}" — you win if any other option is the final result.
+            当前选择为“非 {contract.label}”。如果最终结果为其他任一选项，则该选择结算为赢。
           </p>
         </div>
       )}
@@ -318,7 +319,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Market
+          市价
         </button>
         <button
           onClick={() => setOrderType('limit')}
@@ -328,14 +329,14 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          Limit
+          限价
         </button>
       </div>
 
       <p className="text-[10px] text-[var(--text-secondary)] mb-3">
         {orderType === 'quick'
-          ? 'Instant fill at current best price'
-          : 'Set your own price and wait for a match'}
+          ? '按当前最优价格立即成交。'
+          : '自行设置价格，等待市场成交。'}
       </p>
 
       {/* ========= MARKET ORDER ========= */}
@@ -343,7 +344,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         <>
           {/* Est. execution price */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[var(--text-secondary)]">Est. execution price</span>
+            <span className="text-[var(--text-secondary)]">预计成交价</span>
             <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC ({probability}%)
               {contract.change24h !== 0 && (
@@ -356,7 +357,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Spend input */}
           <div className="mb-4">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Spend (USDC)</label>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">买入金额（USDC）</label>
             <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <span className="text-sm text-[var(--text-secondary)]">$</span>
               <input
@@ -387,19 +388,19 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
           {parsedSpend > 0 && (
             <div className="bg-[var(--bg-base)] rounded-lg p-3 mb-4 space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-[var(--text-secondary)]">Price per share</span>
+                <span className="text-[var(--text-secondary)]">每份价格</span>
                 <span className="text-[var(--text-primary)] font-mono">{formatUsdc(price)} USDC</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-[var(--text-secondary)]">Est. shares</span>
+                <span className="text-[var(--text-secondary)]">预计份额</span>
                 <span className="text-[var(--text-primary)] font-mono">{quickShares.toFixed(1)}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-[var(--text-secondary)]">Potential payout</span>
+                <span className="text-[var(--text-secondary)]">可能返还</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(quickPayout)} USDC</span>
               </div>
               <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
-                <span className="text-[var(--text-secondary)]">Potential profit</span>
+                <span className="text-[var(--text-secondary)]">可能净盈利</span>
                 <span className={`font-mono font-medium ${quickProfit >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                   {quickProfit >= 0 ? '+' : ''}{formatUsdc(quickProfit)} USDC
                 </span>
@@ -413,7 +414,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               <path d="M6 3.5v3M6 8.5v0" stroke="var(--text-secondary)" strokeWidth="1" strokeLinecap="round" />
             </svg>
             <span className="text-[10px] text-[var(--text-secondary)]">
-              Win = 1 USDC/share · Lose = 0 USDC/share
+              命中按 1 USDC / 份结算，未命中按 0 USDC / 份结算
             </span>
           </div>
 
@@ -425,8 +426,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
             onClick={handleQuickBuy}
           >
             {isDisabled
-              ? 'Trading Unavailable'
-              : `Buy ${selectedSide} — ${parsedSpend > 0 ? `$${formatUsdc(parsedSpend)}` : 'Enter Amount'}`}
+              ? '当前不可交易'
+              : `买入${selectedSideLabel} — ${parsedSpend > 0 ? `${formatUsdc(parsedSpend)} USDC` : '请输入金额'}`}
           </Button>
         </>
       )}
@@ -436,7 +437,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
         <>
           {/* Est. execution price */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[var(--text-secondary)]">Est. execution price</span>
+            <span className="text-[var(--text-secondary)]">参考成交价</span>
             <span className="text-[var(--text-primary)] font-mono">
               {formatUsdc(price)} USDC
               {contract.change24h !== 0 && (
@@ -449,7 +450,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Price per share */}
           <div className="mb-3">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Price per share</label>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">每份价格</label>
             <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <input
                 type="number"
@@ -467,7 +468,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Shares */}
           <div className="mb-3">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Shares</label>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">份额</label>
             <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <input
                 type="number"
@@ -478,7 +479,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
                 min="1"
                 step="1"
               />
-              <span className="text-xs text-[var(--text-secondary)]">shares</span>
+              <span className="text-xs text-[var(--text-secondary)]">份</span>
             </div>
             <div className="flex gap-1.5 mt-2">
               {[25, 50, 75, 100].map((pct) => (
@@ -487,7 +488,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
                   onClick={() => handlePercentClick(pct)}
                   className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
-                  {pct === 100 ? 'Max' : `${pct}%`}
+                  {pct === 100 ? '最大' : `${pct}%`}
                 </button>
               ))}
             </div>
@@ -495,7 +496,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Total Cost */}
           <div className="mb-3">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">Total cost</label>
+            <label className="text-xs text-[var(--text-secondary)] mb-1 block">总成本</label>
             <div className="flex items-center gap-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg px-3 py-2">
               <span className="text-sm text-[var(--text-secondary)]">$</span>
               <input
@@ -513,7 +514,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
 
           {/* Available balance */}
           <div className="flex justify-between text-xs mb-3">
-            <span className="text-[var(--text-secondary)]">Available</span>
+            <span className="text-[var(--text-secondary)]">可用余额</span>
             <span className="text-[var(--text-primary)] font-mono">{formatUsdc(MOCK_BALANCE)} USDC</span>
           </div>
 
@@ -523,7 +524,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
             className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-3"
           >
             <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>▸</span>
-            Advanced: {tif}
+            高级设置：{tif}
           </button>
           {showAdvanced && (
             <div className="mb-3">
@@ -532,8 +533,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
                 onChange={(e) => setTif(e.target.value)}
                 className="w-full h-8 px-2 text-xs bg-[var(--bg-control)] text-[var(--text-primary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[#2DD4BF]"
               >
-                <option value="GTC">GTC (Good til Cancel)</option>
-                <option value="IOC">IOC (Immediate or Cancel)</option>
+                <option value="GTC">撤销前有效</option>
+                <option value="IOC">立即成交或取消</option>
               </select>
             </div>
           )}
@@ -542,11 +543,11 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
           {limitValid && (
             <div className="bg-[var(--bg-base)] rounded-lg p-3 mb-4 space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-[var(--text-secondary)]">Potential payout</span>
+                <span className="text-[var(--text-secondary)]">可能返还</span>
                 <span className="text-[#2DD4BF] font-mono">{formatUsdc(limitPayout)} USDC</span>
               </div>
               <div className="flex justify-between text-xs border-t border-[var(--border)] pt-1.5">
-                <span className="text-[var(--text-secondary)]">Potential profit</span>
+                <span className="text-[var(--text-secondary)]">可能净盈利</span>
                 <span className={`font-mono font-medium ${limitProfit >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
                   {limitProfit >= 0 ? '+' : ''}{formatUsdc(limitProfit)} USDC
                 </span>
@@ -560,7 +561,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               <path d="M6 3.5v3M6 8.5v0" stroke="var(--text-secondary)" strokeWidth="1" strokeLinecap="round" />
             </svg>
             <span className="text-[10px] text-[var(--text-secondary)]">
-              Win = 1 USDC/share · Lose = 0 USDC/share
+              命中按 1 USDC / 份结算，未命中按 0 USDC / 份结算
             </span>
           </div>
 
@@ -572,8 +573,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
             onClick={handleLimitBuy}
           >
             {isDisabled
-              ? 'Trading Unavailable'
-              : `Limit ${selectedSide} — ${limitValid ? `${lShares} @ ${formatUsdc(lPrice)}` : 'Enter Price & Shares'}`}
+              ? '当前不可交易'
+              : `提交${selectedSideLabel}限价委托 — ${limitValid ? `${lShares} 份 @ ${formatUsdc(lPrice)}` : '请输入价格和份额'}`}
           </Button>
         </>
       )}
@@ -581,7 +582,7 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
       {/* Cancel for mobile */}
       <div className="md:hidden mt-2">
         <Button variant="ghost" fullWidth size="sm" onClick={closeTradePanel}>
-          Cancel
+          取消
         </Button>
       </div>
     </div>

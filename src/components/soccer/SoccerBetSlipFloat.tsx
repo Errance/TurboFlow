@@ -83,7 +83,7 @@ export default function SoccerBetSlipFloat() {
             </span>
           </div>
           <span className="text-xs text-[var(--text-secondary)] font-mono">
-            组合 {formattedOdds} {matchCount > 1 ? `· 跨 ${matchCount} 场` : ''}
+            总赔率 {formattedOdds} {matchCount > 1 ? `· 跨 ${matchCount} 场` : ''}
           </span>
           {hasOddsChanged && <span className="text-[10px] text-amber-400">赔率已变动</span>}
         </div>

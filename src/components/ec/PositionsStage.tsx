@@ -32,7 +32,7 @@ export default function PositionsStage() {
                 : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
             }`}
           >
-            My Positions
+            我的持仓
             {tab === 'my' && bets.length > 0 && (
               <span className="ml-1 text-[10px] text-[var(--text-tertiary)]">({bets.length})</span>
             )}
@@ -45,7 +45,7 @@ export default function PositionsStage() {
                 : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
             }`}
           >
-            All
+            全部动态
           </button>
         </div>
 
@@ -53,7 +53,7 @@ export default function PositionsStage() {
           onClick={() => setHistoryOpen(true)}
           className="text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors"
         >
-          History
+          历史记录
         </button>
       </div>
 
@@ -63,7 +63,7 @@ export default function PositionsStage() {
           {bets.length === 0 ? (
             <div className="text-center py-10 text-sm text-[var(--text-tertiary)]">
               <div className="text-2xl mb-2">🎯</div>
-              No active positions — place a bet to start
+              暂无进行中的持仓，请先提交一笔投注。
             </div>
           ) : (
             <div className="space-y-2">

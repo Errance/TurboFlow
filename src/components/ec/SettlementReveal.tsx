@@ -125,7 +125,7 @@ function FullReveal({ bet, onDone }: { bet: ECBet & { _ceremony?: 'streak' | 'co
               textShadow: `0 0 30px ${accent}80, 0 0 80px ${accent}30`,
             }}
           >
-            {won ? 'WIN' : 'LOSS'}
+            {won ? '获胜' : '未命中'}
           </span>
         </div>
 
@@ -158,18 +158,18 @@ function FullReveal({ bet, onDone }: { bet: ECBet & { _ceremony?: 'streak' | 'co
             <span className={`font-bold ${bet.direction === 'higher' ? `text-[${teal}]` : `text-[${red}]`}`}
               style={{ color: bet.direction === 'higher' ? teal : red }}
             >
-              {bet.direction === 'higher' ? 'Higher' : 'Lower'}
+              {bet.direction === 'higher' ? '看涨' : '看跌'}
             </span>
           </div>
 
           <div className="text-xs text-[var(--text-tertiary)] tabular-nums">
-            Entry ${bet.entryPrice.toFixed(decimals)}
+            开仓价 ${bet.entryPrice.toFixed(decimals)}
             <span className="mx-1.5 opacity-40">&rarr;</span>
-            Settled ${bet.settlementPrice?.toFixed(decimals) ?? '—'}
+            结算价 ${bet.settlementPrice?.toFixed(decimals) ?? '—'}
           </div>
 
           <div className="text-xs text-[var(--text-tertiary)]">
-            Bet ${bet.amount} &middot; {bet.duration < 60 ? `${bet.duration}s` : `${bet.duration / 60}min`}
+            投注 ${bet.amount} &middot; {bet.duration < 60 ? `${bet.duration} 秒` : `${bet.duration / 60} 分钟`}
           </div>
         </div>
       </div>

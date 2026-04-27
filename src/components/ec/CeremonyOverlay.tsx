@@ -76,7 +76,7 @@ export default function CeremonyOverlay({ type, streakCount }: CeremonyOverlayPr
               : { textShadow: '0 0 10px rgba(251,191,36,0.4)' }
             }
           >
-            {isStreak ? 'WIN STREAK' : 'COMEBACK'}
+            {isStreak ? '连胜' : '反转'}
           </div>
           <div
             className={`text-4xl font-black text-center ${
@@ -87,7 +87,7 @@ export default function CeremonyOverlay({ type, streakCount }: CeremonyOverlayPr
               : { textShadow: '0 0 16px rgba(251,191,36,0.5)' }
             }
           >
-            {isStreak ? `${streakCount}x` : 'CLUTCH'}
+            {isStreak ? `${streakCount} 连胜` : '关键命中'}
           </div>
         </div>
       </div>

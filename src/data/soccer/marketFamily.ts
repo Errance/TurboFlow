@@ -84,9 +84,9 @@ export type CombineResult =
 export function canCombine(a: MarketFamily, b: MarketFamily): CombineResult {
   if (a === 'novelty' || b === 'novelty') return { ok: true }
   if (a === 'unknown' || b === 'unknown') {
-    return { ok: false, reason: '包含未分类盘口，需先确认相关性规则' }
+    return { ok: false, reason: '该盘口暂不可与本场其他玩法组合' }
   }
-  if (a === b) return { ok: false, reason: '同类盘口默认不可同场组合' }
+  if (a === b) return { ok: false, reason: '同一类玩法不可同时选入同一张投注单' }
   const reason = CONFLICT_REASONS.get(keyOf(a, b))
   if (reason) return { ok: false, reason }
   return { ok: true }

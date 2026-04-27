@@ -19,7 +19,7 @@ export default function MyCopyPage() {
       <FigmaPageLayout imageSrc={src} aspectRatio={1920 / (hasFollowing ? 1288 : 1080)}>
         {/* 返回 / 去跟单广场：左上或空态中央按钮，按设计稿约 10% 5% 宽 15% 高 4% */}
         <Hotspot left={8} top={4} width={14} height={4} title="返回" onClick={() => navigate('/copy')} />
-        {/* 空态：View Portfolio / 去跟单广场 按钮 约 40% 65% 宽 20% 高 5% */}
+        {/* 空态：去跟单广场按钮 约 40% 65% 宽 20% 高 5% */}
         {!hasFollowing && (
           <Hotspot left={40} top={65} width={20} height={5} title="去跟单广场" onClick={() => navigate('/copy')} />
         )}
@@ -41,11 +41,11 @@ export default function MyCopyPage() {
                 </div>
                 <div>
                   <p className="font-medium text-[var(--text-primary)]">{t.nickname}</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">Copied on: {t.copiedOn}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">跟单时间：{t.copiedOn}</p>
                   <p className="text-xs mt-1">
-                    <span style={{ color: 'var(--text-tertiary)' }}>Unrealized PNL: </span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>未实现盈亏：</span>
                     <span style={{ color: '#E85A7E' }}>{t.unrealizedPnl}</span>
-                    <span className="ml-3" style={{ color: 'var(--text-tertiary)' }}>Realized PNL: </span>
+                    <span className="ml-3" style={{ color: 'var(--text-tertiary)' }}>已实现盈亏：</span>
                     <span style={{ color: '#0abab5' }}>{t.realizedPnl}</span>
                   </p>
                 </div>

@@ -44,7 +44,7 @@ export default function ClobPage() {
               <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
               <path d="M2 12h20" />
             </svg>
-            足球 · CLOB
+            足球撮合
           </h2>
           <p className="text-[9px] text-[var(--text-secondary)] mb-3">订单簿撮合模式</p>
 
@@ -60,7 +60,7 @@ export default function ClobPage() {
               <span>全部赛事</span>
               <div className="flex items-center gap-1.5">
                 {liveCount > 0 && (
-                  <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} live</span>
+                  <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} 场进行中</span>
                 )}
                 <span className="text-[10px] text-[var(--text-secondary)] font-mono">{clobMatches.length}</span>
               </div>
@@ -108,8 +108,8 @@ export default function ClobPage() {
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
                 <span className="w-12 shrink-0 text-center">时间</span>
                 <span className="flex-1">比赛</span>
-                <span className="hidden sm:block w-[182px] shrink-0 text-center">1x2</span>
-                <span className="hidden md:block w-[118px] shrink-0 text-center">总进球</span>
+                <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
+                <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
                 <span className="hidden lg:block w-[118px] shrink-0 text-center">亚盘</span>
                 <span className="w-16 shrink-0 text-right">市场</span>
               </div>

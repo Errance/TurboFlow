@@ -192,7 +192,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
         if (!verdict.ok) {
           addToast({
             type: 'error',
-            message: `无法同场组合：${marketTitle} 与 ${existing.marketTitle} ${verdict.reason}`,
+            message: `无法同场组合：${marketTitle} 与 ${existing.marketTitle}。${verdict.reason}`,
           })
           return { ok: false, reason: verdict.reason }
         }
@@ -229,7 +229,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     const nextBetType = prev.length >= 1 && prevBetType === 'single' ? 'accumulator' : prevBetType
     set({ items: [...prev, newItem], betType: nextBetType })
     if (nextBetType !== prevBetType) {
-      addToast({ type: 'info', message: '已切换为串关，全部命中才赢' })
+      addToast({ type: 'info', message: '已切换为串关，需全部选项命中方可获胜' })
     }
     return { ok: true, action: 'added' }
   },
@@ -585,7 +585,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     set({ items: [], submitting: false, slipOpen: false })
     addToast({
       type: 'success',
-      message: `下单成功 · 凭证 ${betCode}`,
+      message: `下单成功，注单号 ${betCode}`,
       cta: { label: '查看注单', route: '/soccer/mybets' },
     })
     return { ok: true, betCode }

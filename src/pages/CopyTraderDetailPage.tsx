@@ -25,7 +25,7 @@ export default function CopyTraderDetailPage() {
     if (id) {
       removeFollowing(id)
       setStopCopyOpen(false)
-      addToast({ type: 'info', message: '已停止跟单（模拟）' })
+      addToast({ type: 'info', message: '已停止跟单' })
       navigate('/copy')
     }
   }
@@ -54,21 +54,21 @@ export default function CopyTraderDetailPage() {
         {/* 返回 + Portfolios：约 15% 12% 起，宽 20% 高 4% */}
         <Hotspot left={12} top={6} width={22} height={5} title="返回" onClick={() => navigate('/copy')} />
         {/* 星标：约 81.5% 14% 宽 3% 高 2.2% */}
-        <Hotspot left={81.5} top={14.4} width={2.8} height={2.2} title="收藏" onClick={() => addToast({ type: 'info', message: '已收藏（模拟）' })} />
+        <Hotspot left={81.5} top={14.4} width={2.8} height={2.2} title="收藏" onClick={() => addToast({ type: 'info', message: '已收藏' })} />
         {/* 分享：约 85% 14% */}
-        <Hotspot left={85.2} top={14.4} width={1.7} height={2.2} title="分享" onClick={() => addToast({ type: 'info', message: '分享（模拟）' })} />
-        {/* Copy 或 Stop Copying 按钮：约 79% 18% 宽 8% 高 3% */}
+        <Hotspot left={85.2} top={14.4} width={1.7} height={2.2} title="分享" onClick={() => addToast({ type: 'info', message: '分享链接已准备' })} />
+        {/* 跟单或停止跟单按钮：约 79% 18% 宽 8% 高 3% */}
         {isFollowing ? (
-          <Hotspot left={79} top={17.8} width={8} height={3.1} title="Stop Copying" onClick={() => setStopCopyOpen(true)} />
+          <Hotspot left={79} top={17.8} width={8} height={3.1} title="停止跟单" onClick={() => setStopCopyOpen(true)} />
         ) : (
-          <Hotspot left={79} top={17.8} width={8} height={3.1} title="Copy" onClick={() => setCopyModalOpen(true)} />
+          <Hotspot left={79} top={17.8} width={8} height={3.1} title="跟单" onClick={() => setCopyModalOpen(true)} />
         )}
-        {/* Tab: Positions */}
-        <Hotspot left={12.9} top={78.2} width={4.8} height={2} title="Positions" onClick={() => setActiveTab('positions')} />
-        <Hotspot left={17.7} top={78.2} width={8} height={2} title="Position History" onClick={() => setActiveTab('positionHistory')} />
-        <Hotspot left={25} top={78.2} width={6} height={2} title="Trade History" onClick={() => setActiveTab('tradeHistory')} />
-        <Hotspot left={31.4} top={78.2} width={7} height={2} title="Balance History" onClick={() => setActiveTab('balanceHistory')} />
-        <Hotspot left={38.7} top={78.2} width={6} height={2} title="Copy Traders" onClick={() => setActiveTab('traders')} />
+        {/* Tab: 持仓 */}
+        <Hotspot left={12.9} top={78.2} width={4.8} height={2} title="持仓" onClick={() => setActiveTab('positions')} />
+        <Hotspot left={17.7} top={78.2} width={8} height={2} title="持仓历史" onClick={() => setActiveTab('positionHistory')} />
+        <Hotspot left={25} top={78.2} width={6} height={2} title="交易历史" onClick={() => setActiveTab('tradeHistory')} />
+        <Hotspot left={31.4} top={78.2} width={7} height={2} title="资金历史" onClick={() => setActiveTab('balanceHistory')} />
+        <Hotspot left={38.7} top={78.2} width={6} height={2} title="跟单用户" onClick={() => setActiveTab('traders')} />
       </FigmaPageLayout>
 
       {/* Tab 下方：Positions 时展示真实表格，其余占位 */}
@@ -77,14 +77,14 @@ export default function CopyTraderDetailPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[var(--text-tertiary)] border-b border-[#353945] bg-[var(--bg-card)]">
-                <th className="pb-2 pt-3 px-3">Pair</th>
-                <th className="pb-2 pt-3 px-3">Position Type</th>
-                <th className="pb-2 pt-3 px-3">Size</th>
-                <th className="pb-2 pt-3 px-3">Collateral</th>
-                <th className="pb-2 pt-3 px-3">Entry Price</th>
-                <th className="pb-2 pt-3 px-3">Index Price</th>
-                <th className="pb-2 pt-3 px-3">Unrealized PNL ($)</th>
-                <th className="pb-2 pt-3 px-3">ROI%</th>
+                <th className="pb-2 pt-3 px-3">交易对</th>
+                <th className="pb-2 pt-3 px-3">持仓方向</th>
+                <th className="pb-2 pt-3 px-3">规模</th>
+                <th className="pb-2 pt-3 px-3">保证金</th>
+                <th className="pb-2 pt-3 px-3">开仓均价</th>
+                <th className="pb-2 pt-3 px-3">指数价格</th>
+                <th className="pb-2 pt-3 px-3">未实现盈亏</th>
+                <th className="pb-2 pt-3 px-3">收益率</th>
               </tr>
             </thead>
             <tbody className="text-[var(--text-primary)]">
@@ -106,10 +106,10 @@ export default function CopyTraderDetailPage() {
       )}
       {(activeTab === 'positionHistory' || activeTab === 'tradeHistory' || activeTab === 'balanceHistory' || activeTab === 'traders') && (
         <div className="mt-4 py-8 text-center text-[var(--text-secondary)] text-sm border border-[var(--border)] rounded-xl bg-[var(--bg-card)]">
-          {activeTab === 'positionHistory' && 'Position History（模拟占位）'}
-          {activeTab === 'tradeHistory' && 'Trade History（模拟占位）'}
-          {activeTab === 'balanceHistory' && 'Balance History（模拟占位）'}
-          {activeTab === 'traders' && 'Copy Traders（模拟占位）'}
+          {activeTab === 'positionHistory' && '暂无持仓历史'}
+          {activeTab === 'tradeHistory' && '暂无交易历史'}
+          {activeTab === 'balanceHistory' && '暂无资金历史'}
+          {activeTab === 'traders' && '暂无跟单用户'}
         </div>
       )}
 

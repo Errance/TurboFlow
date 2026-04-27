@@ -27,7 +27,7 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: '全部' },
   { id: 'unsettled', label: '待结算' },
   { id: 'settled_any', label: '已结算' },
-  { id: 'cashed_out', label: '兑付' },
+  { id: 'cashed_out', label: '提前结清' },
   { id: 'corrected', label: '修正' },
 ]
 
@@ -102,13 +102,13 @@ export default function SoccerMyBetsPage() {
   const handleCashOut = (bet: MyBetItem) => {
     const price = bet.cashout?.availablePrice ?? cashoutPrice(bet)
     const ok = window.confirm(
-      `按当前模拟兑付价 ${price.toFixed(2)} USDT 兑付注单 ${bet.betCode ?? bet.id}？兑付后不可撤销。`,
+      `是否按当前参考结算价 ${price.toFixed(2)} USDT 提前结清本注单（单号：${bet.betCode ?? bet.id}）？结清后无法撤销。`,
     )
     if (!ok) return
     const done = cashout(bet.id, price)
     addToast({
       type: done ? 'success' : 'error',
-      message: done ? `已兑付 ${price.toFixed(2)} USDT，余额已到账` : '当前注单不能兑付',
+      message: done ? `已提前结清，${price.toFixed(2)} USDT 已计入可用余额` : '当前注单不支持提前结清',
     })
   }
 
@@ -117,7 +117,7 @@ export default function SoccerMyBetsPage() {
     if (ok) {
       addToast({ type: 'success', message: '已加入投注单' })
     } else {
-      addToast({ type: 'error', message: '该注单无可复用的腿' })
+      addToast({ type: 'error', message: '该注单暂无可重新投注的选项' })
     }
   }
 
@@ -126,7 +126,7 @@ export default function SoccerMyBetsPage() {
       await navigator.clipboard.writeText(code)
       addToast({ type: 'info', message: `已复制 ${code}` })
     } catch {
-      addToast({ type: 'error', message: '复制失败，请手动选择' })
+      addToast({ type: 'error', message: '复制失败，请手动复制注单号' })
     }
   }
 
@@ -144,7 +144,7 @@ export default function SoccerMyBetsPage() {
     URL.revokeObjectURL(url)
   }
 
-  // 给待结算注单补一份可见的模拟兑付价。
+  // 给待结算注单补一份可见的参考提前结清价。
   useEffect(() => {
     for (const b of bets) {
       if (b.cashout && !b.cashout.needsRequote) continue
@@ -180,11 +180,11 @@ export default function SoccerMyBetsPage() {
         <div>
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">我的注单</h1>
           <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
-            Cash Out 当前为模拟兑付价，刷新后会重新报价。
+            提前结清报价为参考报价，刷新后将更新。
           </p>
         </div>
         <Button variant="ghost" onClick={handleExport} className="!py-1.5 !text-xs">
-          导出 CSV
+          导出记录
         </Button>
       </div>
 
@@ -230,7 +230,7 @@ export default function SoccerMyBetsPage() {
 
       {filtered.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-sm text-[var(--text-secondary)]">暂无匹配注单</p>
+          <p className="text-sm text-[var(--text-secondary)]">当前无符合条件的注单</p>
         </div>
       )}
 
@@ -249,7 +249,7 @@ export default function SoccerMyBetsPage() {
       {hasMore && (
         <div className="mt-4 text-center">
           <Button variant="ghost" onClick={() => setPage((p) => p + 1)}>
-            加载更多，还剩 {filtered.length - visible.length} 条
+            加载更多（剩余 {filtered.length - visible.length} 条）
           </Button>
         </div>
       )}

@@ -71,7 +71,7 @@ export default function Orderbook({ isOpen, side = 'YES', className, onPriceClic
       {!isOpen && (
         <div className="absolute inset-0 z-10 bg-[var(--bg-base)]/60 flex items-center justify-center rounded-xl">
           <span className="bg-[var(--bg-card)] border border-[var(--border)] px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] font-medium">
-            Market Closed — Orderbook Frozen
+            市场已关闭，订单簿已冻结
           </span>
         </div>
       )}

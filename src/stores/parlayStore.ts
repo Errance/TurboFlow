@@ -159,10 +159,10 @@ export const useParlayStore = create<ParlayState>((set, get) => ({
       })
     })
 
-    const modeLabel = mode === 'parlay' ? 'Parlay' : 'Bundle'
+    const modeLabel = mode === 'parlay' ? '串关' : '单项组合'
     useToastStore.getState().addToast({
       type: 'success',
-      message: `${modeLabel} placed: ${slip.length} legs, $${stake.toFixed(2)} stake, potential payout $${potentialPayout.toFixed(2)}`,
+      message: `${modeLabel}已提交：${slip.length} 个投注项，投注金额 ${stake.toFixed(2)} USDC，可能返还 ${potentialPayout.toFixed(2)} USDC`,
     })
 
     set({

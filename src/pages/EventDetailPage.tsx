@@ -51,15 +51,15 @@ function StatusBanner({ statusInfo, onAction }: { statusInfo: EventStatusInfo; o
   const style = config[key] ?? config['CLOSED-normal']
 
   const titleMap: Record<string, string> = {
-    'OPEN-paused': 'Trading Paused',
-    'CLOSED-normal': 'Market Closed — Awaiting Settlement',
-    'RESOLVING-normal': 'Resolving',
-    'RESOLVING-disputed': 'Settlement Disputed',
-    'RESOLVING-delayed': 'Settlement Delayed',
-    'SETTLED-normal': 'Settled',
-    'SETTLED-disputed': 'Post-Settlement Dispute',
-    'CANCELLED-normal': 'Market Cancelled',
-    'VOIDED-normal': 'Market Voided — Full Refund',
+    'OPEN-paused': '交易已暂停',
+    'CLOSED-normal': '市场已关闭，等待结算',
+    'RESOLVING-normal': '结算中',
+    'RESOLVING-disputed': '结算争议处理中',
+    'RESOLVING-delayed': '结算延迟',
+    'SETTLED-normal': '已结算',
+    'SETTLED-disputed': '结算后争议处理中',
+    'CANCELLED-normal': '市场已取消',
+    'VOIDED-normal': '市场已作废，全额退款',
   }
 
   return (
@@ -81,12 +81,12 @@ function StatusBanner({ statusInfo, onAction }: { statusInfo: EventStatusInfo; o
 
 function actionLabel(action: string): string {
   const map: Record<string, string> = {
-    appeal: 'Submit Appeal',
-    view_dispute: 'View Dispute',
-    request_settle: 'Request Settlement',
-    report_issue: 'Report Issue',
-    view_refund: 'View Refund',
-    view_evidence: 'View Evidence',
+    appeal: '提交申诉',
+    view_dispute: '查看争议',
+    request_settle: '申请结算',
+    report_issue: '报告问题',
+    view_refund: '查看退款',
+    view_evidence: '查看证据',
   }
   return map[action] ?? action
 }
@@ -95,18 +95,18 @@ function actionLabel(action: string): string {
 
 function RulesSummaryCard({ event }: { event: PredictionEvent }) {
   const [showFull, setShowFull] = useState(false)
-  const closeLabel = `Closes ${formatDate(event.timeline.closeDate)}${event.timeline.expectedSettleWindow ? ` / Settles within ${event.timeline.expectedSettleWindow}` : ''}`
+  const closeLabel = `关闭时间 ${formatDate(event.timeline.closeDate)}${event.timeline.expectedSettleWindow ? ` / 预计 ${event.timeline.expectedSettleWindow} 内结算` : ''}`
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Rules Summary</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">规则摘要</h3>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <svg className="w-4 h-4 text-[#2DD4BF] shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
             <path d="M2 14V2h12M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <div>
-            <span className="text-xs font-semibold text-[#2DD4BF]">What</span>
+            <span className="text-xs font-semibold text-[#2DD4BF]">判定对象</span>
             <p className="text-xs text-[var(--text-primary)] mt-0.5">{event.rulesMeasurement}</p>
           </div>
         </div>
@@ -116,7 +116,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
             <path d="M8 4v4l3 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <div>
-            <span className="text-xs font-semibold text-[#2DD4BF]">When</span>
+            <span className="text-xs font-semibold text-[#2DD4BF]">时间</span>
             <p className="text-xs text-[var(--text-primary)] mt-0.5">{closeLabel}</p>
           </div>
         </div>
@@ -126,7 +126,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
             <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
           <div>
-            <span className="text-xs font-semibold text-[#2DD4BF]">How</span>
+            <span className="text-xs font-semibold text-[#2DD4BF]">结算来源</span>
             <p className="text-xs text-[var(--text-primary)] mt-0.5">{event.resolutionSource}</p>
           </div>
         </div>
@@ -137,7 +137,7 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
             onClick={() => setShowFull(!showFull)}
             className="text-xs text-[#2DD4BF] mt-3 hover:underline"
           >
-            {showFull ? 'Hide Full Rules ↑' : 'View Full Rules →'}
+            {showFull ? '收起完整规则 ↑' : '查看完整规则 →'}
           </button>
           {showFull && (
             <div className="mt-3 bg-[var(--bg-base)] rounded-lg p-3">
@@ -155,14 +155,14 @@ function RulesSummaryCard({ event }: { event: PredictionEvent }) {
 function TimelinePayoutCard({ event }: { event: PredictionEvent }) {
   const { timeline } = event
   const stages = [
-    { label: 'Opened', date: timeline.openDate, done: true },
-    { label: 'Closes', date: timeline.closeDate, done: ['CLOSED', 'RESOLVING', 'SETTLED', 'CANCELLED', 'VOIDED'].includes(event.status) },
-    { label: 'Settled', date: timeline.settledDate ?? null, done: event.status === 'SETTLED' },
+    { label: '已开放', date: timeline.openDate, done: true },
+    { label: '关闭', date: timeline.closeDate, done: ['CLOSED', 'RESOLVING', 'SETTLED', 'CANCELLED', 'VOIDED'].includes(event.status) },
+    { label: '已结算', date: timeline.settledDate ?? null, done: event.status === 'SETTLED' },
   ]
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Timeline & Payout</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">时间线与返还</h3>
 
       {/* Timeline */}
       <div className="flex items-center gap-0 mb-4">
@@ -185,19 +185,19 @@ function TimelinePayoutCard({ event }: { event: PredictionEvent }) {
       {/* Settlement window */}
       {timeline.expectedSettleWindow && (
         <p className="text-xs text-[var(--text-secondary)] mb-3">
-          Expected settlement: {timeline.expectedSettleWindow}
+          预计结算时间：{timeline.expectedSettleWindow}
         </p>
       )}
 
       {/* Payout explanation */}
       <div className="bg-[var(--bg-base)] rounded-lg p-3">
         <div className="flex justify-between text-xs">
-          <span className="text-[var(--text-secondary)]">If you win</span>
-          <span className="text-[#2DD4BF] font-medium">1 USDC per share</span>
+          <span className="text-[var(--text-secondary)]">如果命中</span>
+          <span className="text-[#2DD4BF] font-medium">每份返还 1 USDC</span>
         </div>
         <div className="flex justify-between text-xs mt-1">
-          <span className="text-[var(--text-secondary)]">If you lose</span>
-          <span className="text-[#E85A7E] font-medium">0 USDC per share</span>
+          <span className="text-[var(--text-secondary)]">如果未命中</span>
+          <span className="text-[#E85A7E] font-medium">每份返还 0 USDC</span>
         </div>
       </div>
     </div>
@@ -257,7 +257,7 @@ function OutcomeModelHint({ event }: { event: PredictionEvent }) {
       <p className="text-xs text-[var(--text-secondary)]">
         <span className="text-[#F59E0B] font-medium">Mutually exclusive: </span>
         Only one option will settle YES; all others settle NO.
-        Yes probabilities may not sum to exactly 100% due to bid-ask spreads.
+        因买卖价差存在，“是”方向概率合计可能不等于 100%。
       </p>
     </div>
   )
@@ -329,7 +329,7 @@ function ContractTableRow({
               : 'bg-[#2DD4BF]/10 text-[#2DD4BF] hover:bg-[#2DD4BF]/20'
           }`}
         >
-          Yes {contract.probability}%
+          是 {contract.probability}%
         </button>
         <button
           onClick={() => !disabled && onSelect(contract.id, 'NO')}
@@ -341,7 +341,7 @@ function ContractTableRow({
               : 'bg-[#E85A7E]/10 text-[#E85A7E] hover:bg-[#E85A7E]/20'
           }`}
         >
-          No {noProb}%
+          否 {noProb}%
         </button>
         {/* Add to Parlay */}
         {!disabled && (
@@ -357,7 +357,7 @@ function ContractTableRow({
         <button
           onClick={() => navigate(`/contract/${contract.id}`)}
           className="min-w-[36px] min-h-[36px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[#2DD4BF] rounded-lg hover:bg-[var(--border)] transition-colors"
-          title="Advanced Trading (CLOB)"
+          title="高级交易"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <rect x="1" y="1" width="5" height="12" rx="0.5" stroke="currentColor" strokeWidth="1.2" />
@@ -376,8 +376,8 @@ function SpreadNote({ event }: { event: PredictionEvent }) {
   const totalYes = event.contracts.reduce((sum, c) => sum + c.probability, 0)
   return (
     <p className="text-[10px] text-[var(--text-secondary)] px-3 mt-1">
-      Sum of Yes probabilities: {totalYes}%
-      {totalYes !== 100 && ' — difference reflects bid-ask spread'}
+      “是”方向概率合计：{totalYes}%
+      {totalYes !== 100 && '，差异来自买卖价差'}
     </p>
   )
 }
@@ -515,9 +515,9 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="px-4 md:px-6 py-12 text-center">
-        <p className="text-[var(--text-secondary)]">Event not found</p>
+        <p className="text-[var(--text-secondary)]">未找到该事件</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
-          Back to Explore
+          返回探索
         </Button>
       </div>
     )
@@ -542,7 +542,7 @@ export default function EventDetailPage() {
       setAppealDrawerOpen(true)
     } else if (action === 'view_refund') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      addToast({ type: 'info', message: 'Refund details shown above in the Refund Banner' })
+      addToast({ type: 'info', message: '退款详情已在页面上方展示' })
     } else if (action === 'request_settle') {
       const settleSection = document.querySelector('[data-section="request-settle"]')
       settleSection?.scrollIntoView({ behavior: 'smooth' })
@@ -570,10 +570,10 @@ export default function EventDetailPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <Badge variant={event.status === 'OPEN' ? 'success' : event.status === 'CANCELLED' ? 'danger' : 'neutral'}>
-              {event.statusInfo.subStatus === 'paused' ? 'Paused' : event.status}
+              {event.statusInfo.subStatus === 'paused' ? '已暂停' : event.status === 'OPEN' ? '开放' : event.status === 'RESOLVING' ? '结算中' : event.status === 'SETTLED' ? '已结算' : event.status === 'CANCELLED' ? '已取消' : event.status === 'VOIDED' ? '已作废' : event.status}
             </Badge>
             <span className="text-xs text-[var(--text-secondary)]">{event.category}</span>
-            <span className="text-xs text-[var(--text-secondary)] font-mono">{formatVolume(event.totalVolume)} vol</span>
+            <span className="text-xs text-[var(--text-secondary)] font-mono">{formatVolume(event.totalVolume)} 成交量</span>
           </div>
         </div>
       </div>
@@ -597,22 +597,22 @@ export default function EventDetailPage() {
           {/* Contract table - primary action first */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3 mb-4">
             <div className="flex items-center justify-between mb-2 px-1">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Contracts</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">合约</h3>
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded"><span className="md:hidden">1 USDC/sh.</span><span className="hidden md:inline">Payout: 1 USDC/share</span></span>
-                <span className="text-xs text-[var(--text-secondary)]">{event.contracts.length} total</span>
+                <span className="text-[10px] text-[#2DD4BF] bg-[#2DD4BF]/10 px-1.5 py-0.5 rounded"><span className="md:hidden">1 USDC/份</span><span className="hidden md:inline">返还：1 USDC/份</span></span>
+                <span className="text-xs text-[var(--text-secondary)]">共 {event.contracts.length} 个</span>
               </div>
             </div>
             {!isDisabled && event.contracts.length > 0 && (
               <div className="flex items-center justify-between px-1 mb-2">
-                <p className="text-[11px] text-[var(--text-secondary)]">Tap Yes/No to place quick orders</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">点击“是 / 否”即可快捷下单</p>
                 <button
                   onClick={() =>
                     openTradePanel(selectedContractId || event.contracts[0].id, selectedSide ?? 'YES')
                   }
                   className="md:hidden text-[11px] text-[#2DD4BF] hover:underline"
                 >
-                  Quick Order
+                  快捷下单
                 </button>
               </div>
             )}

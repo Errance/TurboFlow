@@ -26,7 +26,7 @@ function FeedRow({ bet }: { bet: ECGlobalBet }) {
                 isHigher ? 'text-[#2DD4BF]' : 'text-[#F87171]'
               }`}
             >
-              {isHigher ? 'H' : 'L'}
+              {isHigher ? '涨' : '跌'}
             </span>
           </div>
         </div>
@@ -49,12 +49,12 @@ function FeedRow({ bet }: { bet: ECGlobalBet }) {
         <div className="text-[10px] text-[var(--text-tertiary)]">
           {isSettled ? (
             <span className={won ? 'text-[#2DD4BF]/70' : 'text-[#F87171]/70'}>
-              {won ? 'Won' : 'Lost'}
+              {won ? '已赢' : '已输'}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] animate-pulse" />
-              Active
+              进行中
             </span>
           )}
         </div>
@@ -77,7 +77,7 @@ export default function GlobalFeed() {
       {globalFeed.length === 0 ? (
         <div className="text-center py-10 text-sm text-[var(--text-tertiary)]">
           <div className="text-2xl mb-2">👥</div>
-          Waiting for players...
+          暂无用户动态
         </div>
       ) : (
         <div className="max-h-[400px] overflow-y-auto">

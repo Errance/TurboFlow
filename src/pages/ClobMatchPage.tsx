@@ -29,7 +29,7 @@ export default function ClobMatchPage() {
   if (!clobMatch) {
     return (
       <div className="px-6 py-12 text-center">
-        <p className="text-[var(--text-secondary)]">比赛未找到</p>
+        <p className="text-[var(--text-secondary)]">未找到该场比赛</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/clob')}>
           返回赛事列表
         </Button>
@@ -76,7 +76,7 @@ export default function ClobMatchPage() {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm min-h-[44px] mb-4">
         <button onClick={() => navigate('/clob')} className="text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors">
-          足球 CLOB
+          足球撮合
         </button>
         <span className="text-[var(--text-secondary)]/40">›</span>
         <button onClick={() => navigate(`/clob?league=${clobMatch.leagueId}`)} className="text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors">

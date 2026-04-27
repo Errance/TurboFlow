@@ -14,9 +14,9 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import type { OddsAcceptPolicy, OddsFormat } from '../../data/soccer/contracts'
 
 const FORMAT_OPTIONS: { id: OddsFormat; label: string; hint: string }[] = [
-  { id: 'decimal', label: 'Decimal', hint: '欧洲 · 2.24' },
-  { id: 'fractional', label: 'Fractional', hint: '英式 · 31/25' },
-  { id: 'american', label: 'American', hint: '美式 · +124' },
+  { id: 'decimal', label: '欧洲盘', hint: '示例 2.24' },
+  { id: 'fractional', label: '分数盘', hint: '示例 31/25' },
+  { id: 'american', label: '美式盘', hint: '示例 +124' },
 ]
 
 const POLICY_OPTIONS: { id: OddsAcceptPolicy; label: string; hint: string }[] = [

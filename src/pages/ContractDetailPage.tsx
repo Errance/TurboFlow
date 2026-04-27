@@ -79,7 +79,7 @@ export default function ContractDetailPage() {
       <div className="px-4 md:px-6 py-12 text-center">
         <p className="text-[var(--text-secondary)]">Contract not found</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/')}>
-          Back to Explore
+          返回探索
         </Button>
       </div>
     )
@@ -96,7 +96,7 @@ export default function ContractDetailPage() {
           current === 'market' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
       >
-        Market
+        市价
       </button>
       <button
         onClick={() => onChange('limit')}
@@ -104,7 +104,7 @@ export default function ContractDetailPage() {
           current === 'limit' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
       >
-        Limit
+        限价
       </button>
     </div>
   )
@@ -121,7 +121,7 @@ export default function ContractDetailPage() {
         </button>
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold text-[var(--text-primary)]">{contract.label}</h1>
-          <Badge variant="info">Advanced Trading</Badge>
+          <Badge variant="info">高级交易</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-1">
           <span className="text-2xl font-bold font-mono text-[#2DD4BF]">{contract.probability}%</span>
@@ -139,7 +139,7 @@ export default function ContractDetailPage() {
             <p className="text-xs text-[var(--text-secondary)] flex-1 min-w-0 truncate">{event.resolutionSource}</p>
             {event.rulesDetail && (
               <Button size="sm" variant="ghost" onClick={() => setRulesDrawerOpen(true)}>
-                <span className="md:hidden">Rules</span><span className="hidden md:inline">View Full Rules</span>
+                <span className="md:hidden">规则</span><span className="hidden md:inline">查看完整规则</span>
               </Button>
             )}
           </div>
@@ -147,17 +147,17 @@ export default function ContractDetailPage() {
           {showChart && <PriceChart marketId={legacyMarket.id} />}
 
           <div>
-            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">Orderbook</h3>
+            <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">订单簿</h3>
             <Orderbook isOpen={!!isOpen} side={prefillSide ?? 'YES'} onPriceClick={isOpen ? handlePriceClick : undefined} />
           </div>
 
           {recentTrades.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-[var(--text-primary)]">Recent Trades</h3>
+                <h3 className="text-sm font-medium text-[var(--text-primary)]">近期成交</h3>
                 {relevantTrades.length > 5 && (
                   <Button size="sm" variant="ghost" onClick={() => setTradesDrawerOpen(true)}>
-                    View All ({relevantTrades.length})
+                    查看全部（{relevantTrades.length}）
                   </Button>
                 )}
               </div>
@@ -165,7 +165,7 @@ export default function ContractDetailPage() {
                 {recentTrades.map((t) => (
                   <div key={t.id} className="flex justify-between px-3 py-2 text-sm">
                     <span className={t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}>
-                      {t.side}
+                      {t.side === 'YES' ? '是' : '否'}
                     </span>
                     <span className="font-mono text-[var(--text-secondary)] tabular-nums">
                       {t.quantity} @ ${t.price.toFixed(2)}
@@ -207,7 +207,7 @@ export default function ContractDetailPage() {
             onClick={() => setMobileDrawerOpen(true)}
             className="w-full h-12 bg-[#2DD4BF] text-[#0B0B0F] font-semibold rounded-lg text-sm transition-opacity hover:opacity-90"
           >
-            Trade
+            交易
           </button>
         </div>
       )}
@@ -216,7 +216,7 @@ export default function ContractDetailPage() {
       <Drawer
         isOpen={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
-        title="Trade"
+        title="交易"
       >
         <OrderTabBar current={orderTab} onChange={setOrderTab} />
         {orderTab === 'market' ? (
@@ -243,20 +243,20 @@ export default function ContractDetailPage() {
       <SideDrawer
         isOpen={rulesDrawerOpen}
         onClose={() => setRulesDrawerOpen(false)}
-        title="Contract Rules"
+        title="合约规则"
       >
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Measurement</h4>
+            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">判定口径</h4>
             <p className="text-sm text-[var(--text-secondary)]">{event.rulesMeasurement}</p>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Resolution Source</h4>
+            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">结算来源</h4>
             <p className="text-sm text-[var(--text-secondary)]">{event.resolutionSource}</p>
           </div>
           {event.rulesDetail && (
             <div>
-              <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">Full Rules</h4>
+              <h4 className="text-sm font-medium text-[var(--text-primary)] mb-1">完整规则</h4>
               <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line">{event.rulesDetail}</p>
             </div>
           )}
@@ -267,14 +267,14 @@ export default function ContractDetailPage() {
       <SideDrawer
         isOpen={tradesDrawerOpen}
         onClose={() => setTradesDrawerOpen(false)}
-        title="All Trades"
+        title="全部成交"
       >
         <div className="divide-y divide-[var(--border)]">
           {relevantTrades.map((t) => (
             <div key={t.id} className="flex justify-between items-center py-3 text-sm">
               <div className="flex items-center gap-3">
                 <span className={`font-medium ${t.side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'}`}>
-                  {t.side}
+                  {t.side === 'YES' ? '是' : '否'}
                 </span>
                 <span className="font-mono text-[var(--text-primary)] tabular-nums">
                   {t.quantity} @ ${t.price.toFixed(2)}
@@ -286,7 +286,7 @@ export default function ContractDetailPage() {
             </div>
           ))}
           {relevantTrades.length === 0 && (
-            <p className="text-sm text-[var(--text-secondary)] text-center py-8">No trades recorded</p>
+            <p className="text-sm text-[var(--text-secondary)] text-center py-8">暂无成交记录</p>
           )}
         </div>
       </SideDrawer>

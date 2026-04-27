@@ -7,13 +7,13 @@ import ParlaySlip from '../components/ParlaySlip'
 import SoccerBetSlipFloat from '../components/soccer/SoccerBetSlipFloat'
 
 const navItems = [
-  { to: '/', label: 'Explore' },
-  { to: '/soccer', label: '足球', badge: 'Stake' },
-  { to: '/clob', label: '足球 CLOB', badge: 'NEW' },
-  { to: '/events', label: 'Events' },
+  { to: '/', label: '探索' },
+  { to: '/soccer', label: '足球' },
+  { to: '/clob', label: '足球撮合', badge: '新' },
+  { to: '/events', label: '预测市场' },
   { to: '/copy', label: '跟单' },
-  { to: '/portfolio', label: 'Portfolio' },
-  { to: '/leaderboard', label: 'Leaderboard' },
+  { to: '/portfolio', label: '资产' },
+  { to: '/leaderboard', label: '排行榜' },
 ]
 
 export default function AppShell() {
@@ -67,11 +67,11 @@ export default function AppShell() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-[var(--text-secondary)]">Prediction Market Prototype</span>
+          <span className="text-xs text-[var(--text-secondary)]">预测市场与体育交易</span>
           <button
             onClick={toggleTheme}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)] transition-colors"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={theme === 'dark' ? '切换为浅色模式' : '切换为深色模式'}
           >
             {theme === 'dark' ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +148,7 @@ export default function AppShell() {
 
 function MobileIcon({ name, active }: { name: string; active: boolean }) {
   const color = active ? '#2DD4BF' : 'var(--text-secondary)'
-  if (name === 'Explore') {
+  if (name === '探索') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <circle cx="10" cy="10" r="7" stroke={color} strokeWidth="1.5" />
@@ -156,14 +156,14 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
       </svg>
     )
   }
-  if (name === 'Events') {
+  if (name === '预测市场') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <path d="M10 3L12.5 8H17L13.5 11.5L15 17L10 13.5L5 17L6.5 11.5L3 8H7.5L10 3Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     )
   }
-  if (name === 'Portfolio') {
+  if (name === '资产') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <rect x="3" y="3" width="6" height="6" rx="1" stroke={color} strokeWidth="1.5" />
@@ -172,7 +172,7 @@ function MobileIcon({ name, active }: { name: string; active: boolean }) {
       </svg>
     )
   }
-  if (name === 'Leaderboard') {
+  if (name === '排行榜') {
     return (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <rect x="3" y="10" width="4" height="7" rx="0.5" stroke={color} strokeWidth="1.5" />

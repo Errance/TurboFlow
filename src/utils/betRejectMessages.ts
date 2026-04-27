@@ -15,15 +15,15 @@ export const REJECT_MESSAGES: Record<BetRejectReason, string> = {
   odds_expired: '报价已过期，请重新确认当前赔率',
   market_closed: '盘口已关闭，请移除不可用选项',
   match_not_available: '比赛已不可用，请移除相关选项',
-  balance_insufficient: '余额不足，请调整金额或使用 MAX',
+  balance_insufficient: '余额不足，请调整投注金额',
   stake_below_min: `单注不得低于 ${BETTING_LIMITS.minStake} USDT`,
   stake_above_max: `单注不得高于 ${BETTING_LIMITS.maxStake.toLocaleString('en-US')} USDT`,
   payout_above_cap: `单注最高可能返还 ${BETTING_LIMITS.maxReturn.toLocaleString('en-US')} USDT`,
-  legs_too_few: `当前投注类型腿数不足，请选择更多选项或切换投注方式`,
-  legs_too_many: `当前投注类型腿数过多，串单最多 ${BETTING_LIMITS.maxLegs} 腿`,
+  legs_too_few: `当前投注方式的投注项不足，请选择更多选项或切换投注方式`,
+  legs_too_many: `当前投注方式的投注项过多，串关最多 ${BETTING_LIMITS.maxLegs} 个投注项`,
   conflict_detected: '存在盘口冲突，请移除或替换冲突选项',
-  network_error: '网络错误，请重试',
-  rate_limited: '提交过于频繁，请稍候',
+  network_error: '网络异常，请稍后重试',
+  rate_limited: '提交处理中，请稍候再试',
 }
 
 export function rejectMessage(reason: BetRejectReason): string {

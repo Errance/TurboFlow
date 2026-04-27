@@ -61,7 +61,7 @@ function BettingLineRow({
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[var(--text-primary)]">{c.label}</p>
-                <p className="text-[10px] text-[var(--text-secondary)] font-mono">{formatVolume(c.volume)} vol</p>
+                <p className="text-[10px] text-[var(--text-secondary)] font-mono">{formatVolume(c.volume)} 成交量</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <button
@@ -73,7 +73,7 @@ function BettingLineRow({
                       : 'bg-[#2DD4BF]/10 text-[#2DD4BF] hover:bg-[#2DD4BF]/20'
                   }`}
                 >
-                  Yes {c.probability}%
+                  是 {c.probability}%
                 </button>
                 <button
                   onClick={() => !disabled && onSelect(c.id, 'NO')}
@@ -84,7 +84,7 @@ function BettingLineRow({
                       : 'bg-[#E85A7E]/10 text-[#E85A7E] hover:bg-[#E85A7E]/20'
                   }`}
                 >
-                  No {noProb}%
+                  否 {noProb}%
                 </button>
                 {!disabled && (
                   <ParlayAddPopover
@@ -149,7 +149,7 @@ export default function SportsGamePage() {
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
           <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Back to Sports
+        返回体育赛事
       </button>
 
       {/* Two-column layout */}
@@ -160,10 +160,10 @@ export default function SportsGamePage() {
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 mb-4">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge variant={sports.status === 'live' ? 'danger' : sports.status === 'final' ? 'neutral' : 'success'}>
-                {sports.status === 'live' ? 'LIVE' : sports.status === 'final' ? 'FINAL' : 'Upcoming'}
+                {sports.status === 'live' ? '进行中' : sports.status === 'final' ? '已结束' : '即将开始'}
               </Badge>
               <span className="text-xs text-[var(--text-secondary)]">{sports.league}</span>
-              {isCancelled && <Badge variant="danger">Cancelled</Badge>}
+              {isCancelled && <Badge variant="danger">已取消</Badge>}
             </div>
 
             {/* Teams matchup */}
@@ -204,15 +204,15 @@ export default function SportsGamePage() {
 
             {/* Volume */}
             <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-              <span className="font-mono">{formatVolume(event.totalVolume)} vol</span>
-              <span>{event.contracts.length} contracts</span>
+              <span className="font-mono">{formatVolume(event.totalVolume)} 成交量</span>
+              <span>{event.contracts.length} 个合约</span>
             </div>
           </div>
 
           {/* Status banner for cancelled/paused */}
           {isCancelled && (
             <div className="bg-[var(--border)] border border-[var(--border)] rounded-xl p-4 mb-4">
-              <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">Game Cancelled</p>
+              <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">比赛已取消</p>
               <p className="text-xs text-[var(--text-secondary)]">{event.statusInfo.reason}</p>
               {event.statusInfo.actionAvailable?.includes('view_refund') && (
                 <Button
@@ -221,7 +221,7 @@ export default function SportsGamePage() {
                   className="mt-2"
                   onClick={() => navigate(`/event/${event.id}`)}
                 >
-                  View Refund
+                  查看退款
                 </Button>
               )}
             </div>
@@ -229,14 +229,14 @@ export default function SportsGamePage() {
 
           {event.statusInfo.subStatus === 'paused' && (
             <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-xl p-4 mb-4">
-              <p className="text-sm text-[#F59E0B] font-medium mb-1">Trading Paused</p>
+              <p className="text-sm text-[#F59E0B] font-medium mb-1">交易已暂停</p>
               <p className="text-xs text-[var(--text-secondary)]">{event.statusInfo.reason}</p>
             </div>
           )}
 
           {/* Betting lines */}
           <div className="space-y-3">
-            <BettingLineRow label="Moneyline" contracts={moneyline} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
+            <BettingLineRow label="胜负盘" contracts={moneyline} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             <BettingLineRow label="Spread" contracts={spread} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             <BettingLineRow label="Total" contracts={total} event={event} onSelect={handleSelect} selectedContractId={selectedContractId} disabled={isDisabled} />
             {other.length > 0 && (

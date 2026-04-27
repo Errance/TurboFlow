@@ -72,12 +72,12 @@ export default function InstantMarketCard({ event }: Props) {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#E85A7E]/20 text-[#E85A7E] rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse" />
-              Live
+              进行中
             </span>
             <span className="text-[10px] text-[var(--text-secondary)]">5 min</span>
           </div>
           <span className={`font-mono text-sm font-bold tabular-nums ${isUrgent ? 'text-[#E85A7E]' : isExpired ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
-            {isExpired ? 'Closed' : formatCountdown(remaining)}
+            {isExpired ? '已关闭' : formatCountdown(remaining)}
           </span>
         </div>
 
@@ -101,18 +101,18 @@ export default function InstantMarketCard({ event }: Props) {
               ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
               : 'bg-[#E85A7E]/10 text-[#E85A7E]'
           }`}>
-            {meta.direction === 'UP' ? '↑' : '↓'} Strike ${formatPrice(meta.strikePrice)}
+            {meta.direction === 'UP' ? '↑' : '↓'} 目标价 ${formatPrice(meta.strikePrice)}
           </div>
           <span className="text-xs text-[var(--text-secondary)]">
-            {meta.direction === 'UP' ? 'Above' : 'Below'} to win
+            {meta.direction === 'UP' ? '高于目标价获胜' : '低于目标价获胜'}
           </span>
         </div>
 
         {/* Probability bar */}
         <div className="mb-4">
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-[#2DD4BF]">Yes {contract.probability}%</span>
-            <span className="text-[#E85A7E]">No {100 - contract.probability}%</span>
+            <span className="text-[#2DD4BF]">是 {contract.probability}%</span>
+            <span className="text-[#E85A7E]">否 {100 - contract.probability}%</span>
           </div>
           <div className="h-2 rounded-full bg-[#E85A7E]/30 overflow-hidden">
             <div
@@ -124,7 +124,7 @@ export default function InstantMarketCard({ event }: Props) {
 
         {/* Volume + Share */}
         <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-3">
-          <span>Volume</span>
+          <span>成交量</span>
           <span className="font-mono">${event.totalVolume.toLocaleString()} USDC</span>
         </div>
 
@@ -135,14 +135,14 @@ export default function InstantMarketCard({ event }: Props) {
             disabled={isExpired}
             className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-colors bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Yes {contract.yesPrice.toFixed(2)}
+            是 {contract.yesPrice.toFixed(2)}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleTrade('NO') }}
             disabled={isExpired}
             className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-colors bg-[#E85A7E]/15 text-[#E85A7E] hover:bg-[#E85A7E]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            No {contract.noPrice.toFixed(2)}
+            否 {contract.noPrice.toFixed(2)}
           </button>
         </div>
 

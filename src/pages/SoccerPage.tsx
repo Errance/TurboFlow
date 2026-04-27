@@ -68,7 +68,7 @@ export default function SoccerPage() {
               <span>全部赛事</span>
               <div className="flex items-center gap-1.5">
                 {liveCount > 0 && (
-                  <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} live</span>
+                  <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} 场进行中</span>
                 )}
                 <span className="text-[10px] text-[var(--text-secondary)] font-mono">{matches.length}</span>
               </div>
@@ -104,7 +104,7 @@ export default function SoccerPage() {
 
           {matches.some((m) => m.status === 'live') && (
             <div className="mt-6 border-t border-[var(--border)] pt-4">
-              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">正在直播</h3>
+              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">正在进行</h3>
               <div className="space-y-1">
                 {matches.filter((m) => m.status === 'live').slice(0, 3).map((m) => (
                   <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[#E85A7E]/5">
@@ -156,8 +156,8 @@ export default function SoccerPage() {
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
                 <span className="w-12 shrink-0 text-center">时间</span>
                 <span className="flex-1">比赛</span>
-                <span className="hidden sm:block w-[182px] shrink-0 text-center">1x2</span>
-                <span className="hidden md:block w-[118px] shrink-0 text-center">总进球</span>
+                <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
+                <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
                 <span className="hidden lg:block w-[138px] shrink-0 text-center">亚盘</span>
                 <span className="w-16 shrink-0 text-right">盘口</span>
               </div>

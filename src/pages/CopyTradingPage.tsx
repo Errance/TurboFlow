@@ -40,8 +40,8 @@ export default function CopyTradingPage() {
       <FigmaPageLayout imageSrc={src}>
         {/* 我的跟单：Banner 右侧，约 72% 12% 宽 10% 高 3% */}
         <Hotspot left={72} top={10} width={10} height={3.2} title="我的跟单" onClick={() => navigate('/copy/my')} />
-        {/* Apply Now：约 84% 12% 宽 8% 高 3% */}
-        <Hotspot left={84} top={10} width={8} height={3.2} title="Apply Now" onClick={() => {}} />
+        {/* 申请成为交易员：约 84% 12% 宽 8% 高 3% */}
+        <Hotspot left={84} top={10} width={8} height={3.2} title="申请成为交易员" onClick={() => {}} />
         {/* Tab 公域 / 私域 / 收藏：约 4% 18% 各约 6% 宽 2.5% 高 */}
         <Hotspot left={4} top={17} width={5} height={2.5} title="公域" onClick={() => {}} />
         <Hotspot left={10} top={17} width={5} height={2.5} title="私域" onClick={() => {}} />
@@ -64,7 +64,7 @@ export default function CopyTradingPage() {
         })}
       </FigmaPageLayout>
 
-      {/* 底图下方：保留可操作卡片网格，便于点 Copy 打开设置弹窗 */}
+      {/* 底图下方：保留可操作卡片网格，便于打开跟单设置弹窗 */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {mockTraders.map((trader) => (
           <PlazaCardRow
@@ -98,7 +98,7 @@ function PlazaCardRow({
 }) {
   const { copyStates } = useCopyTradingStore()
   const state = (copyStates[trader.id] ?? trader.copyButton) as CopyButtonState
-  const canCopy = state === 'Copy' || state === 'Full'
+  const canCopy = state === 'Copy'
 
   return (
     <div
@@ -110,19 +110,19 @@ function PlazaCardRow({
         <span className="font-medium text-[var(--text-primary)]">{trader.nickname}</span>
         <span className="text-xs text-[var(--text-tertiary)]">{trader.followerCount} / {trader.followerMax}</span>
       </div>
-      <p className="text-xs text-[var(--text-tertiary)] mb-2">180D PNL: <span style={{ color: '#0abab5' }}>+${trader.pnl180d.toLocaleString()}</span></p>
-      <p className="text-xs text-[var(--text-tertiary)] mb-3">30D ROI: <span style={{ color: '#0abab5' }}>{trader.roi30d}%</span></p>
+      <p className="text-xs text-[var(--text-tertiary)] mb-2">180 日盈亏：<span style={{ color: '#0abab5' }}>+${trader.pnl180d.toLocaleString()}</span></p>
+      <p className="text-xs text-[var(--text-tertiary)] mb-3">30 日收益率：<span style={{ color: '#0abab5' }}>{trader.roi30d}%</span></p>
       <button
         type="button"
         className="w-full h-10 rounded-lg font-medium text-base text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         style={{ backgroundColor: '#0abab5' }}
-        disabled={state === 'Copying'}
+        disabled={state === 'Copying' || state === 'Full'}
         onClick={(e) => {
           e.stopPropagation()
           if (canCopy) onOpenCopyModal(trader.id, trader.nickname)
         }}
       >
-        {state === 'Copying' ? 'Copying' : state === 'Full' ? 'Full' : 'Copy'}
+        {state === 'Copying' ? '跟单中' : state === 'Full' ? '名额已满' : '跟单'}
       </button>
     </div>
   )

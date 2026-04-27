@@ -13,9 +13,9 @@ export default function EffectsSettings({
   if (!open) return null
 
   const revealOptions: { value: 'on' | 'minimal' | 'off'; label: string; desc: string }[] = [
-    { value: 'on', label: 'On', desc: 'Full-screen reveal animation' },
-    { value: 'minimal', label: 'Minimal', desc: 'Card-level flash only' },
-    { value: 'off', label: 'Off', desc: 'Silent result update' },
+    { value: 'on', label: '完整动效', desc: '全屏展示结算动效' },
+    { value: 'minimal', label: '轻量动效', desc: '仅在卡片中提示结果' },
+    { value: 'off', label: '关闭动效', desc: '只更新结果，不展示动效' },
   ]
 
   return (
@@ -23,7 +23,7 @@ export default function EffectsSettings({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold">Effects</h3>
+          <h3 className="text-sm font-semibold">动效设置</h3>
           <button
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[var(--border)] text-[var(--text-secondary)] transition-colors"
@@ -37,7 +37,7 @@ export default function EffectsSettings({
         {/* Settlement Reveal */}
         <div className="mb-4">
           <div className="text-xs font-medium text-[var(--text-primary)] mb-2">
-            Settlement Reveal
+            结算展示
           </div>
           <div className="space-y-1.5">
             {revealOptions.map((opt) => (
@@ -61,9 +61,9 @@ export default function EffectsSettings({
         <div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs font-medium text-[var(--text-primary)]">Hype Mode</div>
+              <div className="text-xs font-medium text-[var(--text-primary)]">庆祝动效</div>
               <div className="text-[10px] text-[var(--text-tertiary)]">
-                Streak & comeback ceremonies
+                连胜或反转时展示额外动效
               </div>
             </div>
             <button

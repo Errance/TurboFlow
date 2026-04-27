@@ -56,12 +56,12 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
     if (!trackedOrder) return
     const { status } = trackedOrder
     if (status === 'Filled') {
-      useToastStore.getState().addToast({ type: 'success', message: 'Order filled!' })
+      useToastStore.getState().addToast({ type: 'success', message: '委托已成交' })
       setFeedbackTimeout(Date.now() + 5000)
     } else if (status === 'Rejected') {
       useToastStore.getState().addToast({
         type: 'error',
-        message: trackedOrder.rejectReason ?? 'Order rejected',
+        message: trackedOrder.rejectReason ?? '委托已拒绝',
         cta: trackedOrder.rejectCta,
       })
       setFeedbackTimeout(Date.now() + 5000)
@@ -83,8 +83,8 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
         {isOpen && onLimitClick && (
           <SegmentedControl
             options={[
-              { id: 'Market', label: 'Market' },
-              { id: 'Limit', label: 'Limit' },
+              { id: 'Market', label: '市价' },
+              { id: 'Limit', label: '限价' },
             ]}
             value={orderMode}
             onChange={(v) => {
@@ -98,17 +98,17 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
           />
         )}
         {(!isOpen || !onLimitClick) && (
-          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">Quick Order</h3>
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">快捷下单</h3>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Direction</label>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1.5">方向</label>
             <SegmentedControl
               variant="yes-no"
               options={[
-                { id: 'YES', label: 'YES' },
-                { id: 'NO', label: 'NO' },
+                { id: 'YES', label: '是' },
+                { id: 'NO', label: '否' },
               ]}
               value={side}
               onChange={(v) => setSide(v as OrderSide)}
@@ -116,7 +116,7 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
           </div>
 
           <Input
-            label="Amount"
+            label="金额"
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -131,7 +131,7 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
             disabled={!isOpen || !amount || Number(amount) <= 0}
             onClick={handleSubmit}
           >
-            {isOpen ? `Buy ${side}` : 'Market Closed'}
+            {isOpen ? `买入${side === 'YES' ? '是' : '否'}` : '市场已关闭'}
           </Button>
         </div>
 
@@ -141,23 +141,23 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
             {trackedOrder.status === 'Pending' && (
               <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <Spinner size="sm" />
-                <span>Processing...</span>
+                <span>处理中...</span>
               </div>
             )}
             {trackedOrder.status === 'PartialFill' && (
-              <p className="text-sm text-[#F59E0B]">Partially filled...</p>
+              <p className="text-sm text-[#F59E0B]">部分成交...</p>
             )}
             {trackedOrder.status === 'Filled' && (
               <div className="flex items-center gap-2 text-sm text-[#2DD4BF]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>
-                <span>Order filled!</span>
+                <span>委托已成交</span>
               </div>
             )}
             {trackedOrder.status === 'Rejected' && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-[#E85A7E]">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                  <span>{trackedOrder.rejectReason ?? 'Rejected'}</span>
+                  <span>{trackedOrder.rejectReason ?? '已拒绝'}</span>
                 </div>
                 {trackedOrder.rejectCta && (
                   <Button
@@ -179,15 +179,15 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
       </div>
 
       {/* Confirm Modal */}
-      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Confirm Order">
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="确认下单">
         <div className="space-y-4">
           <div className="space-y-2 text-sm">
             {[
-              ['Side', side, side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
-              ['Amount', `${Number(amount).toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
-              ['Est. Avg Price', `${scenario.estimatedAvgPrice.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
-              ['Est. Levels', String(scenario.estimatedLevels), 'text-[var(--text-primary)]'],
-              ['Est. Fee', `${scenario.estimatedFee.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
+              ['方向', side === 'YES' ? '是' : '否', side === 'YES' ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'],
+              ['金额', `${Number(amount).toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
+              ['预计均价', `${scenario.estimatedAvgPrice.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
+              ['预计成交档位', String(scenario.estimatedLevels), 'text-[var(--text-primary)]'],
+              ['预计手续费', `${scenario.estimatedFee.toFixed(2)} USDC`, 'text-[var(--text-primary)]'],
             ].map(([label, value, color]) => (
               <div key={label} className="flex justify-between">
                 <span className="text-[var(--text-secondary)]">{label}</span>
@@ -197,10 +197,10 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
           </div>
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" fullWidth onClick={() => setShowConfirm(false)}>
-              Cancel
+              取消
             </Button>
             <Button variant={side === 'YES' ? 'primary' : 'danger'} fullWidth onClick={handleConfirm}>
-              Confirm
+              确认
             </Button>
           </div>
         </div>

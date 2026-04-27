@@ -42,7 +42,7 @@ function statusBadge(bet: MyBetItem) {
         进行中
       </span>
     )
-  if (status === 'cashed_out') return <Badge variant="warning">已兑付</Badge>
+  if (status === 'cashed_out') return <Badge variant="warning">已提前结清</Badge>
   if (status === 'corrected') return <Badge variant="warning">已修正</Badge>
   const r = bet.settlementResult ?? bet.result
   const cfg = resultConfig[r ?? 'win']
@@ -68,7 +68,7 @@ export default function MyBetsPanel({ bets: external, limit = 5 }: Props) {
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-          我的投注
+          我的注单
           <span className="ml-1.5 text-[10px] bg-[var(--border)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-full font-bold">
             {source.length}
           </span>
@@ -116,7 +116,7 @@ export default function MyBetsPanel({ bets: external, limit = 5 }: Props) {
                         : 'text-[var(--text-secondary)]'
                   }`}
                 >
-                  {bet.status === 'cashed_out' && profitAmount !== null && `已兑付 ${bet.payout.toFixed(2)}`}
+                  {bet.status === 'cashed_out' && profitAmount !== null && `已提前结清 ${bet.payout.toFixed(2)}`}
                   {bet.status === 'corrected' && profitAmount !== null && `修正后 ${profitAmount >= 0 ? '+' : ''}${profitAmount.toFixed(2)}`}
                   {bet.status === 'settled' && bet.result === 'win' && profitAmount !== null && `+${profitAmount.toFixed(2)}`}
                   {bet.status === 'settled' && bet.result === 'loss' && `-${stake.toFixed(2)}`}
@@ -143,7 +143,7 @@ export default function MyBetsPanel({ bets: external, limit = 5 }: Props) {
           onClick={() => navigate('/soccer/mybets')}
           className="mt-3 w-full text-[10px] text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors"
         >
-          前往注单中心 →
+          前往我的注单 →
         </button>
       )}
     </div>

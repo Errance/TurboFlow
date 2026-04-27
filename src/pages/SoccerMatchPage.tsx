@@ -71,7 +71,7 @@ function MarketList({
           onClick={() => setExpandedState({ tabId, expanded: !expanded })}
           className="w-full py-2 text-xs rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
-          {expanded ? '收起盘口' : `查看更多 ${markets.length - MARKET_COLLAPSE_THRESHOLD} 个盘口`}
+          {expanded ? '收起盘口' : `展开其余 ${markets.length - MARKET_COLLAPSE_THRESHOLD} 个盘口`}
         </button>
       )}
     </div>
@@ -212,7 +212,7 @@ export default function SoccerMatchPage() {
   if (!match) {
     return (
       <div className="px-6 py-12 text-center">
-        <p className="text-[var(--text-secondary)]">比赛未找到</p>
+        <p className="text-[var(--text-secondary)]">未找到该场比赛</p>
         <Button variant="ghost" className="mt-4" onClick={() => navigate('/soccer')}>
           返回赛事列表
         </Button>

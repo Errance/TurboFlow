@@ -336,7 +336,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               )}
               {items.length > 1 && betType === 'accumulator' && (
                 <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
-                  当前为串关，全部选项命中才赢。
+                  当前为串关，需全部选项命中方可获胜。
                 </p>
               )}
             </div>
@@ -358,7 +358,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                         }`}
                       >
                         {t.label}
-                        <span className="block font-normal opacity-70">{meta.requiredLegs} 腿</span>
+                        <span className="block font-normal opacity-70">{meta.requiredLegs} 项</span>
                       </button>
                     )
                   })}
@@ -482,9 +482,9 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
             {/* Total odds + leg counter */}
             <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-3 pb-3 border-b border-[var(--border)]">
               <span>
-                {items.length > 1 ? (groups.length > 1 ? '组合赔率（跨场）' : '组合赔率（同场）') : '单式赔率'}
+                {items.length > 1 ? (groups.length > 1 ? '总赔率（跨场）' : '总赔率（同场）') : '单式赔率'}
                 <span className="ml-2 text-[10px]">
-                  腿数 {items.length}/{BETTING_LIMITS.maxLegs}
+                  投注项 {items.length}/{BETTING_LIMITS.maxLegs}
                 </span>
               </span>
               <span className="font-mono font-semibold text-[var(--text-primary)]">
@@ -558,10 +558,10 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                     ? '当前比赛已结束'
                     : !legsInRange
                       ? betType === 'system'
-                        ? `${getSystemMeta(systemType).label} 需要 ${minLegs} 腿`
+                        ? `${getSystemMeta(systemType).label} 需要 ${minLegs} 个投注项`
                         : betType === 'accumulator'
-                        ? '串关至少 2 腿'
-                        : '请调整腿数'
+                        ? '串关至少需要 2 个投注项'
+                        : '请调整投注项数量'
                       : '确认投注'}
             </Button>
           </>
@@ -598,7 +598,7 @@ function BalanceBadge({ balance, locked }: { balance: number; locked: number }) 
       <button
         disabled
         className="ml-1 px-1.5 py-0.5 rounded bg-[var(--bg-control)] text-[var(--text-secondary)] text-[10px] cursor-not-allowed"
-        title="占位：Demo 不支持充值"
+        title="充值功能暂未开放"
       >
         + 充值
       </button>
@@ -625,7 +625,7 @@ function QuickStakes({ balance, onPick }: { balance: number; onPick: (value: num
         disabled={balance <= 0}
         className="text-[10px] px-2 py-1 rounded-md bg-[var(--bg-control)] hover:bg-[var(--border)] text-[var(--text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        MAX
+        最大
       </button>
     </div>
   )

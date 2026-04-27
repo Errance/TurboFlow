@@ -69,7 +69,7 @@ function EffectsButton({ onClick }: { onClick: () => void }) {
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
         <path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.4 1.4M8.1 8.1l1.4 1.4M2.5 9.5l1.4-1.4M8.1 3.9l1.4-1.4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
       </svg>
-      Effects
+      动效设置
     </button>
   )
 }

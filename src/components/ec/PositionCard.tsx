@@ -74,7 +74,7 @@ export default function PositionCard({ bet }: { bet: ECBet }) {
                 : 'bg-[#F87171]/15 text-[#F87171]'
             }`}
           >
-            {bet.direction === 'higher' ? 'HIGHER' : 'LOWER'}
+            {bet.direction === 'higher' ? '看涨' : '看跌'}
           </span>
           <span className="text-[10px] text-[var(--text-tertiary)]">{bet.asset}/USDT</span>
         </div>
@@ -92,30 +92,30 @@ export default function PositionCard({ bet }: { bet: ECBet }) {
           >
             {isWinning ? '+' : ''}${estimatedPnl.toFixed(2)}
           </span>
-          <span className="text-[9px] text-[var(--text-tertiary)] ml-1.5">EST.</span>
+          <span className="text-[9px] text-[var(--text-tertiary)] ml-1.5">预估</span>
         </div>
-        <div className="text-[9px] text-[var(--text-tertiary)] mb-2">If settled now</div>
+        <div className="text-[9px] text-[var(--text-tertiary)] mb-2">按当前价格结算</div>
 
         {/* Details grid — full width now */}
         <div className="grid grid-cols-4 gap-x-3 gap-y-0.5 text-[10px]">
           <div>
-            <span className="text-[var(--text-tertiary)] block">Entry</span>
+            <span className="text-[var(--text-tertiary)] block">开仓价</span>
             <span className="text-[var(--text-secondary)] tabular-nums">
               ${bet.entryPrice.toFixed(decimals)}
             </span>
           </div>
           <div>
-            <span className="text-[var(--text-tertiary)] block">Current</span>
+            <span className="text-[var(--text-tertiary)] block">当前价</span>
             <span className="text-[var(--text-secondary)] tabular-nums">
               ${currentPrice.toFixed(decimals)}
             </span>
           </div>
           <div>
-            <span className="text-[var(--text-tertiary)] block">Amount</span>
+            <span className="text-[var(--text-tertiary)] block">金额</span>
             <span className="text-[var(--text-secondary)] tabular-nums">${bet.amount}</span>
           </div>
           <div>
-            <span className="text-[var(--text-tertiary)] block">Return</span>
+            <span className="text-[var(--text-tertiary)] block">回报率</span>
             <span className="text-[var(--text-secondary)] tabular-nums">
               {(bet.payout * 100).toFixed(0)}%
             </span>
@@ -125,7 +125,7 @@ export default function PositionCard({ bet }: { bet: ECBet }) {
         {/* Settling state */}
         {settling && (
           <div className="mt-2 text-center">
-            <span className="text-[10px] text-[var(--text-tertiary)]">Settling...</span>
+            <span className="text-[10px] text-[var(--text-tertiary)]">结算中...</span>
           </div>
         )}
       </div>

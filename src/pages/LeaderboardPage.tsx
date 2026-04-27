@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="px-4 md:px-6 py-6 max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Leaderboard</h1>
+      <h1 className="text-xl font-bold mb-4">排行榜</h1>
 
       {/* Time filter */}
       <div className="flex gap-1 mb-5">
@@ -52,7 +52,7 @@ export default function LeaderboardPage() {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
             }`}
           >
-            {f === 'monthly' ? 'This Month' : 'All Time'}
+            {f === 'monthly' ? '本月' : '全部时间'}
           </button>
         ))}
       </div>
@@ -61,12 +61,12 @@ export default function LeaderboardPage() {
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden mb-6">
         {/* Header */}
         <div className="hidden md:grid grid-cols-6 gap-2 px-4 py-3 text-xs font-medium text-[var(--text-secondary)] border-b border-[var(--border)]">
-          <span>Rank</span>
-          <span>Trader</span>
-          <span className="text-right">PnL</span>
-          <span className="text-right">Accuracy</span>
-          <span className="text-right">Volume</span>
-          <span className="text-right">Markets</span>
+          <span>排名</span>
+          <span>交易员</span>
+          <span className="text-right">盈亏</span>
+          <span className="text-right">准确率</span>
+          <span className="text-right">成交量</span>
+          <span className="text-right">市场数</span>
         </div>
 
         {/* Rows */}
@@ -105,23 +105,23 @@ export default function LeaderboardPage() {
                 <path d="M8 2v12M4 6l4-4 4 4" stroke="#2DD4BF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Volume Incentives</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">交易量奖励</h3>
           </div>
           <p className="text-xs text-[var(--text-secondary)] mb-3">
-            Earn bonus rewards based on your monthly trading volume. Higher volume tiers unlock better reward rates.
+            按月度交易量获得额外奖励。交易量等级越高，对应奖励比例越高。
           </p>
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">$10K–$50K monthly</span>
-              <span className="text-[#2DD4BF] font-mono">+5% bonus</span>
+              <span className="text-[var(--text-secondary)]">月交易量 $10K-$50K</span>
+              <span className="text-[#2DD4BF] font-mono">+5% 奖励</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">$50K–$200K monthly</span>
-              <span className="text-[#2DD4BF] font-mono">+10% bonus</span>
+              <span className="text-[var(--text-secondary)]">月交易量 $50K-$200K</span>
+              <span className="text-[#2DD4BF] font-mono">+10% 奖励</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">$200K+ monthly</span>
-              <span className="text-[#2DD4BF] font-mono">+20% bonus</span>
+              <span className="text-[var(--text-secondary)]">月交易量 $200K 以上</span>
+              <span className="text-[#2DD4BF] font-mono">+20% 奖励</span>
             </div>
           </div>
         </Card>
@@ -135,23 +135,23 @@ export default function LeaderboardPage() {
                 <rect x="10" y="4" width="4" height="10" rx="0.5" stroke="#F59E0B" strokeWidth="1.2" />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Liquidity Incentives</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">流动性奖励</h3>
           </div>
           <p className="text-xs text-[var(--text-secondary)] mb-3">
-            Earn rewards for providing liquidity by placing limit orders that narrow the bid-ask spread.
+            通过提交限价委托并收窄买卖价差获得流动性奖励。
           </p>
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Active limit orders</span>
-              <span className="text-[#F59E0B] font-mono">0.1% per fill</span>
+              <span className="text-[var(--text-secondary)]">有效限价委托</span>
+              <span className="text-[#F59E0B] font-mono">每次成交 0.1%</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Top-of-book orders</span>
-              <span className="text-[#F59E0B] font-mono">2x multiplier</span>
+              <span className="text-[var(--text-secondary)]">最优档委托</span>
+              <span className="text-[#F59E0B] font-mono">2 倍系数</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Featured market bonus</span>
-              <span className="text-[#F59E0B] font-mono">+50% extra</span>
+              <span className="text-[var(--text-secondary)]">重点市场奖励</span>
+              <span className="text-[#F59E0B] font-mono">额外 +50%</span>
             </div>
           </div>
         </Card>

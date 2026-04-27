@@ -4,9 +4,9 @@ import { useEventContractStore } from '../../stores/eventContractStore'
 type TabId = 'totalPnl' | 'bestSinglePnl' | 'maxStreak'
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'totalPnl', label: 'Total Profit' },
-  { id: 'bestSinglePnl', label: 'Best Trade' },
-  { id: 'maxStreak', label: 'Win Streak' },
+  { id: 'totalPnl', label: '总盈利' },
+  { id: 'bestSinglePnl', label: '最佳交易' },
+  { id: 'maxStreak', label: '连胜' },
 ]
 
 const PAGE_SIZE = 10
@@ -60,7 +60,7 @@ export default function Leaderboard({
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
           </svg>
-          <span className="text-xs font-semibold">Leaderboard</span>
+          <span className="text-xs font-semibold">排行榜</span>
           {topPlayer && !expanded && (
             <span className="text-[10px] text-[var(--text-tertiary)] ml-1">
               #1 {topPlayer.playerName} · +${topPlayer.totalPnl.toLocaleString()}
@@ -103,26 +103,26 @@ export default function Leaderboard({
             <thead>
               <tr className="border-b border-[var(--border)]">
                 <th className="py-2 px-2 text-left text-[var(--text-tertiary)] font-semibold w-10">#</th>
-                <th className="py-2 px-2 text-left text-[var(--text-tertiary)] font-semibold">Player</th>
+                <th className="py-2 px-2 text-left text-[var(--text-tertiary)] font-semibold">用户</th>
                 {activeTab === 'totalPnl' && (
                   <>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Streak</th>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Best Trade</th>
-                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">Total Profit</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">连胜</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">最佳交易</th>
+                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">总盈利</th>
                   </>
                 )}
                 {activeTab === 'bestSinglePnl' && (
                   <>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Streak</th>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Total Profit</th>
-                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">Best Trade</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">连胜</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">总盈利</th>
+                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">最佳交易</th>
                   </>
                 )}
                 {activeTab === 'maxStreak' && (
                   <>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Best Trade</th>
-                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">Total Profit</th>
-                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">Win Streak</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">最佳交易</th>
+                    <th className="py-2 px-2 text-right text-[var(--text-tertiary)] font-semibold">总盈利</th>
+                    <th className="py-2 px-2 text-right text-[#2DD4BF] font-semibold">连胜</th>
                   </>
                 )}
               </tr>
@@ -142,7 +142,7 @@ export default function Leaderboard({
                   {activeTab === 'totalPnl' && (
                     <>
                       <td className="py-1.5 px-2 text-right tabular-nums text-[var(--text-tertiary)]">
-                        {entry.maxStreak}W
+                        {entry.maxStreak} 连胜
                       </td>
                       <td className="py-1.5 px-2 text-right tabular-nums text-[var(--text-tertiary)]">
                         +${entry.bestSinglePnl.toLocaleString()}
@@ -155,7 +155,7 @@ export default function Leaderboard({
                   {activeTab === 'bestSinglePnl' && (
                     <>
                       <td className="py-1.5 px-2 text-right tabular-nums text-[var(--text-tertiary)]">
-                        {entry.maxStreak}W
+                        {entry.maxStreak} 连胜
                       </td>
                       <td className="py-1.5 px-2 text-right tabular-nums text-[var(--text-tertiary)]">
                         +${entry.totalPnl.toLocaleString()}
@@ -174,7 +174,7 @@ export default function Leaderboard({
                         +${entry.totalPnl.toLocaleString()}
                       </td>
                       <td className="py-1.5 px-2 text-right tabular-nums font-bold text-[#2DD4BF]">
-                        {entry.maxStreak}W
+                        {entry.maxStreak} 连胜
                       </td>
                     </>
                   )}
