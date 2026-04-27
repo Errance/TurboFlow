@@ -282,9 +282,19 @@ const systemBet: MyBetItem = makeBet('bet-system', 'placed', {
   ],
 })
 
+function stopBoardInteraction(event: React.SyntheticEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
 export default function SoccerDesignBoardPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-10">
+    <div
+      className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-10 [&_a]:cursor-default [&_button]:cursor-default"
+      onClickCapture={stopBoardInteraction}
+      onKeyDownCapture={stopBoardInteraction}
+      onSubmitCapture={stopBoardInteraction}
+    >
       <header id="coverage" className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
         <p className="text-xs text-[#2DD4BF] font-semibold mb-2">足球盘口设计状态展板</p>
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Lean 版本全部页面、组件、元素和状态</h1>
