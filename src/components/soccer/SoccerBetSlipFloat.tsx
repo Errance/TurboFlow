@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSoccerBetSlipStore } from '../../stores/soccerBetSlipStore'
 import { useParlayStore } from '../../stores/parlayStore'
+import { useSettingsStore } from '../../stores/settingsStore'
+import { formatOdds } from '../../utils/oddsFormat'
 
 /**
  * 全局浮动 betSlip 入口：当 soccer 投注单不为空、但用户离开 SoccerMatchPage 时仍可见，
@@ -13,6 +15,7 @@ export default function SoccerBetSlipFloat() {
   const location = useLocation()
   const items = useSoccerBetSlipStore((s) => s.items)
   const parlayLegs = useParlayStore((s) => s.slip.length)
+  const oddsFormat = useSettingsStore((s) => s.oddsFormat)
 
   if (items.length === 0) return null
 
@@ -20,7 +23,9 @@ export default function SoccerBetSlipFloat() {
   if (location.pathname.startsWith('/soccer/match/')) return null
 
   const latestItem = items.reduce((a, b) => (a.addedAt > b.addedAt ? a : b))
-  const totalOdds = items.reduce((acc, it) => acc * it.odds, 1)
+  const totalOdds = items.reduce((acc, it) => acc * it.oddsCurrent, 1)
+  const formattedOdds = formatOdds(totalOdds, oddsFormat)
+  const hasOddsChanged = items.some((it) => it.oddsCurrent !== it.oddsAtAdd)
   const matchCount = new Set(items.map((it) => it.matchId)).size
 
   // ParlayBar（Events）同时存在时，把本条向上错位，避免重叠
@@ -48,7 +53,10 @@ export default function SoccerBetSlipFloat() {
           <span className="text-[10px] bg-[#E85A7E]/10 text-[#E85A7E] px-1.5 py-0.5 rounded font-bold">
             {items.length}
           </span>
-          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{totalOdds.toFixed(2)}x</span>
+          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{formattedOdds}</span>
+          {hasOddsChanged && (
+            <span className="text-[10px] text-amber-400">赔率已变动</span>
+          )}
           {matchCount > 1 && (
             <span className="text-[10px] text-[var(--text-secondary)]">· {matchCount} 场</span>
           )}
@@ -75,8 +83,9 @@ export default function SoccerBetSlipFloat() {
             </span>
           </div>
           <span className="text-xs text-[var(--text-secondary)] font-mono">
-            组合 {totalOdds.toFixed(2)}x {matchCount > 1 ? `· 跨 ${matchCount} 场` : ''}
+            组合 {formattedOdds} {matchCount > 1 ? `· 跨 ${matchCount} 场` : ''}
           </span>
+          {hasOddsChanged && <span className="text-[10px] text-amber-400">赔率已变动</span>}
         </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--text-secondary)] shrink-0">
           <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

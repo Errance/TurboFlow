@@ -23,7 +23,10 @@ export default function MatchListCard({ match }: Props) {
       <div className="w-12 shrink-0 text-center">
         {match.status === 'live' ? (
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] font-mono text-[#E85A7E] font-medium">LIVE</span>
+            <span className="flex items-center gap-1 text-[10px] font-mono text-[#E85A7E] font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse" />
+              LIVE
+            </span>
             <span className="text-xs font-mono font-bold text-[var(--text-primary)]">{match.score?.home}-{match.score?.away}</span>
           </div>
         ) : match.status === 'finished' ? (

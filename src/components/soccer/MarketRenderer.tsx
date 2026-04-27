@@ -10,8 +10,12 @@ import RangeButtonsMarket from './RangeButtonsMarket'
 interface Props {
   market: Market
   displayTitle: string
+  matchId?: string
   onSelect: (market: string, selection: string, odds: number) => void
   selectedKey?: string
+  conflictReason?: string
+  conflictWith?: string
+  onReplaceConflict?: () => void
 }
 
 const lockIcon = (
@@ -21,7 +25,16 @@ const lockIcon = (
   </svg>
 )
 
-export default function MarketRenderer({ market, displayTitle, onSelect, selectedKey }: Props) {
+export default function MarketRenderer({
+  market,
+  displayTitle,
+  matchId,
+  onSelect,
+  selectedKey,
+  conflictReason,
+  conflictWith,
+  onReplaceConflict,
+}: Props) {
   const status = market.status ?? 'open'
 
   if (status === 'hidden') return null
@@ -30,13 +43,13 @@ export default function MarketRenderer({ market, displayTitle, onSelect, selecte
 
   switch (market.type) {
     case 'buttonGroup':
-      content = <ButtonGroupMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
+      content = <ButtonGroupMarket data={market} matchId={matchId} onSelect={onSelect} selectedKey={selectedKey} />
       break
     case 'oddsTable':
-      content = <OddsTableMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
+      content = <OddsTableMarket data={market} matchId={matchId} onSelect={onSelect} selectedKey={selectedKey} />
       break
     case 'scoreGrid':
-      content = <ScoreGridMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
+      content = <ScoreGridMarket data={market} matchId={matchId} onSelect={onSelect} selectedKey={selectedKey} />
       break
     case 'playerList':
       content = <PlayerListMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
@@ -45,7 +58,7 @@ export default function MarketRenderer({ market, displayTitle, onSelect, selecte
       content = <ComboGridMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
       break
     case 'rangeButtons':
-      content = <RangeButtonsMarket data={market} onSelect={onSelect} selectedKey={selectedKey} />
+      content = <RangeButtonsMarket data={market} matchId={matchId} onSelect={onSelect} selectedKey={selectedKey} />
       break
   }
 
@@ -65,6 +78,25 @@ export default function MarketRenderer({ market, displayTitle, onSelect, selecte
     <MarketCard title={displayTitle}>
       <div className="relative">
         {content}
+
+        {conflictReason && status === 'open' && (
+          <div className="absolute inset-0 bg-[var(--bg-card)]/85 flex items-center justify-center rounded-lg backdrop-blur-[1px] p-3">
+            <div className="text-center space-y-2">
+              <p className="text-xs font-medium text-amber-300">
+                与投注单中「{conflictWith}」冲突
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">{conflictReason}</p>
+              {onReplaceConflict && (
+                <button
+                  onClick={onReplaceConflict}
+                  className="text-[10px] px-2 py-1 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
+                >
+                  移除冲突项后选择
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {isLocked && status !== 'settled' && (
           <div className="absolute inset-0 bg-[var(--bg-card)]/70 flex items-center justify-center rounded-lg backdrop-blur-[1px]">

@@ -56,6 +56,24 @@
   }
 }
 
+@keyframes odds-flash-up {
+  0%   { background-color: rgba(16, 185, 129, 0.28); color: #6EE7B7; }
+  100% { background-color: transparent; }
+}
+
+@keyframes odds-flash-down {
+  0%   { background-color: rgba(239, 68, 68, 0.28); color: #FCA5A5; }
+  100% { background-color: transparent; }
+}
+
+.odds-flash-up {
+  animation: odds-flash-up 500ms ease-out;
+}
+
+.odds-flash-down {
+  animation: odds-flash-down 500ms ease-out;
+}
+
 :root {
   --bg-base: #0B0B0F;
   --bg-card: #161622;

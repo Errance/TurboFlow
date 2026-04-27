@@ -14,6 +14,15 @@ function getSlotMinute(label: string): number {
 }
 
 export default function MatchHeader({ match }: Props) {
+  const visibleScore =
+    (match.status === 'live' ||
+      match.status === 'interrupted' ||
+      match.status === 'finished' ||
+      match.status === 'abandoned' ||
+      match.status === 'corrected')
+      ? match.score
+      : undefined
+
   const statusBadge = (() => {
     switch (match.status) {
       case 'live': return <Badge variant="danger">LIVE</Badge>
@@ -61,13 +70,13 @@ export default function MatchHeader({ match }: Props) {
         </div>
 
         <div className="text-right space-y-3">
-          {match.score ? (
+          {visibleScore ? (
             <>
               <p className={`text-2xl font-bold font-mono ${match.status === 'finished' ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
-                {match.score.home}
+                {visibleScore.home}
               </p>
               <p className={`text-2xl font-bold font-mono ${match.status === 'finished' ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
-                {match.score.away}
+                {visibleScore.away}
               </p>
             </>
           ) : (

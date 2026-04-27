@@ -90,7 +90,11 @@ export type Market =
   | RangeButtonsMarket
 
 export type MarketStatus = 'open' | 'upcoming' | 'suspended' | 'settled' | 'void' | 'cancelled' | 'corrected' | 'hidden'
-export type SettlementResult = 'win' | 'loss' | 'void' | 'push'
+export type SettlementResult = 'win' | 'loss' | 'void' | 'push' | 'half_win' | 'half_loss' | 'dead_heat'
+
+export type MyBetStatus = 'pending' | 'placed' | 'live' | 'settled' | 'cashed_out' | 'corrected'
+
+export type BetType = 'single' | 'accumulator' | 'system'
 
 interface MarketBase {
   status?: MarketStatus
@@ -156,13 +160,76 @@ export interface BetSlipItem {
   odds: number
 }
 
+/**
+ * 单腿注单。单式注单 legs 长度恒为 1；串单 / 复式按实际腿数。
+ *
+ * oddsAtPlacement 在下单瞬间快照，结算期间不再变更；
+ * oddsAfterRecalc 仅在 push/void 触发重算时写入（= 1.0）。
+ */
+export interface MyBetLeg {
+  id: string
+  matchId: string
+  matchLabel: string
+  marketTitle: string
+  selection: string
+  oddsAtPlacement: number
+  oddsAfterRecalc?: number
+  status?: MyBetStatus
+  result?: SettlementResult
+}
+
+/**
+ * 历史注单。
+ *
+ * 旧 mock schema 保留 amount/payout/result 三字段以向后兼容 MyBetsPanel 展示；
+ * 新 schema（Phase 1+）使用 stake/potentialReturn/legs 等字段。
+ * 两套字段在迁移期间并存，读写时按 "??" 优先级兜底。
+ */
 export interface MyBetItem {
   id: string
   matchLabel: string
   marketTitle: string
   selection: string
   odds: number
+
+  // --- 旧 schema（仍被 MyBetsPanel 引用，Phase 5 会重构后移除） ---
   amount: number
   result: 'win' | 'loss' | 'push'
   payout: number
+
+  // --- Phase 0 新增扩展字段（全部 optional，便于渐进迁移） ---
+  status?: MyBetStatus
+  /** 结算后的最终结果，含 half_win / half_loss / dead_heat */
+  settlementResult?: SettlementResult
+  /** ISO 8601 下单时间 */
+  placedAt?: string
+  /** ISO 8601 结算时间 */
+  settledAt?: string
+  /** 用户可见的注单编码，形如 TF-ABCD1234 */
+  betCode?: string
+  betType?: BetType
+  systemType?: import('./contracts').SystemType
+  systemLineCount?: number
+  unitStake?: number
+  /** 单式 = 1；串单 / 复式 ≥ 2 */
+  legs?: MyBetLeg[]
+  stake?: number
+  currency?: 'USDT'
+  potentialReturn?: number
+  potentialProfit?: number
+  cashout?: {
+    availablePrice: number
+    minutesUntilExpire: number
+    expiresAt?: string
+    isSimulated?: boolean
+    needsRequote?: boolean
+  }
+  correction?: {
+    originalResult: SettlementResult
+    newResult: SettlementResult
+    diffPayout: number
+  }
 }
+
+/** Re-export 由 marketFamily.ts 定义的 MarketFamily 类型，让 types.ts 成为单一真源。 */
+export type { MarketFamily } from './marketFamily'

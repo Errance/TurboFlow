@@ -1,12 +1,15 @@
 import type { OddsTableMarket as OTData } from '../../data/soccer/types'
+import OddsDisplay from './OddsDisplay'
+import { makeSelectionKey } from '../../services/oddsRegistry'
 
 interface Props {
   data: OTData
+  matchId?: string
   onSelect: (market: string, selection: string, odds: number) => void
   selectedKey?: string
 }
 
-export default function OddsTableMarket({ data, onSelect, selectedKey }: Props) {
+export default function OddsTableMarket({ data, matchId, onSelect, selectedKey }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -32,6 +35,7 @@ export default function OddsTableMarket({ data, onSelect, selectedKey }: Props) 
                 const selection = `${data.columns[i]} ${row.line}`
                 const key = `${data.title}|${selection}`
                 const isSelected = selectedKey === key
+                const selKey = matchId ? makeSelectionKey(matchId, data.title, selection) : undefined
                 return (
                   <td key={i} className="py-1 px-1">
                     <button
@@ -42,7 +46,7 @@ export default function OddsTableMarket({ data, onSelect, selectedKey }: Props) 
                           : 'bg-[var(--bg-control)] border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]/30'
                       }`}
                     >
-                      {odd.toFixed(2)}
+                      <OddsDisplay selectionKey={selKey} fallbackOdds={odd} />
                     </button>
                   </td>
                 )

@@ -1,12 +1,15 @@
 import type { ScoreGridMarket as SGData } from '../../data/soccer/types'
+import OddsDisplay from './OddsDisplay'
+import { makeSelectionKey } from '../../services/oddsRegistry'
 
 interface Props {
   data: SGData
+  matchId?: string
   onSelect: (market: string, selection: string, odds: number) => void
   selectedKey?: string
 }
 
-export default function ScoreGridMarket({ data, onSelect, selectedKey }: Props) {
+export default function ScoreGridMarket({ data, matchId, onSelect, selectedKey }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -38,6 +41,7 @@ export default function ScoreGridMarket({ data, onSelect, selectedKey }: Props) 
                 if (!odd) return <td key={a} className="py-1 px-1"><div className="w-full h-8 rounded bg-[var(--bg-control)]/50" /></td>
                 const selKey = `${data.title}|${scoreKey}`
                 const isSelected = selectedKey === selKey
+                const registryKey = matchId ? makeSelectionKey(matchId, data.title, scoreKey) : undefined
                 return (
                   <td key={a} className="py-1 px-1">
                     <button
@@ -48,7 +52,7 @@ export default function ScoreGridMarket({ data, onSelect, selectedKey }: Props) 
                           : 'bg-[var(--bg-control)] border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]/30'
                       }`}
                     >
-                      {odd.toFixed(odd >= 100 ? 0 : 2)}
+                      <OddsDisplay selectionKey={registryKey} fallbackOdds={odd} compactLarge />
                     </button>
                   </td>
                 )

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getMatchById, myBets } from '../data/soccer/mockData'
+import { getMatchById } from '../data/soccer/mockData'
 import Tabs from '../components/ui/Tabs'
 import MatchHeader from '../components/soccer/MatchHeader'
 import MarketRenderer from '../components/soccer/MarketRenderer'
@@ -8,9 +8,116 @@ import SoccerBetSlip from '../components/soccer/SoccerBetSlip'
 import MyBetsPanel from '../components/soccer/MyBetsPanel'
 import MatchInfoPanel from '../components/soccer/MatchInfoPanel'
 import Button from '../components/ui/Button'
+import { SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
 import { useSoccerBetSlipStore } from '../stores/soccerBetSlipStore'
+import { makeSelectionKey, seedOdds } from '../services/oddsRegistry'
+import { markKeysLive } from '../services/oddsTicker'
+import type { Market } from '../data/soccer/types'
+import { canCombine, getMarketFamily } from '../data/soccer/marketFamily'
 
-const ENDED_STATUSES = new Set(['finished', 'abandoned', 'cancelled', 'corrected'])
+const MARKET_COLLAPSE_THRESHOLD = 6
+
+function MarketList({
+  tabId,
+  markets,
+  matchId,
+  selectedKeys,
+  selectedMarkets,
+  onSelect,
+  onClearMarket,
+}: {
+  tabId: string
+  markets: Market[]
+  matchId: string
+  selectedKeys: Set<string>
+  selectedMarkets: Array<{ title: string; family: ReturnType<typeof getMarketFamily> }>
+  onSelect: (market: string, selection: string, odds: number) => void
+  onClearMarket: (marketTitle: string) => void
+}) {
+  const [expandedState, setExpandedState] = useState({ tabId, expanded: false })
+  const expanded = expandedState.tabId === tabId ? expandedState.expanded : false
+
+  const over = markets.length > MARKET_COLLAPSE_THRESHOLD
+  const visible = !over || expanded ? markets : markets.slice(0, MARKET_COLLAPSE_THRESHOLD)
+
+  return (
+    <div className="mt-4 space-y-3">
+      {visible.map((market, i) => {
+        const selectedKey = [...selectedKeys].find((k) => k.startsWith(market.title + '|'))
+        const family = getMarketFamily(market.title)
+        const conflict = selectedKey
+          ? null
+          : selectedMarkets.find((existing) => {
+              if (existing.title === market.title) return false
+              return !canCombine(family, existing.family).ok
+            })
+        const verdict = conflict ? canCombine(family, conflict.family) : null
+        return (
+          <MarketRenderer
+            key={`${tabId}-${i}`}
+            market={market}
+            displayTitle={market.title}
+            matchId={matchId}
+            onSelect={onSelect}
+            selectedKey={selectedKey}
+            conflictWith={conflict?.title}
+            conflictReason={verdict && !verdict.ok ? verdict.reason : undefined}
+            onReplaceConflict={conflict ? () => onClearMarket(conflict.title) : undefined}
+          />
+        )
+      })}
+      {over && (
+        <button
+          onClick={() => setExpandedState({ tabId, expanded: !expanded })}
+          className="w-full py-2 text-xs rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          {expanded ? '收起盘口' : `查看更多 ${markets.length - MARKET_COLLAPSE_THRESHOLD} 个盘口`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+const ENDED_STATUSES = new Set([
+  'finished',
+  'interrupted',
+  'abandoned',
+  'postponed',
+  'cancelled',
+  'corrected',
+])
+
+/**
+ * 枚举单个盘口里全部可选项（selection, odds），供 oddsRegistry seed 使用。
+ * 只处理能参与抖动的类型；playerList / comboGrid 暂不接入 ticker（demo 足够）。
+ */
+function enumerateSelections(market: Market): Array<[string, number]> {
+  const out: Array<[string, number]> = []
+  switch (market.type) {
+    case 'buttonGroup':
+    case 'rangeButtons':
+      for (const opt of market.options) out.push([opt.label, opt.odds])
+      break
+    case 'oddsTable':
+      for (const row of market.rows) {
+        row.odds.forEach((odd, i) => {
+          const sel = `${market.columns[i]} ${row.line}`
+          out.push([sel, odd])
+        })
+      }
+      break
+    case 'scoreGrid':
+      for (const h of market.homeRange) {
+        for (const a of market.awayRange) {
+          const scoreKey = `${h}:${a}`
+          const odd = market.odds[scoreKey]
+          if (odd) out.push([scoreKey, odd])
+        }
+      }
+      break
+  }
+  return out
+}
 
 export default function SoccerMatchPage() {
   const { matchId } = useParams<{ matchId: string }>()
@@ -18,9 +125,11 @@ export default function SoccerMatchPage() {
   const match = getMatchById(matchId ?? '')
 
   const [activeTab, setActiveTab] = useState('home')
+  const [bootstrapped, setBootstrapped] = useState(false)
 
   const toggleItem = useSoccerBetSlipStore((s) => s.toggleItem)
   const purgeVoid = useSoccerBetSlipStore((s) => s.purgeVoid)
+  const removeByMatchTitle = useSoccerBetSlipStore((s) => s.removeByMatchTitle)
   const allItems = useSoccerBetSlipStore((s) => s.items)
 
   const handleSelect = useCallback(
@@ -46,6 +155,13 @@ export default function SoccerMatchPage() {
     return keys
   }, [allItems, match])
 
+  const selectedMarkets = useMemo(() => {
+    if (!match) return []
+    return allItems
+      .filter((it) => it.matchId === match.id)
+      .map((it) => ({ title: it.marketTitle, family: it.marketFamily }))
+  }, [allItems, match])
+
   const { suspendedMarkets, voidMarkets } = useMemo(() => {
     const suspended = new Set<string>()
     const voided = new Set<string>()
@@ -64,6 +180,34 @@ export default function SoccerMatchPage() {
     if (!match) return
     purgeVoid(match.id, voidMarkets)
   }, [match, voidMarkets, purgeVoid])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setBootstrapped(true), 120)
+    return () => window.clearTimeout(id)
+  }, [matchId])
+
+  // Seed oddsRegistry + 根据比赛 live 状态切换 ticker 抖动白名单
+  useEffect(() => {
+    if (!match) return
+    const pairs: Array<[string, number]> = []
+    for (const tab of match.tabs) {
+      for (const m of tab.markets) {
+        if (m.status && m.status !== 'open') continue
+        for (const [sel, odds] of enumerateSelections(m)) {
+          pairs.push([makeSelectionKey(match.id, m.title, sel), odds])
+        }
+      }
+    }
+    seedOdds(pairs)
+    const keys = pairs.map(([k]) => k)
+    const live = match.status === 'live'
+    markKeysLive(keys, live)
+    return () => {
+      markKeysLive(keys, false)
+    }
+  }, [match])
+
+  if (!bootstrapped) return <SoccerMatchSkeleton />
 
   if (!match) {
     return (
@@ -107,17 +251,15 @@ export default function SoccerMatchPage() {
             <Tabs tabs={tabItems} activeTab={activeTab} onChange={setActiveTab} />
           </div>
 
-          <div className="mt-4 space-y-3">
-            {currentTab?.markets.map((market, i) => (
-              <MarketRenderer
-                key={`${currentTab.id}-${i}`}
-                market={market}
-                displayTitle={market.title}
-                onSelect={handleSelect}
-                selectedKey={[...selectedKeys].find((k) => k.startsWith(market.title + '|'))}
-              />
-            ))}
-          </div>
+          <MarketList
+            tabId={currentTab?.id ?? ''}
+            markets={currentTab?.markets ?? []}
+            matchId={match.id}
+            selectedKeys={selectedKeys}
+            selectedMarkets={selectedMarkets}
+            onSelect={handleSelect}
+            onClearMarket={(title) => match && removeByMatchTitle(match.id, title)}
+          />
         </div>
 
         {/* Right sidebar */}
@@ -130,7 +272,7 @@ export default function SoccerMatchPage() {
             matchStatus={match.status}
           />
 
-          <MyBetsPanel bets={myBets} />
+          <MyBetsPanel />
         </div>
       </div>
     </div>

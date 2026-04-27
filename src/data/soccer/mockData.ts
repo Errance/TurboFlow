@@ -1,16 +1,4 @@
 import type { SoccerLeague, SoccerMatch, Market, MyBetItem } from './types'
-
-function markMarketStatus(match: SoccerMatch, titlePattern: string, status: Market['status'], extra?: Partial<Pick<Market, 'settlementResult' | 'winningSelection'>>) {
-  for (const tab of match.tabs) {
-    for (const market of tab.markets) {
-      if (market.title.includes(titlePattern)) {
-        market.status = status
-        if (extra?.settlementResult) market.settlementResult = extra.settlementResult
-        if (extra?.winningSelection) market.winningSelection = extra.winningSelection
-      }
-    }
-  }
-}
 import { createFullMatchTabs } from './fullMatchTabs'
 import {
   botafogoLineup, mirassolLineup, botafogoMirassolH2H,
@@ -28,6 +16,49 @@ import {
   sevillaLineup, villarrealLineup, sevillaVillarrealH2H,
   valenciaLineup, getafeLineup, valenciaGetafeH2H,
 } from './matchInfoData'
+
+export const soccerBackOfficeControls: { goalMarketsRemainOpenAfterKickoff: boolean } = {
+  goalMarketsRemainOpenAfterKickoff: true,
+}
+
+function markMarketStatus(match: SoccerMatch, titlePattern: string, status: Market['status'], extra?: Partial<Pick<Market, 'settlementResult' | 'winningSelection'>>) {
+  for (const tab of match.tabs) {
+    for (const market of tab.markets) {
+      if (market.title.includes(titlePattern)) {
+        market.status = status
+        if (extra?.settlementResult) market.settlementResult = extra.settlementResult
+        if (extra?.winningSelection) market.winningSelection = extra.winningSelection
+      }
+    }
+  }
+}
+
+function isGoalMarket(title: string): boolean {
+  if (title.includes('角球') || title.includes('红黄牌') || title.includes('罚牌')) return false
+  return title.includes('进球') ||
+    title.includes('得分') ||
+    title.includes('比分') ||
+    title.includes('不失球') ||
+    title.includes('不丢球') ||
+    title.includes('Multiscores') ||
+    title.includes('奇/偶') ||
+    title.startsWith('两个半场高于') ||
+    title.startsWith('两个半场低于') ||
+    title.includes('合计') ||
+    title.includes('总计') ||
+    title.includes('总数')
+}
+
+function applyGoalMarketKickoffControl(match: SoccerMatch) {
+  if (match.status !== 'live' || soccerBackOfficeControls.goalMarketsRemainOpenAfterKickoff) return
+  for (const tab of match.tabs) {
+    for (const market of tab.markets) {
+      if (isGoalMarket(market.title) && (!market.status || market.status === 'open')) {
+        market.status = 'suspended'
+      }
+    }
+  }
+}
 
 export const leagues: SoccerLeague[] = [
   { id: 'brasileiro-a', name: 'Brasileiro Serie A', country: '巴西', matchCount: 5 },
@@ -304,6 +335,8 @@ const palGreScheduled = matches.find(m => m.id === 'palmeiras-gremio')
 if (palGreScheduled) {
   markMarketStatus(palGreScheduled, '1st 进球队员', 'cancelled')
 }
+
+matches.forEach(applyGoalMarketKickoffControl)
 
 export const myBets: MyBetItem[] = [
   {

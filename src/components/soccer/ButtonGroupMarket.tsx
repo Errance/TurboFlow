@@ -1,17 +1,21 @@
 import type { ButtonGroupMarket as BGData } from '../../data/soccer/types'
+import OddsDisplay from './OddsDisplay'
+import { makeSelectionKey } from '../../services/oddsRegistry'
 
 interface Props {
   data: BGData
+  matchId?: string
   onSelect: (market: string, selection: string, odds: number) => void
   selectedKey?: string
 }
 
-export default function ButtonGroupMarket({ data, onSelect, selectedKey }: Props) {
+export default function ButtonGroupMarket({ data, matchId, onSelect, selectedKey }: Props) {
   return (
     <div className="flex gap-2">
       {data.options.map((opt) => {
         const key = `${data.title}|${opt.label}`
         const isSelected = selectedKey === key
+        const selKey = matchId ? makeSelectionKey(matchId, data.title, opt.label) : undefined
         return (
           <button
             key={opt.label}
@@ -25,9 +29,11 @@ export default function ButtonGroupMarket({ data, onSelect, selectedKey }: Props
             <span className={`text-xs leading-tight ${isSelected ? 'text-[#2DD4BF]' : 'text-[var(--text-secondary)]'}`}>
               {opt.label}
             </span>
-            <span className={`text-sm font-semibold font-mono tabular-nums ${isSelected ? 'text-[#2DD4BF]' : 'text-[var(--text-primary)]'}`}>
-              {opt.odds.toFixed(2)}
-            </span>
+            <OddsDisplay
+              selectionKey={selKey}
+              fallbackOdds={opt.odds}
+              className={`text-sm font-semibold font-mono tabular-nums ${isSelected ? 'text-[#2DD4BF]' : 'text-[var(--text-primary)]'}`}
+            />
           </button>
         )
       })}

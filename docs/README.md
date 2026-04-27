@@ -6,6 +6,8 @@
 |------|------|------|
 | 跟单 | [copy-trading/](copy-trading/) | 跟单产品规格 |
 | MVP | [mvp/](mvp/) | MVP PRD、基线、产品逻辑、能力清单、路径树等 |
+| 足球传统盘口 | [soccer-traditional/](soccer-traditional/) | `/soccer` 传统盘口 PRD |
+| 足球 CLOB | [soccer-clob/](soccer-clob/) | `/clob` 足球 CLOB PRD 与路线图 |
 | Events | [events/](events/) | Events Contract 产品规格（当前为 v2） |
 | UX | [ux/](ux/) | 交互与体验规范 |
 | 规划与思路 | [plans/](plans/) | 分支上下文、修复/重构计划等 |

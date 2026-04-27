@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { leagues, matches } from '../data/soccer/mockData'
 import MatchListCard from '../components/soccer/MatchListCard'
+import { SoccerListSkeleton } from '../components/soccer/SoccerSkeletons'
 
 export default function SoccerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedLeague, setSelectedLeague] = useState<string>(() => searchParams.get('league') ?? 'all')
+  const [bootstrapped, setBootstrapped] = useState(false)
 
   useEffect(() => {
     const leagueParam = searchParams.get('league')
@@ -13,6 +15,13 @@ export default function SoccerPage() {
       setSelectedLeague(leagueParam)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setBootstrapped(true), 120)
+    return () => window.clearTimeout(id)
+  }, [])
+
+  if (!bootstrapped) return <SoccerListSkeleton />
 
   const handleLeagueChange = (id: string) => {
     setSelectedLeague(id)
