@@ -595,17 +595,19 @@ stateDiagram-v2
 
 ### 13.1 核心漏斗
 
-```text
-足球首页曝光
-→ 比赛详情曝光
-→ 盘口曝光
-→ 选择赔率
-→ 打开投注单
-→ 输入金额
-→ 触发二次确认
-→ 提交投注
-→ 下单成功 / 下单失败
-→ 查看我的注单
+```mermaid
+flowchart TD
+  homeView["足球首页曝光"] --> matchView["比赛详情曝光"]
+  matchView --> marketView["盘口曝光"]
+  marketView --> oddsSelect["选择赔率"]
+  oddsSelect --> betslipOpen["打开投注单"]
+  betslipOpen --> stakeInput["输入金额"]
+  stakeInput --> confirmView["触发二次确认"]
+  confirmView --> betSubmit["提交投注"]
+  betSubmit --> betSuccess["下单成功"]
+  betSubmit --> betFailed["下单失败"]
+  betSuccess --> myBetsView["查看我的注单"]
+  betFailed --> retryOrAdjust["调整金额、报价或投注项后重试"]
 ```
 
 ### 13.2 事件设计
