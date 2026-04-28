@@ -3,7 +3,7 @@
  *
  * 每个投注单 item 加入时会写入 oddsLockedUntil（= now + 30s）。
  * 本 hook 每秒读取 store 并计算剩余秒数；到期不自动删除 item，仅标 stale
- * （由二次确认弹窗要求用户重新接受当前赔率）。
+ * （由下单区或二次确认弹窗要求用户接受最新报价）。
  */
 
 import { useEffect, useState } from 'react'

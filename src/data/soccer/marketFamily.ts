@@ -86,7 +86,7 @@ export function canCombine(a: MarketFamily, b: MarketFamily): CombineResult {
   if (a === 'unknown' || b === 'unknown') {
     return { ok: false, reason: '该盘口暂不可与本场其他玩法组合' }
   }
-  if (a === b) return { ok: false, reason: '同一类玩法不可同时选入同一张投注单' }
+  if (a === b) return { ok: false, reason: '同一类玩法不可同时选入同一张串关注单' }
   const reason = CONFLICT_REASONS.get(keyOf(a, b))
   if (reason) return { ok: false, reason }
   return { ok: true }

@@ -13,6 +13,7 @@ import { BETTING_LIMITS } from '../../data/soccer/contracts'
 import type { BetType } from '../../data/soccer/types'
 import { getMatchById } from '../../data/soccer/mockData'
 import { formatOdds } from '../../utils/oddsFormat'
+import { canCombine } from '../../data/soccer/marketFamily'
 
 /**
  * 投注单面板。Phase 3 完整重构：
@@ -68,6 +69,27 @@ function groupByMatch(items: ExtendedBetSlipItem[], currentMatchId: string): Gro
 
 function fmtMoney(n: number): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function findAccumulatorConflict(items: ExtendedBetSlipItem[]) {
+  const byMatch = new Map<string, ExtendedBetSlipItem[]>()
+  for (const item of items) {
+    const group = byMatch.get(item.matchId) ?? []
+    group.push(item)
+    byMatch.set(item.matchId, group)
+  }
+
+  for (const group of byMatch.values()) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[i].marketTitle === group[j].marketTitle) continue
+        const verdict = canCombine(group[i].marketFamily, group[j].marketFamily)
+        if (!verdict.ok) return { left: group[i], right: group[j], reason: verdict.reason }
+      }
+    }
+  }
+
+  return null
 }
 
 function collectClosedMarketTitles(matchId: string): Set<string> {
@@ -144,6 +166,9 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   const hasStaleQuote = items.some(
     (it) => it.quoteState === 'needs_refresh' || (lockCountdown[it.id] ?? 0) === 0,
   )
+  const hasOddsChange = items.some((it) => it.oddsCurrent !== it.oddsAtAdd)
+  const needsQuoteAcceptance = hasStaleQuote || hasOddsChange
+  const accumulatorConflict = useMemo(() => findAccumulatorConflict(items), [items])
 
   // 腿数的合法区间 / 标签
   const minLegs = BETTING_LIMITS.minLegs[betType]
@@ -151,6 +176,11 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   const legsInRange = items.length >= minLegs && items.length <= maxLegs
 
   const handlePrimaryClick = () => {
+    if (needsQuoteAcceptance) {
+      acceptAllOddsChanges()
+      addToast({ type: 'info', message: '已接受最新报价，请再次确认投注' })
+      return
+    }
     if (stake < BETTING_LIMITS.minStake) {
       addToast({ type: 'error', message: `投注金额需不低于 ${BETTING_LIMITS.minStake} USDT` })
       return
@@ -211,6 +241,17 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
     { id: 'multi_single', label: '多笔单注' },
     { id: 'accumulator', label: '串关' },
   ]
+
+  const handleBetTypeChange = (type: BetType) => {
+    if (type === 'accumulator' && accumulatorConflict) {
+      addToast({
+        type: 'error',
+        message: `${accumulatorConflict.left.marketTitle} 与 ${accumulatorConflict.right.marketTitle} 不可同场串关，可继续作为多笔单注提交`,
+      })
+      return
+    }
+    setBetType(type)
+  }
 
   return (
     <>
@@ -292,7 +333,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                   <button
                     key={t.id}
                     disabled={disabled}
-                    onClick={() => setBetType(t.id)}
+                    onClick={() => handleBetTypeChange(t.id)}
                     className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${
                       active
                         ? 'bg-[var(--bg-card)] text-[var(--text-primary)] font-semibold'
@@ -312,6 +353,11 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               {items.length > 1 && betType === 'accumulator' && (
                 <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
                   当前为串关，需全部选项命中方可获胜。
+                </p>
+              )}
+              {accumulatorConflict && betType === 'multi_single' && items.length > 1 && (
+                <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
+                  已选投注项将按独立单注提交，不受同场组合限制。
                 </p>
               )}
             </div>
@@ -451,11 +497,17 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               )}
             </div>
 
-            {hasStaleQuote && (
-              <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2">
+            {needsQuoteAcceptance && (
+              <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2 flex items-center justify-between gap-2">
                 <span className="text-[10px] text-amber-300">
-                  有报价需要重新确认，系统会在二次确认弹窗内提示。
+                  报价已更新，请先接受最新报价。
                 </span>
+                <button
+                  onClick={acceptAllOddsChanges}
+                  className="shrink-0 text-[10px] px-2 py-1 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
+                >
+                  接受最新报价
+                </button>
               </div>
             )}
 
@@ -464,18 +516,24 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               onClick={handlePrimaryClick}
               disabled={
                 submitting ||
-                hasUnavailableInSlip ||
-                (isMatchUnavailable && hasCurrentMatchItems) ||
-                !legsInRange ||
-                stake < BETTING_LIMITS.minStake
+                (!needsQuoteAcceptance &&
+                  (hasUnavailableInSlip ||
+                    (isMatchUnavailable && hasCurrentMatchItems) ||
+                    (betType === 'accumulator' && !!accumulatorConflict) ||
+                    !legsInRange ||
+                    stake < BETTING_LIMITS.minStake))
               }
             >
               {submitting
                 ? '提交中…'
+                : needsQuoteAcceptance
+                  ? '接受最新报价'
                 : hasUnavailableInSlip
                   ? '包含不可用选项'
                   : isMatchUnavailable && hasCurrentMatchItems
                     ? '当前比赛已封盘'
+                    : betType === 'accumulator' && accumulatorConflict
+                      ? '包含不可串关选项'
                     : !legsInRange
                       ? betType === 'accumulator'
                         ? '串关至少需要 2 个投注项'

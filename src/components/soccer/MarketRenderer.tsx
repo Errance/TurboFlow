@@ -86,7 +86,7 @@ export default function MarketRenderer({
           <div className="absolute inset-0 bg-[var(--bg-card)]/85 flex items-center justify-center rounded-lg backdrop-blur-[1px] p-3">
             <div className="text-center space-y-2">
               <p className="text-xs font-medium text-amber-300">
-                与投注单中「{conflictWith}」冲突
+                与投注单中「{conflictWith}」不可串关
               </p>
               <p className="text-[10px] text-[var(--text-secondary)]">{conflictReason}</p>
               {onReplaceConflict && (
@@ -94,7 +94,7 @@ export default function MarketRenderer({
                   onClick={onReplaceConflict}
                   className="text-[10px] px-2 py-1 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
                 >
-                  移除冲突项后选择
+                  移除后加入串关
                 </button>
               )}
             </div>

@@ -26,8 +26,6 @@ const BET_TYPE_LABEL: Record<BetType, string> = {
   accumulator: '串关',
 }
 
-const CONFIRM_TIMEOUT_SECONDS = 60
-
 function fmtMoney(n: number): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -49,18 +47,13 @@ export default function ConfirmBetDialog({
   const oddsFormat = useSettingsStore((s) => s.oddsFormat)
   const finalStake = totalStake ?? stake
   const profit = +(potentialReturn - finalStake).toFixed(2)
-  const [remaining, setRemaining] = useState(CONFIRM_TIMEOUT_SECONDS)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     if (!isOpen) return
-    const openedAt = Date.now()
-    setNow(openedAt)
-    setRemaining(CONFIRM_TIMEOUT_SECONDS)
+    setNow(Date.now())
     const timer = window.setInterval(() => {
-      const nextNow = Date.now()
-      setNow(nextNow)
-      setRemaining(Math.max(0, CONFIRM_TIMEOUT_SECONDS - Math.floor((nextNow - openedAt) / 1000)))
+      setNow(Date.now())
     }, 1000)
     return () => window.clearInterval(timer)
   }, [isOpen])
@@ -72,8 +65,18 @@ export default function ConfirmBetDialog({
     })
   }, [items, now])
   const hasBlockingOddsChange = itemsNeedingAcceptance.length > 0
-  const timedOut = remaining <= 0
-  const confirmDisabled = submitting || timedOut || hasBlockingOddsChange
+  const primaryButtonLabel = submitting
+    ? '提交中…'
+    : hasBlockingOddsChange
+      ? '接受最新报价'
+      : '确认投注'
+  const handlePrimaryAction = () => {
+    if (hasBlockingOddsChange) {
+      onAcceptAllOddsChanges()
+      return
+    }
+    onConfirm()
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="确认投注">
@@ -86,9 +89,9 @@ export default function ConfirmBetDialog({
             </span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-[var(--text-secondary)]">确认倒计时</span>
-            <span className={`font-mono font-semibold ${timedOut ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
-              {timedOut ? '已超时' : `${remaining}s`}
+            <span className="text-[var(--text-secondary)]">确认要求</span>
+            <span className="text-[var(--text-primary)] font-medium">
+              {hasBlockingOddsChange ? '请先接受最新报价' : '请核对后提交'}
             </span>
           </div>
         </div>
@@ -115,7 +118,7 @@ export default function ConfirmBetDialog({
                     <span className="text-[10px] text-amber-300">
                       {oddsChanged
                         ? `赔率 ${formatOdds(it.oddsAtAdd, oddsFormat)} → ${formatOdds(it.oddsCurrent, oddsFormat)}`
-                        : '报价已过期，请确认当前赔率'}
+                        : '报价已过期，请接受最新报价'}
                     </span>
                     <button
                       onClick={() => onAcceptOddsChange(it.id)}
@@ -131,22 +134,10 @@ export default function ConfirmBetDialog({
         </div>
 
         {hasBlockingOddsChange && (
-          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2 flex items-center justify-between gap-2">
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2">
             <span className="text-[10px] text-amber-300">
-              有投注项需要确认当前赔率，接受后才能提交。
+              报价已更新。接受最新报价后，请再次核对金额和可能返还。
             </span>
-            <button
-              onClick={onAcceptAllOddsChanges}
-              className="shrink-0 text-[10px] px-2 py-1 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
-            >
-              全部接受
-            </button>
-          </div>
-        )}
-
-        {timedOut && (
-          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-2 text-[10px] text-red-300">
-            二次确认已超过 1 分钟，确认按钮已禁用。请取消后重新提交。
           </div>
         )}
 
@@ -163,11 +154,11 @@ export default function ConfirmBetDialog({
             取消
           </Button>
           <Button
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-            className={`flex-1 ${timedOut ? '!bg-[var(--border)] !text-[var(--text-secondary)]' : ''}`}
+            onClick={handlePrimaryAction}
+            disabled={submitting}
+            className="flex-1"
           >
-            {submitting ? '提交中…' : timedOut ? '确认已超时' : hasBlockingOddsChange ? '请先接受赔率' : '确认投注'}
+            {primaryButtonLabel}
           </Button>
         </div>
       </div>

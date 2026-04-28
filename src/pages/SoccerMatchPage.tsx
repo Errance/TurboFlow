@@ -12,7 +12,7 @@ import { SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
 import { useSoccerBetSlipStore } from '../stores/soccerBetSlipStore'
 import { makeSelectionKey, seedOdds } from '../services/oddsRegistry'
 import { markKeysLive } from '../services/oddsTicker'
-import type { Market } from '../data/soccer/types'
+import type { BetType, Market } from '../data/soccer/types'
 import { canCombine, getMarketFamily } from '../data/soccer/marketFamily'
 
 const MARKET_COLLAPSE_THRESHOLD = 6
@@ -23,6 +23,7 @@ function MarketList({
   matchId,
   selectedKeys,
   selectedMarkets,
+  betType,
   bettingClosed,
   onSelect,
   onClearMarket,
@@ -32,6 +33,7 @@ function MarketList({
   matchId: string
   selectedKeys: Set<string>
   selectedMarkets: Array<{ title: string; family: ReturnType<typeof getMarketFamily> }>
+  betType: BetType
   bettingClosed: boolean
   onSelect: (market: string, selection: string, odds: number) => void
   onClearMarket: (marketTitle: string) => void
@@ -47,7 +49,7 @@ function MarketList({
       {visible.map((market, i) => {
         const selectedKey = [...selectedKeys].find((k) => k.startsWith(market.title + '|'))
         const family = getMarketFamily(market.title)
-        const conflict = selectedKey
+        const conflict = selectedKey || betType !== 'accumulator'
           ? null
           : selectedMarkets.find((existing) => {
               if (existing.title === market.title) return false
@@ -134,6 +136,7 @@ export default function SoccerMatchPage() {
   const purgeVoid = useSoccerBetSlipStore((s) => s.purgeVoid)
   const removeByMatchTitle = useSoccerBetSlipStore((s) => s.removeByMatchTitle)
   const allItems = useSoccerBetSlipStore((s) => s.items)
+  const betType = useSoccerBetSlipStore((s) => s.betType)
 
   const handleSelect = useCallback(
     (marketTitle: string, selection: string, odds: number) => {
@@ -260,6 +263,7 @@ export default function SoccerMatchPage() {
             matchId={match.id}
             selectedKeys={selectedKeys}
             selectedMarkets={selectedMarkets}
+            betType={betType}
             bettingClosed={bettingClosed}
             onSelect={handleSelect}
             onClearMarket={(title) => match && removeByMatchTitle(match.id, title)}

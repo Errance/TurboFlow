@@ -165,7 +165,7 @@ const marketStateScenarios: Array<{ label: string; note: string; market?: Market
   { label: '已结算赢', note: '展示命中结果。', market: settlementMarket('win') },
   { label: '已结算输', note: '展示未命中。', market: settlementMarket('loss') },
   { label: '退款', note: '走盘或盘口作废按退款展示。', market: settlementMarket('push') },
-  { label: '同场互斥', note: '盘口保留展示，并解释与已选盘口冲突。', market: marketByTitle('正确进球'), conflict: true },
+  { label: '串关互斥', note: '仅在串关模式下解释与已选盘口不可组合。', market: marketByTitle('正确进球'), conflict: true },
   { label: '隐藏', note: '后台隐藏的盘口不出现在用户列表中。' },
 ]
 
@@ -176,8 +176,8 @@ const conflictExamples = [
 ]
 
 const rejectReasons = [
-  ['赔率已变化', '当前赔率与加入投注单时不同，提交前需要确认。'],
-  ['报价已过期', '锁价时间已结束，请按当前赔率重新确认。'],
+  ['赔率已变化', '最新报价与加入投注单时不同，提交前需要确认。'],
+  ['报价已过期', '锁价时间已结束，请先接受最新报价。'],
   ['盘口已关闭', '该盘口已暂停、作废或结算，请移除相关选项。'],
   ['该比赛暂不支持投注', '比赛已结束、延期、取消或进入异常处理。'],
   ['余额不足', '可用余额低于本次投注金额，请调整金额后再提交。'],
@@ -352,7 +352,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="market-states" title="4. 盘口状态和同场互斥" description="暂停、作废、结算、封盘和冲突都需要给出清晰反馈。">
+      <BoardSection id="market-states" title="4. 盘口状态和串关互斥" description="暂停、作废、结算、封盘和串关冲突都需要给出清晰反馈；多笔单注不做同场组合限制。">
         <div className="grid gap-4 xl:grid-cols-2">
           {marketStateScenarios.map((item) => (
             <StateCard key={item.label} title={item.label} description={item.note}>
@@ -373,7 +373,7 @@ export default function SoccerDesignBoardPage() {
             </StateCard>
           ))}
         </div>
-        <StateCard title="同场互斥说明" description="设计上需要展示冲突对象、原因和可继续操作的方式。">
+        <StateCard title="串关互斥说明" description="只在串关模式展示冲突对象、原因和可继续操作的方式。">
           <div className="grid gap-3 md:grid-cols-3">
             {conflictExamples.map(([title, reason]) => (
               <SmallState key={title} title={title} text={reason} />
@@ -399,18 +399,17 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、确认超时、提交反馈和设置。">
+      <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、提交反馈和设置。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview title="空单" lines={['投注单', '点击赔率按钮添加选项']} footer="不可提交" />
           <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '单笔 50 USDT', '分别计算赔率和返还']} footer="二次确认" />
           <BetSlipPreview title="串关" lines={['3 项 · 跨 3 场', '总赔率 7.42', '全部选项命中方可获胜']} footer="确认串关" />
           <BetSlipPreview title="多场分组" lines={['当前比赛 1 项', '其他比赛 2 项', '按比赛分组复核']} footer="跨场串关" />
           <BetSlipPreview title="折叠投注单" lines={['投注单已收起', '3 项 · 总赔率 7.42']} footer="点击展开" />
-          <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '当前赔率 @1.83']} footer="可提交" tone="success" />
-          <BetSlipPreview title="报价过期" lines={['报价已过期', '需要接受当前赔率']} footer="接受当前赔率" tone="warning" />
-          <BetSlipPreview title="二次确认" lines={['投注方式、明细、金额、赔率', '60 秒内确认']} footer="确认投注" />
-          <BetSlipPreview title="确认超时" lines={['二次确认超过 1 分钟', '确认按钮禁用']} footer="只能取消" tone="warning" />
-          <BetSlipPreview title="确认中赔率变化" lines={['1.83 → 1.76', '弹窗内接受当前赔率']} footer="接受后提交" tone="warning" />
+          <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '最新报价 @1.83']} footer="可提交" tone="success" />
+          <BetSlipPreview title="报价过期" lines={['报价已过期', '请接受最新报价']} footer="接受最新报价" tone="warning" />
+          <BetSlipPreview title="二次确认" lines={['投注方式、明细、金额、赔率', '核对后提交']} footer="确认投注" />
+          <BetSlipPreview title="确认中报价变化" lines={['1.83 → 1.76', '主按钮变为接受最新报价']} footer="接受最新报价" tone="warning" />
           <BetSlipPreview title="未达最低投注金额" lines={['投注金额 0.5 USDT', '最低投注金额为 1 USDT']} footer="调整金额" tone="danger" />
           <BetSlipPreview title="余额不足" lines={['总投注额 12,000 USDT', '可用余额 10,000 USDT']} footer="降低金额" tone="danger" />
           <BetSlipPreview title="提交中" lines={['正在确认投注...', '按钮禁用，避免重复提交']} footer="请等待" />

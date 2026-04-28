@@ -49,14 +49,14 @@ export interface BetSubmission {
 /**
  * 拒单原因。顺序对应 Phase 3 placeBet 校验链。
  * - odds_changed：赔率已变化且尚未在二次确认弹窗内接受
- * - odds_expired：报价有效期已过，需要用户重新确认当前赔率
+ * - odds_expired：报价有效期已过，需要用户接受最新报价
  * - market_closed：盘口已 suspended / settled / void / hidden
  * - match_not_available：比赛已不可下注
  * - balance_insufficient：钱包余额不足
  * - stake_below_min / stake_above_max：投注额越界
  * - payout_above_cap：可能返还超过 maxReturn
  * - legs_too_few / legs_too_many：腿数不满足 betType 要求
- * - conflict_detected：同场盘口冲突（由 canCombine 判定）
+ * - conflict_detected：串关包含不可同场组合的盘口（由 canCombine 判定）
  * - network_error：网络层失败（mock 5% 概率）
  * - rate_limited：频率限制（防御性占位）
  */

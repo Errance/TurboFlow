@@ -126,6 +126,27 @@ function makeId(matchId: string, marketTitle: string, selection: string): string
   return `${matchId}|${marketTitle}|${selection}`
 }
 
+function findSameMatchConflict(items: ExtendedBetSlipItem[]) {
+  const byMatch = new Map<string, ExtendedBetSlipItem[]>()
+  for (const item of items) {
+    const group = byMatch.get(item.matchId) ?? []
+    group.push(item)
+    byMatch.set(item.matchId, group)
+  }
+
+  for (const group of byMatch.values()) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[i].marketTitle === group[j].marketTitle) continue
+        const verdict = canCombine(group[i].marketFamily, group[j].marketFamily)
+        if (!verdict.ok) return { left: group[i], right: group[j], reason: verdict.reason }
+      }
+    }
+  }
+
+  return null
+}
+
 const persisted = loadState<PersistedSlip>(STORAGE_KEY)
 
 function restoreItems(items: ExtendedBetSlipItem[] | undefined): ExtendedBetSlipItem[] {
@@ -170,8 +191,8 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       (it) => it.matchId === matchId && it.marketTitle === marketTitle,
     )
 
-    // 3) 若跨盘口，对同场其他盘口做相关性校验
-    if (sameMarketIdx === -1) {
+    // 3) 多笔单注彼此独立，只有当前处于串关模式时才需要同场相关性校验
+    if (get().betType === 'accumulator' && sameMarketIdx === -1) {
       for (const existing of prev) {
         if (existing.matchId !== matchId) continue
         if (existing.marketTitle === marketTitle) continue
@@ -179,7 +200,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
         if (!verdict.ok) {
           addToast({
             type: 'error',
-            message: `无法同场组合：${marketTitle} 与 ${existing.marketTitle}。${verdict.reason}`,
+            message: `无法同场串关：${marketTitle} 与 ${existing.marketTitle}。${verdict.reason}`,
           })
           return { ok: false, reason: verdict.reason }
         }
@@ -244,25 +265,14 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       }
     })
 
-    const byMatch = new Map<string, ExtendedBetSlipItem[]>()
-    for (const item of next) {
-      const group = byMatch.get(item.matchId) ?? []
-      group.push(item)
-      byMatch.set(item.matchId, group)
-    }
-    for (const group of byMatch.values()) {
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          if (group[i].marketTitle === group[j].marketTitle) continue
-          const verdict = canCombine(group[i].marketFamily, group[j].marketFamily)
-          if (!verdict.ok) {
-            addToast({
-              type: 'error',
-              message: `无法重投：${group[i].marketTitle} 与 ${group[j].marketTitle} 不可同场组合`,
-            })
-            return { ok: false, reason: verdict.reason }
-          }
-        }
+    if (nextBetType === 'accumulator') {
+      const conflict = findSameMatchConflict(next)
+      if (conflict) {
+        addToast({
+          type: 'error',
+          message: `无法重投为串关：${conflict.left.marketTitle} 与 ${conflict.right.marketTitle} 不可同场串关`,
+        })
+        return { ok: false, reason: conflict.reason }
       }
     }
 
@@ -435,26 +445,15 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     // 4. 余额校验
     if (!wallet.canAfford(totalStake)) return reject('balance_insufficient')
 
-    // 5. 相关性校验（同场）
-    const byMatch = new Map<string, ExtendedBetSlipItem[]>()
-    for (const it of items) {
-      const arr = byMatch.get(it.matchId) ?? []
-      arr.push(it)
-      byMatch.set(it.matchId, arr)
-    }
-    for (const group of byMatch.values()) {
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          if (group[i].marketTitle === group[j].marketTitle) continue
-          const verdict = canCombine(group[i].marketFamily, group[j].marketFamily)
-          if (!verdict.ok) {
-            addToast({
-              type: 'error',
-              message: `${group[i].marketTitle} 与 ${group[j].marketTitle} 不可同场组合`,
-            })
-            return { ok: false, reason: 'conflict_detected' }
-          }
-        }
+    // 5. 相关性校验只适用于串关；多笔单注独立生成注单，不互相组合。
+    if (betType === 'accumulator') {
+      const conflict = findSameMatchConflict(items)
+      if (conflict) {
+        addToast({
+          type: 'error',
+          message: `${conflict.left.marketTitle} 与 ${conflict.right.marketTitle} 不可同场串关`,
+        })
+        return { ok: false, reason: 'conflict_detected' }
       }
     }
 

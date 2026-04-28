@@ -11,8 +11,8 @@ import { BETTING_LIMITS } from '../data/soccer/contracts'
 import type { BetRejectReason } from '../data/soccer/contracts'
 
 export const REJECT_MESSAGES: Record<BetRejectReason, string> = {
-  odds_changed: '赔率已变化，请接受当前赔率后重试',
-  odds_expired: '报价已过期，请重新确认当前赔率',
+  odds_changed: '赔率已变化，请接受最新报价后重试',
+  odds_expired: '报价已过期，请接受最新报价后重试',
   market_closed: '盘口已关闭，请移除不可用选项',
   match_not_available: '该比赛暂不支持投注，请移除相关选项',
   balance_insufficient: '余额不足，请调整投注金额',
@@ -21,7 +21,7 @@ export const REJECT_MESSAGES: Record<BetRejectReason, string> = {
   payout_above_cap: `预计返还不能超过 ${BETTING_LIMITS.maxReturn.toLocaleString('en-US')} USDT`,
   legs_too_few: `当前投注方式需要更多选项，请继续添加或切换投注方式`,
   legs_too_many: `当前投注方式最多支持 ${BETTING_LIMITS.maxLegs} 个投注项，请移除部分选项`,
-  conflict_detected: '当前选项不可组合，请移除或替换冲突选项',
+  conflict_detected: '当前选项不可同场串关，请移除或改为多笔单注',
   network_error: '提交未成功，请稍后重试',
   rate_limited: '投注正在确认中，请等待当前结果返回',
 }
