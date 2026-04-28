@@ -2,7 +2,7 @@
  * 我的注单页。
  *
  * 功能：
- * - 状态筛选：全部、待结算、已结算、兑付、修正
+ * - 状态筛选：全部、待结算、已结算、提前结清
  * - 日期范围：今天 / 7 天 / 30 天 / 全部
  * - 分页：20/页，底部"加载更多"
  * - Cash Out
@@ -20,7 +20,7 @@ import MyBetCard from '../components/soccer/MyBetCard'
 import Button from '../components/ui/Button'
 import type { MyBetItem } from '../data/soccer/types'
 
-type StatusFilter = 'all' | 'unsettled' | 'settled_any' | 'cashed_out' | 'corrected'
+type StatusFilter = 'all' | 'unsettled' | 'settled_any' | 'cashed_out'
 type DateFilter = 'today' | '7d' | '30d' | 'all'
 
 const STATUS_TABS: { id: StatusFilter; label: string }[] = [
@@ -28,7 +28,6 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
   { id: 'unsettled', label: '待结算' },
   { id: 'settled_any', label: '已结算' },
   { id: 'cashed_out', label: '提前结清' },
-  { id: 'corrected', label: '修正' },
 ]
 
 const DATE_TABS: { id: DateFilter; label: string }[] = [
@@ -90,7 +89,7 @@ export default function SoccerMyBetsPage() {
         if (statusTab === 'unsettled')
           return b.status === 'placed' || b.status === 'live' || b.status === 'pending'
         if (statusTab === 'settled_any')
-          return b.status === 'settled' || b.status === 'cashed_out' || b.status === 'corrected'
+          return b.status === 'settled' || b.status === 'cashed_out'
         return b.status === statusTab
       })
       .sort((a, b) => (a.placedAt ?? '') < (b.placedAt ?? '') ? 1 : -1)

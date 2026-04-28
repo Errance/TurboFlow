@@ -1,12 +1,11 @@
 /**
  * 注单卡片。支持：
- * - 状态 badge（placed 蓝 / live 红脉动 / settled 按 result 上色 / cashed_out 橙 / corrected 黄）
+ * - 状态 badge（placed 蓝 / live 红脉动 / settled 按 result 上色 / cashed_out 橙）
  * - placedAt 相对时间
  * - betCode 小字（点击复制）
  * - 单式简洁展示；串单可折叠明细
  * - Cash Out（placed / live 且未过期）
  * - 重投按钮（duplicateToSlip）
- * - corrected 黄色 banner + 差额展示
  * - push/void 腿重算赔率提示
  */
 
@@ -16,7 +15,6 @@ import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { formatOdds } from '../../utils/oddsFormat'
-import { getSystemMeta } from '../../utils/systemBets'
 
 interface Props {
   bet: MyBetItem
@@ -66,8 +64,6 @@ function StatusBadge({ bet }: { bet: MyBetItem }) {
     )
   if (status === 'cashed_out')
     return <Badge variant="warning">已提前结清</Badge>
-  if (status === 'corrected')
-    return <Badge variant="warning">已修正</Badge>
   // settled
   const r = bet.settlementResult ?? bet.result
   if (r === 'win' || r === 'half_win' || r === 'dead_heat') return <Badge variant="success">{RESULT_LABEL[r]}</Badge>
@@ -88,18 +84,15 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
   const oddsFormat = useSettingsStore((s) => s.oddsFormat)
 
   const legs = useMemo(() => bet.legs ?? [], [bet.legs])
-  const isParlay = (bet.betType && bet.betType !== 'single') || legs.length > 1
+  const isParlay = bet.betType === 'accumulator' || legs.length > 1
 
   const effectiveTotalOdds = useMemo(() => {
     if (legs.length === 0) return bet.odds
-    if (bet.betType === 'system') return bet.odds
     return legs.reduce((acc, l) => acc * recalcOddsDetail(l).effective, 1)
-  }, [legs, bet.odds, bet.betType])
+  }, [legs, bet.odds])
 
   const effectiveReturn =
-    bet.betType === 'system'
-      ? (bet.potentialReturn ?? (bet.unitStake ?? 0) * effectiveTotalOdds)
-      : (bet.stake ?? bet.amount) * effectiveTotalOdds
+    (bet.stake ?? bet.amount) * effectiveTotalOdds
 
   const canCashOut = (bet.status === 'placed' || bet.status === 'live') && bet.cashout
   const showReplay = !!onReplay && legs.length > 0
@@ -110,11 +103,9 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
             <StatusBadge bet={bet} />
-            {bet.betType && bet.betType !== 'single' && (
+            {bet.betType === 'accumulator' && (
               <span className="text-[10px] text-[var(--text-secondary)]">
-                {bet.betType === 'accumulator'
-                  ? '串关'
-                  : `${bet.systemType ? getSystemMeta(bet.systemType).label : '复式'}${bet.systemLineCount ? ` · ${bet.systemLineCount} 注` : ''}`} · {legs.length} 项
+                串关 · {legs.length} 项
               </span>
             )}
           </div>
@@ -222,19 +213,6 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
           highlight={bet.status === 'cashed_out' || (bet.status === 'settled' && bet.payout > 0)}
         />
       </div>
-
-      {bet.correction && (
-        <div className="px-2.5 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-300">
-          结果已修正 · {RESULT_LABEL[bet.correction.originalResult] ?? bet.correction.originalResult} →{' '}
-          {RESULT_LABEL[bet.correction.newResult] ?? bet.correction.newResult}
-          {bet.correction.diffPayout !== 0 && (
-            <span className="ml-1 font-mono">
-              差额 {bet.correction.diffPayout >= 0 ? '+' : ''}
-              {fmtMoney(bet.correction.diffPayout)} USDT
-            </span>
-          )}
-        </div>
-      )}
 
       {(canCashOut || showReplay) && (
         <div className="flex gap-2 pt-1">

@@ -10,13 +10,12 @@
  *
  * 持久化 key：tf_mybets
  *
- * Cash Out 与结算修正（correct）与 walletStore 解耦：调用者负责同步 credit / deduct，
+ * Cash Out 与结算动作和 walletStore 解耦：调用者负责同步 credit / deduct，
  * 这样 store 责任单一，便于 Phase 3/5 的集成测试单点注入。
  */
 
 import { create } from 'zustand'
 import type { BetType, MyBetItem, MyBetLeg, MyBetStatus, SettlementResult } from '../data/soccer/types'
-import type { SystemType } from '../data/soccer/contracts'
 import { myBets as seedBets } from '../data/soccer/mockData'
 import { attachPersist, loadState } from './persist'
 import { useSoccerBetSlipStore } from './soccerBetSlipStore'
@@ -32,7 +31,6 @@ interface MyBetsState {
   remove: (id: string) => void
   cashout: (id: string, price: number) => boolean
   settle: (id: string, result: SettlementResult) => boolean
-  correct: (id: string, newResult: SettlementResult, diffPayout: number) => boolean
   /** 返回 CSV 文本（由调用方触发下载） */
   exportCsv: () => string
   /** 把指定注单的 legs 推回投注单（重投） */
@@ -65,7 +63,6 @@ function payoutForResult(bet: MyBetItem, result: SettlementResult): number {
 /**
  * 把旧 schema（amount/payout/result）迁移到新 schema，并追加若干特殊状态示例：
  * - 1 条 live 串单含 1 腿 push：展示重算赔率
- * - 1 条 corrected：原 WIN → 现 LOSS 追回
  * - 1 条 placed：可 Cash Out
  *
  * placedAt 全部分散在过去 72h 内，便于"今天 / 7 天 / 30 天"筛选演示。
@@ -92,7 +89,7 @@ function migrateSeed(): MyBetItem[] {
       placedAt,
       settledAt,
       betCode: `TF-SEED-${String(idx + 1).padStart(4, '0')}`,
-      betType: 'single',
+      betType: 'multi_single',
       legs: [leg],
       stake: b.amount,
       currency: 'USDT',
@@ -152,45 +149,6 @@ function migrateSeed(): MyBetItem[] {
     ],
   }
 
-  // corrected：原 WIN 150 → 现 LOSS，追回 150
-  const corrected: MyBetItem = {
-    id: 'seed-corrected',
-    matchLabel: '巴塞罗那 vs 皇家马德里',
-    marketTitle: '胜平负',
-    selection: '巴塞罗那',
-    odds: 3.0,
-    amount: 50,
-    result: 'loss',
-    payout: 0,
-    status: 'corrected',
-    placedAt: new Date(now - 1000 * 60 * 60 * 30).toISOString(),
-    settledAt: new Date(now - 1000 * 60 * 60 * 2).toISOString(),
-    betCode: 'TF-SEED-CORR',
-    betType: 'single',
-    currency: 'USDT',
-    stake: 50,
-    potentialReturn: 0,
-    potentialProfit: -50,
-    settlementResult: 'loss',
-    correction: {
-      originalResult: 'win',
-      newResult: 'loss',
-      diffPayout: -150,
-    },
-    legs: [
-      {
-        id: 'seed-corrected-l1',
-        matchId: 'seed',
-        matchLabel: '巴塞罗那 vs 皇家马德里',
-        marketTitle: '胜平负',
-        selection: '巴塞罗那',
-        oddsAtPlacement: 3.0,
-        status: 'corrected',
-        result: 'loss',
-      },
-    ],
-  }
-
   // placed：支持 CashOut
   const placed: MyBetItem = {
     id: 'seed-placed',
@@ -204,7 +162,7 @@ function migrateSeed(): MyBetItem[] {
     status: 'placed',
     placedAt: new Date(now - 1000 * 60 * 15).toISOString(),
     betCode: 'TF-SEED-PLCD',
-    betType: 'single',
+    betType: 'multi_single',
     currency: 'USDT',
     stake: 100,
     potentialReturn: 185,
@@ -222,7 +180,7 @@ function migrateSeed(): MyBetItem[] {
     ],
   }
 
-  return [placed, pushLive, corrected, ...migrated]
+  return [placed, pushLive, ...migrated]
 }
 
 const persisted = loadState<{ bets: MyBetItem[] }>(STORAGE_KEY)
@@ -312,34 +270,6 @@ export const useMyBetsStore = create<MyBetsState>((set, get) => ({
     return true
   },
 
-  correct: (id, newResult, diffPayout) => {
-    if (!Number.isFinite(diffPayout)) return false
-    const bet = get().bets.find((b) => b.id === id)
-    if (!bet || bet.status !== 'settled') return false
-    const wallet = useWalletStore.getState()
-    if (diffPayout > 0) wallet.credit(diffPayout)
-    if (diffPayout < 0 && !wallet.debit(Math.abs(diffPayout))) return false
-    set((s) => ({
-      bets: s.bets.map((b) => {
-        if (b.id !== id) return b
-        const originalResult: SettlementResult = b.settlementResult ?? b.result
-        return {
-          ...b,
-          status: 'corrected',
-          settlementResult: newResult,
-          correction: {
-            originalResult,
-            newResult,
-            diffPayout,
-          },
-          payout: +(b.payout + diffPayout).toFixed(2),
-          potentialProfit: +(b.payout + diffPayout - stakeOf(b)).toFixed(2),
-        }
-      }),
-    }))
-    return true
-  },
-
   exportCsv: () => {
     const header = ['betCode', 'placedAt', 'betType', 'stake', 'totalOdds', 'status', 'result', 'payout'].join(',')
     const rows = get().bets.map((b) => {
@@ -350,7 +280,7 @@ export const useMyBetsStore = create<MyBetsState>((set, get) => ({
       const result = b.settlementResult ?? b.result ?? ''
       const placedAt = b.placedAt ?? ''
       const betCode = b.betCode ?? b.id
-      return [betCode, placedAt, b.betType ?? 'single', stake.toFixed(2), totalOdds.toFixed(2), status, result, payout.toFixed(2)].join(',')
+      return [betCode, placedAt, b.betType ?? 'multi_single', stake.toFixed(2), totalOdds.toFixed(2), status, result, payout.toFixed(2)].join(',')
     })
     return [header, ...rows].join('\n')
   },
@@ -359,7 +289,7 @@ export const useMyBetsStore = create<MyBetsState>((set, get) => ({
     const all = get().bets
     if (status === 'all') return all
     if (status === 'unsettled') return all.filter((b) => b.status === 'placed' || b.status === 'live' || b.status === 'pending')
-    if (status === 'settled_any') return all.filter((b) => b.status === 'settled' || b.status === 'cashed_out' || b.status === 'corrected')
+    if (status === 'settled_any') return all.filter((b) => b.status === 'settled' || b.status === 'cashed_out')
     return all.filter((b) => (b.status ?? 'settled') === status)
   },
 
@@ -388,9 +318,8 @@ export const useMyBetsStore = create<MyBetsState>((set, get) => ({
         quoteState: currentOdds ? ('fresh' as const) : ('needs_refresh' as const),
       }
     })
-    const betType: BetType = bet.betType ?? (inputs.length > 1 ? 'accumulator' : 'single')
-    const systemType: SystemType | undefined = betType === 'system' ? bet.systemType : undefined
-    return useSoccerBetSlipStore.getState().replaceWithItems(inputs, betType, systemType).ok
+    const betType: BetType = bet.betType === 'accumulator' ? 'accumulator' : 'multi_single'
+    return useSoccerBetSlipStore.getState().replaceWithItems(inputs, betType).ok
   },
 }))
 

@@ -27,7 +27,6 @@ function realizedProfit(bet: MyBetItem): number | null {
   const status = bet.status ?? 'settled'
   const stake = bet.stake ?? bet.amount ?? 0
   if (status === 'cashed_out') return (bet.payout ?? 0) - stake
-  if (status === 'corrected') return (bet.payout ?? 0) - stake + (bet.correction?.diffPayout ?? 0)
   if (status !== 'settled') return null
   return (bet.payout ?? 0) - stake
 }
@@ -43,7 +42,6 @@ function statusBadge(bet: MyBetItem) {
       </span>
     )
   if (status === 'cashed_out') return <Badge variant="warning">已提前结清</Badge>
-  if (status === 'corrected') return <Badge variant="warning">已修正</Badge>
   const r = bet.settlementResult ?? bet.result
   const cfg = resultConfig[r ?? 'win']
   return cfg ? <Badge variant={cfg.variant}>{cfg.label}</Badge> : <Badge variant="neutral">已结算</Badge>
@@ -117,7 +115,6 @@ export default function MyBetsPanel({ bets: external, limit = 5 }: Props) {
                   }`}
                 >
                   {bet.status === 'cashed_out' && profitAmount !== null && `已提前结清 ${bet.payout.toFixed(2)}`}
-                  {bet.status === 'corrected' && profitAmount !== null && `修正后 ${profitAmount >= 0 ? '+' : ''}${profitAmount.toFixed(2)}`}
                   {bet.status === 'settled' && bet.result === 'win' && profitAmount !== null && `+${profitAmount.toFixed(2)}`}
                   {bet.status === 'settled' && bet.result === 'loss' && `-${stake.toFixed(2)}`}
                   {bet.status === 'settled' && bet.result === 'push' && `退还 ${stake.toFixed(2)}`}

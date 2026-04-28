@@ -23,6 +23,7 @@ function MarketList({
   matchId,
   selectedKeys,
   selectedMarkets,
+  bettingClosed,
   onSelect,
   onClearMarket,
 }: {
@@ -31,6 +32,7 @@ function MarketList({
   matchId: string
   selectedKeys: Set<string>
   selectedMarkets: Array<{ title: string; family: ReturnType<typeof getMarketFamily> }>
+  bettingClosed: boolean
   onSelect: (market: string, selection: string, odds: number) => void
   onClearMarket: (marketTitle: string) => void
 }) {
@@ -60,9 +62,10 @@ function MarketList({
             matchId={matchId}
             onSelect={onSelect}
             selectedKey={selectedKey}
-            conflictWith={conflict?.title}
-            conflictReason={verdict && !verdict.ok ? verdict.reason : undefined}
-            onReplaceConflict={conflict ? () => onClearMarket(conflict.title) : undefined}
+            conflictWith={bettingClosed ? undefined : conflict?.title}
+            conflictReason={!bettingClosed && verdict && !verdict.ok ? verdict.reason : undefined}
+            onReplaceConflict={!bettingClosed && conflict ? () => onClearMarket(conflict.title) : undefined}
+            bettingClosed={bettingClosed}
           />
         )
       })}
@@ -79,12 +82,12 @@ function MarketList({
 }
 
 const ENDED_STATUSES = new Set([
+  'live',
   'finished',
   'interrupted',
   'abandoned',
   'postponed',
   'cancelled',
-  'corrected',
 ])
 
 /**
@@ -200,8 +203,7 @@ export default function SoccerMatchPage() {
     }
     seedOdds(pairs)
     const keys = pairs.map(([k]) => k)
-    const live = match.status === 'live'
-    markKeysLive(keys, live)
+    markKeysLive(keys, false)
     return () => {
       markKeysLive(keys, false)
     }
@@ -223,6 +225,7 @@ export default function SoccerMatchPage() {
   const currentTab = match.tabs.find((t) => t.id === activeTab) ?? match.tabs[0]
   const tabItems = match.tabs.map((t) => ({ id: t.id, label: t.label }))
   const hasInfoPanel = !!(match.homeLineup || match.headToHead || match.stats)
+  const bettingClosed = match.status !== 'scheduled'
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -257,6 +260,7 @@ export default function SoccerMatchPage() {
             matchId={match.id}
             selectedKeys={selectedKeys}
             selectedMarkets={selectedMarkets}
+            bettingClosed={bettingClosed}
             onSelect={handleSelect}
             onClearMarket={(title) => match && removeByMatchTitle(match.id, title)}
           />

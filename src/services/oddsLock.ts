@@ -3,7 +3,7 @@
  *
  * 每个投注单 item 加入时会写入 oddsLockedUntil（= now + 30s）。
  * 本 hook 每秒读取 store 并计算剩余秒数；到期不自动删除 item，仅标 stale
- * （由 placeBet 的 acceptPolicy 阶段决定是否拒单）。
+ * （由二次确认弹窗要求用户重新接受当前赔率）。
  */
 
 import { useEffect, useState } from 'react'

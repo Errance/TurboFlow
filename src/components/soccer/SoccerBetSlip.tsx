@@ -10,21 +10,19 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { useToastStore } from '../../stores/toastStore'
 import { useOddsLockCountdown } from '../../services/oddsLock'
 import { BETTING_LIMITS } from '../../data/soccer/contracts'
-import type { SystemType } from '../../data/soccer/contracts'
 import type { BetType } from '../../data/soccer/types'
 import { getMatchById } from '../../data/soccer/mockData'
 import { formatOdds } from '../../utils/oddsFormat'
-import { buildSystemBetProjection, getSystemMeta } from '../../utils/systemBets'
 
 /**
  * 投注单面板。Phase 3 完整重构：
  * - 顶部余额条
- * - 投注类型 tabs（单/串/复，复式详细 UI 留到 Phase 8）
+ * - 投注类型 tabs（多笔单注 / 串关）
  * - 每腿展示赔率变动 badge + 30s 锁定倒计时
  * - 快选金额 chips（含 MAX）
  * - 可能返还 / 可能净盈利拆两行展示
  * - 折叠展开（chevron）
- * - 串单 ≥ 3 腿或 stake ≥ 1000 触发二次确认弹窗
+ * - 所有提交都触发二次确认弹窗
  */
 
 interface Props {
@@ -33,21 +31,21 @@ interface Props {
   matchStatus?: SoccerMatch['status']
 }
 
-const ENDED_STATUSES = new Set([
+const UNAVAILABLE_MATCH_STATUSES = new Set([
+  'live',
   'finished',
   'interrupted',
   'abandoned',
   'postponed',
   'cancelled',
-  'corrected',
 ])
 const CLOSED_MARKET_STATUSES = new Set(['suspended', 'settled', 'void', 'cancelled', 'hidden'])
 
 const STATUS_MESSAGES: Record<string, string> = {
+  live: '比赛已开始，所有盘口已封盘',
   finished: '比赛已结束，所有盘口已结算',
   abandoned: '比赛异常结束，盘口按规则结算',
   cancelled: '比赛已取消，所有盘口作废退款',
-  corrected: '比赛结果已修正',
 }
 
 type Group = { matchId: string; matchLabel: string; items: ExtendedBetSlipItem[] }
@@ -84,9 +82,6 @@ function collectClosedMarketTitles(matchId: string): Set<string> {
   return closed
 }
 
-const CONFIRM_STAKE_THRESHOLD = 1000
-const CONFIRM_LEGS_THRESHOLD = 3
-
 export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchStatus }: Props) {
   const [amount, setAmount] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -94,10 +89,8 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
   const items = useSoccerBetSlipStore((s) => s.items)
   const betType = useSoccerBetSlipStore((s) => s.betType)
-  const systemType = useSoccerBetSlipStore((s) => s.systemType)
   const submitting = useSoccerBetSlipStore((s) => s.submitting)
   const setBetType = useSoccerBetSlipStore((s) => s.setBetType)
-  const setSystemType = useSoccerBetSlipStore((s) => s.setSystemType)
   const removeById = useSoccerBetSlipStore((s) => s.removeById)
   const clearMatch = useSoccerBetSlipStore((s) => s.clearMatch)
   const clearAll = useSoccerBetSlipStore((s) => s.clearAll)
@@ -107,42 +100,39 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
   const balance = useWalletStore((s) => s.balance)
   const locked = useWalletStore((s) => s.locked)
-  const acceptPolicy = useSettingsStore((s) => s.acceptPolicy)
   const oddsFormat = useSettingsStore((s) => s.oddsFormat)
   const addToast = useToastStore((s) => s.addToast)
 
   const lockCountdown = useOddsLockCountdown()
 
   useEffect(() => {
-    if (items.length <= 1 && betType !== 'single') setBetType('single')
-    if (items.length === 2 && betType === 'system') setBetType('accumulator')
+    if (items.length <= 1 && betType !== 'multi_single') setBetType('multi_single')
   }, [items.length, betType, setBetType])
 
   const totalOdds = useMemo(
     () => items.reduce((acc, item) => acc * item.oddsCurrent, 1),
     [items],
   )
-  const systemProjection = useMemo(
-    () => (betType === 'system' ? buildSystemBetProjection(systemType, items) : null),
-    [betType, systemType, items],
-  )
 
   const stake = parseFloat(amount) || 0
-  const displayOdds = systemProjection?.totalOdds ?? totalOdds
-  const totalStake = systemProjection ? +(stake * systemProjection.lineCount).toFixed(2) : stake
-  const potentialReturn = stake > 0 ? +(stake * displayOdds).toFixed(2) : 0
+  const totalStake = betType === 'multi_single' ? +(stake * items.length).toFixed(2) : stake
+  const potentialReturn = stake > 0
+    ? betType === 'multi_single'
+      ? +items.reduce((sum, item) => sum + stake * item.oddsCurrent, 0).toFixed(2)
+      : +(stake * totalOdds).toFixed(2)
+    : 0
   const potentialProfit = +(potentialReturn - totalStake).toFixed(2)
 
   const groups = useMemo(() => groupByMatch(items, currentMatchId), [items, currentMatchId])
   const crossMatchCount = groups.filter((g) => g.matchId !== currentMatchId).length
 
-  const isMatchEnded = matchStatus ? ENDED_STATUSES.has(matchStatus) : false
+  const isMatchUnavailable = matchStatus ? UNAVAILABLE_MATCH_STATUSES.has(matchStatus) : false
   const hasCurrentMatchItems = items.some((it) => it.matchId === currentMatchId)
   const unavailableItemIds = useMemo(() => {
     const ids = new Set<string>()
     for (const it of items) {
       const match = getMatchById(it.matchId)
-      if (!match || ENDED_STATUSES.has(match.status)) {
+      if (!match || UNAVAILABLE_MATCH_STATUSES.has(match.status)) {
         ids.add(it.id)
         continue
       }
@@ -156,9 +146,8 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   )
 
   // 腿数的合法区间 / 标签
-  const requiredSystemLegs = betType === 'system' ? getSystemMeta(systemType).requiredLegs : null
-  const minLegs = requiredSystemLegs ?? BETTING_LIMITS.minLegs[betType]
-  const maxLegs = requiredSystemLegs ?? BETTING_LIMITS.maxLegs
+  const minLegs = BETTING_LIMITS.minLegs[betType]
+  const maxLegs = BETTING_LIMITS.maxLegs
   const legsInRange = items.length >= minLegs && items.length <= maxLegs
 
   const handlePrimaryClick = () => {
@@ -166,13 +155,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
       addToast({ type: 'error', message: `投注金额需不低于 ${BETTING_LIMITS.minStake} USDT` })
       return
     }
-    const shouldConfirm =
-      items.length >= CONFIRM_LEGS_THRESHOLD || stake >= CONFIRM_STAKE_THRESHOLD
-    if (shouldConfirm) {
-      setConfirmOpen(true)
-      return
-    }
-    void doPlaceBet()
+    setConfirmOpen(true)
   }
 
   const doPlaceBet = async () => {
@@ -182,7 +165,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
     for (const id of matchIds) {
       const match = getMatchById(id)
-      if (!match || ENDED_STATUSES.has(match.status)) {
+      if (!match || UNAVAILABLE_MATCH_STATUSES.has(match.status)) {
         endedMatchIds.add(id)
         continue
       }
@@ -211,7 +194,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
             <BetSlipSettingsMenu />
           </div>
         </div>
-        {isMatchEnded && matchStatus ? (
+        {isMatchUnavailable && matchStatus ? (
           <p className="text-xs text-[var(--text-secondary)] text-center py-6">
             {STATUS_MESSAGES[matchStatus] ?? '比赛已结束'}
           </p>
@@ -225,14 +208,8 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   }
 
   const betTypes: { id: BetType; label: string }[] = [
-    { id: 'single', label: '单式' },
+    { id: 'multi_single', label: '多笔单注' },
     { id: 'accumulator', label: '串关' },
-    { id: 'system', label: '复式' },
-  ]
-  const systemTypes: { id: SystemType; label: string }[] = [
-    { id: 'trixie', label: '三项复式' },
-    { id: 'patent', label: '三项全包' },
-    { id: 'yankee', label: '四项复式' },
   ]
 
   return (
@@ -298,7 +275,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               已收起 · {items.length} 项 · {groups.length} 场
             </span>
             <span className="font-mono font-semibold text-[var(--text-primary)]">
-              {formatOdds(displayOdds, oddsFormat)}
+              {betType === 'accumulator' ? formatOdds(totalOdds, oddsFormat) : `${items.length} 项`}
             </span>
           </div>
         )}
@@ -307,16 +284,10 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
           <>
             {/* BetType tabs */}
             <div className="mb-3">
-              {items.length === 1 && (
-                <div className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-xs text-[var(--text-secondary)]">
-                  单关 · 只结算当前 1 个选项
-                </div>
-              )}
-              {items.length > 1 && (
-                <div className="flex gap-1 p-0.5 bg-[var(--bg-control)] rounded-lg">
-              {betTypes.filter((t) => t.id !== 'single').map((t) => {
+              <div className="flex gap-1 p-0.5 bg-[var(--bg-control)] rounded-lg">
+              {betTypes.map((t) => {
                 const active = betType === t.id
-                const disabled = t.id === 'system' && items.length < 3
+                const disabled = t.id === 'accumulator' && items.length < 2
                 return (
                   <button
                     key={t.id}
@@ -332,7 +303,11 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                   </button>
                 )
               })}
-                </div>
+              </div>
+              {betType === 'multi_single' && (
+                <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
+                  当前为多笔单注，每个投注项独立生成注单、独立结算。
+                </p>
               )}
               {items.length > 1 && betType === 'accumulator' && (
                 <p className="mt-1.5 text-[10px] text-[var(--text-secondary)]">
@@ -341,42 +316,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               )}
             </div>
 
-            {betType === 'system' && (
-              <div className="mb-3 rounded-lg bg-[var(--bg-control)] p-2">
-                <div className="flex gap-1 mb-2">
-                  {systemTypes.map((t) => {
-                    const active = systemType === t.id
-                    const meta = getSystemMeta(t.id)
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setSystemType(t.id)}
-                        className={`flex-1 text-[10px] py-1.5 rounded-md transition-colors ${
-                          active
-                            ? 'bg-[var(--bg-card)] text-[var(--text-primary)] font-semibold'
-                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        {t.label}
-                        <span className="block font-normal opacity-70">{meta.requiredLegs} 项</span>
-                      </button>
-                    )
-                  })}
-                </div>
-                {systemProjection && (
-                  <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-                    <span>
-                      {systemProjection.label} 生成 {systemProjection.lineCount} 注，金额按单注计算
-                    </span>
-                    <span className="font-mono text-[var(--text-primary)]">
-                      Σ {formatOdds(systemProjection.totalOdds, oddsFormat)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {isMatchEnded && matchStatus && hasCurrentMatchItems && (
+            {isMatchUnavailable && matchStatus && hasCurrentMatchItems && (
               <div className="mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <p className="text-xs text-amber-400 font-medium">
                   {STATUS_MESSAGES[matchStatus] ?? '比赛已结束'}
@@ -406,18 +346,12 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                     <div className="space-y-1.5">
                       {g.items.map((item) => {
                         const match = getMatchById(item.matchId)
-                        const matchEnded = !match || ENDED_STATUSES.has(match.status)
+                        const matchUnavailable = !match || UNAVAILABLE_MATCH_STATUSES.has(match.status)
                         const isSuspended =
                           unavailableItemIds.has(item.id) ||
                           (isCurrent && suspendedMarkets?.has(item.marketTitle))
-                        const disabledCtx = isSuspended || matchEnded
+                        const disabledCtx = isSuspended || matchUnavailable
                         const oddsChanged = item.oddsCurrent !== item.oddsAtAdd
-                        const oddsUp = item.oddsCurrent > item.oddsAtAdd
-                        // 按 acceptPolicy 决定是否需要手工接受
-                        const needsAccept =
-                          oddsChanged &&
-                          (acceptPolicy === 'none' ||
-                            (acceptPolicy === 'higher_only' && !oddsUp))
                         const lockRemain = lockCountdown[item.id] ?? 0
                         const quoteExpired = item.quoteState === 'needs_refresh' || lockRemain === 0
 
@@ -442,17 +376,9 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                             </div>
                             {oddsChanged && (
                               <div className="mt-1.5 flex items-center justify-between">
-                                <span className={`text-[10px] ${oddsUp ? 'text-emerald-400' : 'text-red-400'}`}>
+                                <span className="text-[10px] text-amber-300">
                                   赔率 {formatOdds(item.oddsAtAdd, oddsFormat)} → {formatOdds(item.oddsCurrent, oddsFormat)}
                                 </span>
-                                {needsAccept && (
-                                  <button
-                                    onClick={() => acceptOddsChange(item.id)}
-                                    className="text-[10px] px-2 py-0.5 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
-                                  >
-                                    接受变化
-                                  </button>
-                                )}
                               </div>
                             )}
                             {!isSuspended && (
@@ -467,7 +393,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                                   <line x1="12" y1="8" x2="12" y2="12" />
                                   <line x1="12" y1="16" x2="12.01" y2="16" />
                                 </svg>
-                                {matchEnded ? '该比赛暂不支持投注' : '盘口已关闭'}
+                                {matchUnavailable ? '该比赛暂不支持投注' : '盘口已关闭'}
                               </div>
                             )}
                           </div>
@@ -482,24 +408,24 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
             {/* Total odds + leg counter */}
             <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-3 pb-3 border-b border-[var(--border)]">
               <span>
-                {items.length > 1 ? (groups.length > 1 ? '总赔率（跨场）' : '总赔率（同场）') : '单式赔率'}
+                {betType === 'accumulator' ? '串关总赔率' : '多笔单注'}
                 <span className="ml-2 text-[10px]">
                   投注项 {items.length}/{BETTING_LIMITS.maxLegs}
                 </span>
               </span>
               <span className="font-mono font-semibold text-[var(--text-primary)]">
-                {formatOdds(displayOdds, oddsFormat)}
+                {betType === 'accumulator' ? formatOdds(totalOdds, oddsFormat) : `${items.length} 项`}
               </span>
             </div>
 
             {/* Quick stakes */}
             <QuickStakes
-              balance={balance}
+              balance={betType === 'multi_single' ? balance / items.length : balance}
               onPick={(v) => setAmount(String(v))}
             />
 
             <Input
-              label="投注金额"
+              label={betType === 'multi_single' ? '单笔投注金额' : '投注金额'}
               type="number"
               placeholder="0.00"
               suffix="USDT"
@@ -513,8 +439,8 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
             {/* Returns */}
             <div className="space-y-1 mb-3">
-              {systemProjection && (
-                <Row label="总投注额" value={`${fmtMoney(totalStake)} USDT`} />
+              {betType === 'multi_single' && items.length > 1 && (
+                <Row label="合计投注额" value={`${fmtMoney(totalStake)} USDT`} />
               )}
               <Row label="可能返还" value={`${fmtMoney(potentialReturn)} USDT`} highlight />
               <Row label="可能净盈利" value={`${potentialProfit >= 0 ? '+' : ''}${fmtMoney(potentialProfit)} USDT`} />
@@ -526,16 +452,10 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
             </div>
 
             {hasStaleQuote && (
-              <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2 flex items-center justify-between gap-2">
+              <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 p-2">
                 <span className="text-[10px] text-amber-300">
-                  有报价已过期，提交前需要重新确认当前赔率。
+                  有报价需要重新确认，系统会在二次确认弹窗内提示。
                 </span>
-                <button
-                  onClick={acceptAllOddsChanges}
-                  className="shrink-0 text-[10px] px-2 py-1 rounded bg-[#2DD4BF]/15 text-[#2DD4BF] hover:bg-[#2DD4BF]/25 transition-colors"
-                >
-                  接受当前赔率
-                </button>
               </div>
             )}
 
@@ -545,7 +465,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               disabled={
                 submitting ||
                 hasUnavailableInSlip ||
-                (isMatchEnded && hasCurrentMatchItems) ||
+                (isMatchUnavailable && hasCurrentMatchItems) ||
                 !legsInRange ||
                 stake < BETTING_LIMITS.minStake
               }
@@ -554,12 +474,10 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                 ? '提交中…'
                 : hasUnavailableInSlip
                   ? '包含不可用选项'
-                  : isMatchEnded && hasCurrentMatchItems
-                    ? '当前比赛已结束'
+                  : isMatchUnavailable && hasCurrentMatchItems
+                    ? '当前比赛已封盘'
                     : !legsInRange
-                      ? betType === 'system'
-                        ? `${getSystemMeta(systemType).label} 需要 ${minLegs} 个投注项`
-                        : betType === 'accumulator'
+                      ? betType === 'accumulator'
                         ? '串关至少需要 2 个投注项'
                         : '请调整投注项数量'
                       : '确认投注'}
@@ -572,12 +490,13 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={doPlaceBet}
+        onAcceptOddsChange={acceptOddsChange}
+        onAcceptAllOddsChanges={acceptAllOddsChanges}
         items={items}
         betType={betType}
-        systemType={betType === 'system' ? systemType : undefined}
         stake={stake}
         totalStake={totalStake}
-        totalOdds={displayOdds}
+        totalOdds={totalOdds}
         potentialReturn={potentialReturn}
         submitting={submitting}
       />

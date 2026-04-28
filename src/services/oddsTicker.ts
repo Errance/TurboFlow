@@ -1,7 +1,8 @@
 /**
  * 赔率抖动服务。
  *
- * 仅对 match.status === 'live' 的盘口每 tickIntervalMs 触发一次随机抖动：
+ * 仅用于赛前 demo 报价刷新。当前足球盘口开赛后即封盘，
+ * 因此 SoccerMatchPage 不会再把 live 比赛注册进本服务。
  *   new = clamp(old + rand(-tickJitter, +tickJitter), 1.01, 50)
  *
  * 抖动结果：

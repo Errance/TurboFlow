@@ -62,7 +62,7 @@ export interface SoccerMatch {
   awayTeam: SoccerTeam
   date: string
   time: string
-  status: 'scheduled' | 'live' | 'finished' | 'interrupted' | 'abandoned' | 'postponed' | 'cancelled' | 'corrected'
+  status: 'scheduled' | 'live' | 'finished' | 'interrupted' | 'abandoned' | 'postponed' | 'cancelled'
   score?: { home: number; away: number }
   currentMinute?: number
   tabs: MatchTab[]
@@ -89,12 +89,12 @@ export type Market =
   | ComboGridMarket
   | RangeButtonsMarket
 
-export type MarketStatus = 'open' | 'upcoming' | 'suspended' | 'settled' | 'void' | 'cancelled' | 'corrected' | 'hidden'
+export type MarketStatus = 'open' | 'upcoming' | 'suspended' | 'settled' | 'void' | 'cancelled' | 'hidden'
 export type SettlementResult = 'win' | 'loss' | 'void' | 'push' | 'half_win' | 'half_loss' | 'dead_heat'
 
-export type MyBetStatus = 'pending' | 'placed' | 'live' | 'settled' | 'cashed_out' | 'corrected'
+export type MyBetStatus = 'pending' | 'placed' | 'live' | 'settled' | 'cashed_out'
 
-export type BetType = 'single' | 'accumulator' | 'system'
+export type BetType = 'multi_single' | 'accumulator'
 
 interface MarketBase {
   status?: MarketStatus
@@ -161,7 +161,7 @@ export interface BetSlipItem {
 }
 
 /**
- * 单腿注单。单式注单 legs 长度恒为 1；串单 / 复式按实际腿数。
+ * 单腿注单。多笔单注会拆成多张 legs 长度为 1 的注单；串关按实际腿数。
  *
  * oddsAtPlacement 在下单瞬间快照，结算期间不再变更；
  * oddsAfterRecalc 仅在 push/void 触发重算时写入（= 1.0）。
@@ -208,10 +208,7 @@ export interface MyBetItem {
   /** 用户可见的注单编码，形如 TF-ABCD1234 */
   betCode?: string
   betType?: BetType
-  systemType?: import('./contracts').SystemType
-  systemLineCount?: number
-  unitStake?: number
-  /** 单式 = 1；串单 / 复式 ≥ 2 */
+  /** 多笔单注 = 1；串关 ≥ 2 */
   legs?: MyBetLeg[]
   stake?: number
   currency?: 'USDT'
@@ -223,11 +220,6 @@ export interface MyBetItem {
     expiresAt?: string
     isSimulated?: boolean
     needsRequote?: boolean
-  }
-  correction?: {
-    originalResult: SettlementResult
-    newResult: SettlementResult
-    diffPayout: number
   }
 }
 

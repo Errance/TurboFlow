@@ -94,7 +94,6 @@ export default function MatchInfoPanel({ match }: Props) {
             {match.status === 'abandoned' && <Badge variant="warning">腰斩</Badge>}
             {match.status === 'postponed' && <Badge variant="warning">延期</Badge>}
             {match.status === 'cancelled' && <Badge variant="neutral">取消</Badge>}
-            {match.status === 'corrected' && <Badge variant="neutral">已更正</Badge>}
           </div>
           {match.status === 'abandoned' && (
             <span className="text-[10px] text-[var(--text-secondary)]">比赛异常结束，所有盘口按规则结算</span>

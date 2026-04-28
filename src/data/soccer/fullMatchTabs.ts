@@ -509,7 +509,7 @@ const minutesMarkets: Market[] = [
 
 const TABS: MatchTab[] = [
   { id: 'home', label: '热门', markets: homeMarkets },
-  { id: 'bet-builder', label: '同场赛复式投注', markets: betBuilderMarkets },
+  { id: 'same-game-extra', label: '同场扩展盘口', markets: betBuilderMarkets },
   { id: 'goals', label: '进球', markets: goalsMarkets },
   { id: 'asian', label: '亚洲盘', markets: asianMarkets },
   { id: 'halves', label: '上半场/下半场', markets: halvesMarkets },

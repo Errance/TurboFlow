@@ -21,9 +21,6 @@ export type OddsFormat = 'decimal' | 'fractional' | 'american'
  */
 export type OddsAcceptPolicy = 'any' | 'higher_only' | 'none'
 
-// lucky15 / heinz 为生产扩展预留，当前投注单 UI 仅开放 trixie / patent / yankee。
-export type SystemType = 'trixie' | 'yankee' | 'patent' | 'lucky15' | 'heinz'
-
 export interface WalletAccount {
   balance: number
   currency: 'USDT'
@@ -44,7 +41,6 @@ export interface BetSubmission {
   /** 幂等键，使用 crypto.randomUUID() */
   idempotencyKey: string
   betType: BetType
-  systemType?: SystemType
   legs: BetLegInput[]
   stake: number
   acceptPolicy: OddsAcceptPolicy
@@ -52,7 +48,7 @@ export interface BetSubmission {
 
 /**
  * 拒单原因。顺序对应 Phase 3 placeBet 校验链。
- * - odds_changed：赔率已变化且不满足 acceptPolicy
+ * - odds_changed：赔率已变化且尚未在二次确认弹窗内接受
  * - odds_expired：报价有效期已过，需要用户重新确认当前赔率
  * - market_closed：盘口已 suspended / settled / void / hidden
  * - match_not_available：比赛已不可下注
@@ -93,13 +89,13 @@ export interface BetSubmissionResult {
  * - minStake 保留 1 而非 0.1，便于演示 stake_below_min 拒单
  * - maxLegs 15 是业界普遍上限
  * - oddsLockSeconds 30s 是从选中到提交的锁定窗口，到期后标 stale
- * - tickIntervalMs 15s + tickJitter 0.02 为 live 场次的赔率抖动参数
+ * - tickIntervalMs 15s + tickJitter 0.02 仅用于赛前 demo 报价刷新；比赛开始后不再刷新赔率
  */
 export const BETTING_LIMITS = {
   minStake: 1,
   maxStake: 10000,
   stakeStep: 0.1,
-  minLegs: { single: 1, accumulator: 2, system: 3 } as Record<BetType, number>,
+  minLegs: { multi_single: 1, accumulator: 2 } as Record<BetType, number>,
   maxLegs: 15,
   maxReturn: 500000,
   oddsLockSeconds: 30,

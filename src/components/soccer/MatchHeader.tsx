@@ -18,8 +18,7 @@ export default function MatchHeader({ match }: Props) {
     (match.status === 'live' ||
       match.status === 'interrupted' ||
       match.status === 'finished' ||
-      match.status === 'abandoned' ||
-      match.status === 'corrected')
+      match.status === 'abandoned')
       ? match.score
       : undefined
 
@@ -32,7 +31,6 @@ export default function MatchHeader({ match }: Props) {
       case 'abandoned': return <Badge variant="warning">腰斩</Badge>
       case 'postponed': return <Badge variant="warning">延期</Badge>
       case 'cancelled': return <Badge variant="neutral">取消</Badge>
-      case 'corrected': return <Badge variant="neutral">已更正</Badge>
       default: return null
     }
   })()

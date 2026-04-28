@@ -29,7 +29,7 @@ const boardSections = [
   ['match-states', '比赛状态'],
   ['lean-markets', '本期盘口'],
   ['market-states', '盘口状态'],
-  ['goal-toggle', '进球类开关'],
+  ['goal-toggle', '开赛封盘'],
   ['betslip-states', '投注单状态'],
   ['float-states', '浮动投注单'],
   ['mybets-states', '我的注单'],
@@ -45,7 +45,7 @@ const liveSourceMatch = matches.find((match) => match.status === 'live') ?? sour
 const finishedSourceMatch = matches.find((match) => match.status === 'finished') ?? sourceMatch
 
 function matchWith(status: SoccerMatch['status'], overrides: Partial<SoccerMatch> = {}): SoccerMatch {
-  const shouldShowScore = status === 'live' || status === 'finished' || status === 'interrupted' || status === 'abandoned' || status === 'corrected'
+  const shouldShowScore = status === 'live' || status === 'finished' || status === 'interrupted' || status === 'abandoned'
   return {
     ...clone(sourceMatch),
     id: `board-${status}`,
@@ -84,17 +84,6 @@ const demoComboMarket: Market = {
     { label: '平局且高于 2.5', odds: 13.00 },
     { label: '客胜且低于 2.5', odds: 6.20 },
     { label: '客胜且高于 2.5', odds: 5.20 },
-  ],
-}
-
-const demoCornerMarket: Market = {
-  type: 'oddsTable',
-  title: '角球总数',
-  columns: ['高于', '低于'],
-  rows: [
-    { line: '8.5', odds: [1.86, 1.94] },
-    { line: '9.5', odds: [2.10, 1.74] },
-    { line: '10.5', odds: [2.42, 1.56] },
   ],
 }
 
@@ -154,7 +143,6 @@ const headerMatches: Array<{ label: string; note: string; match: SoccerMatch }> 
   { label: '腰斩', note: '展示异常结束状态和结算说明。', match: matchWith('abandoned', { score: { home: 0, away: 2 }, currentMinute: 39 }) },
   { label: '延期', note: '展示延期状态，不展示比分。', match: matchWith('postponed', { date: '待定', time: '待定' }) },
   { label: '取消', note: '展示取消状态，相关盘口作废。', match: matchWith('cancelled', { date: '待定', time: '待定' }) },
-  { label: '结果更正', note: '展示更正状态和更正后的比分。', match: matchWith('corrected', { score: { home: 2, away: 2 } }) },
 ]
 
 const leanMarketScenarios = LEAN_MARKET_ORDER.map((title) => ({
@@ -177,7 +165,6 @@ const marketStateScenarios: Array<{ label: string; note: string; market?: Market
   { label: '已结算赢', note: '展示命中结果。', market: settlementMarket('win') },
   { label: '已结算输', note: '展示未命中。', market: settlementMarket('loss') },
   { label: '退款', note: '走盘或盘口作废按退款展示。', market: settlementMarket('push') },
-  { label: '结果修正', note: '展示修正后的结果。', market: marketWith('正确进球', { status: 'corrected', winningSelection: '2:1' }) },
   { label: '同场互斥', note: '盘口保留展示，并解释与已选盘口冲突。', market: marketByTitle('正确进球'), conflict: true },
   { label: '隐藏', note: '后台隐藏的盘口不出现在用户列表中。' },
 ]
@@ -238,16 +225,6 @@ const sampleBets: MyBetItem[] = [
   makeBet('bet-halfloss', 'settled', { betCode: 'TF-HALFLS', result: 'loss', settlementResult: 'half_loss', payout: 25 }),
   makeBet('bet-deadheat', 'settled', { betCode: 'TF-DEADHT', result: 'win', settlementResult: 'dead_heat', payout: 63 }),
   makeBet('bet-cashout', 'cashed_out', { betCode: 'TF-CASH01', payout: 286.5, odds: 5.62, marketTitle: '串关', selection: '3 项' }),
-  makeBet('bet-corrected', 'corrected', {
-    betCode: 'TF-CORR01',
-    result: 'loss',
-    settlementResult: 'loss',
-    payout: 0,
-    matchLabel: '巴黎圣日耳曼 vs 拜仁慕尼黑',
-    marketTitle: '两队都得分',
-    selection: '是',
-    correction: { originalResult: 'win', newResult: 'loss', diffPayout: -99.6 },
-  }),
 ]
 
 const parlayBet: MyBetItem = makeBet('bet-parlay', 'placed', {
@@ -261,24 +238,6 @@ const parlayBet: MyBetItem = makeBet('bet-parlay', 'placed', {
     { id: 'l1', matchId: 'm1', matchLabel: 'RJ博塔弗戈 vs 米拉索尔', marketTitle: '胜平负', selection: 'RJ博塔弗戈', oddsAtPlacement: 1.83 },
     { id: 'l2', matchId: 'm2', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '合计', selection: '高于 2.5', oddsAtPlacement: 2.05 },
     { id: 'l3', matchId: 'm3', matchLabel: '阿森纳 vs 切尔西', marketTitle: '亚洲让分盘', selection: '-0.5', oddsAtPlacement: 1.50 },
-  ],
-})
-
-const systemBet: MyBetItem = makeBet('bet-system', 'placed', {
-  betCode: 'TF-SYSTEM',
-  betType: 'system',
-  systemType: 'yankee',
-  systemLineCount: 11,
-  unitStake: 10,
-  stake: 110,
-  amount: 110,
-  odds: 8.2,
-  potentialReturn: 902,
-  legs: [
-    { id: 's1', matchId: 'm1', matchLabel: 'RJ博塔弗戈 vs 米拉索尔', marketTitle: '胜平负', selection: 'RJ博塔弗戈', oddsAtPlacement: 1.83 },
-    { id: 's2', matchId: 'm2', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '合计', selection: '高于 2.5', oddsAtPlacement: 2.05 },
-    { id: 's3', matchId: 'm3', matchLabel: '阿森纳 vs 切尔西', marketTitle: '亚洲让分盘', selection: '-0.5', oddsAtPlacement: 1.50 },
-    { id: 's4', matchId: 'm4', matchLabel: '巴黎圣日耳曼 vs 拜仁慕尼黑', marketTitle: '胜平负', selection: '平局', oddsAtPlacement: 3.2 },
   ],
 })
 
@@ -304,11 +263,11 @@ export default function SoccerDesignBoardPage() {
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-6">
           <Metric label="页面模块" value="5" />
-          <Metric label="比赛状态" value="8" />
+          <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="10" />
-          <Metric label="盘口状态" value="12" />
-          <Metric label="投注单状态" value="17" />
-          <Metric label="注单状态" value="12" />
+          <Metric label="盘口状态" value="11" />
+          <Metric label="投注单状态" value="16" />
+          <Metric label="注单状态" value="10" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">本期盘口范围</p>
@@ -355,7 +314,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="match-states" title="2. 比赛状态和右栏信息" description="展示 8 种比赛状态，以及倒计时、事件、阵容、交锋、统计和特殊情况说明。">
+      <BoardSection id="match-states" title="2. 比赛状态和右栏信息" description="展示赛前、进行中、已结束和异常比赛状态，以及倒计时、事件、阵容、交锋、统计和特殊情况说明。">
         <div className="grid gap-4 lg:grid-cols-2">
           {headerMatches.map((item) => (
             <StateCard key={item.label} title={item.label} description={item.note}>
@@ -393,7 +352,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="market-states" title="4. 盘口状态和同场互斥" description="暂停、作废、结算、修正和冲突都需要给出清晰反馈。">
+      <BoardSection id="market-states" title="4. 盘口状态和同场互斥" description="暂停、作废、结算、封盘和冲突都需要给出清晰反馈。">
         <div className="grid gap-4 xl:grid-cols-2">
           {marketStateScenarios.map((item) => (
             <StateCard key={item.label} title={item.label} description={item.note}>
@@ -423,35 +382,35 @@ export default function SoccerDesignBoardPage() {
         </StateCard>
       </BoardSection>
 
-      <BoardSection id="goal-toggle" title="5. 进球类开关" description="开赛后是否继续开放进球类盘口由后台开关控制。角球和红黄牌不是进球类盘口。">
+      <BoardSection id="goal-toggle" title="5. 开赛封盘" description="比赛开始后所有盘口封盘，赔率停止变化，不能新增投注或提交未确认投注单。">
         <div className="grid gap-4 lg:grid-cols-4">
-          <StateCard title="开关打开" description="比赛进行中，进球类盘口仍可投注。">
+          <StateCard title="赛前可投注" description="比赛未开始，开放盘口可以选择。">
             <MarketRenderer market={marketByTitle('合计')} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} />
           </StateCard>
-          <StateCard title="开关关闭" description="比赛进行中，进球类盘口保留展示但暂停。">
-            <MarketRenderer market={marketWith('合计', { status: 'suspended' })} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} />
+          <StateCard title="开赛后封盘" description="比赛进行中，盘口保留展示但不可选择。">
+            <MarketRenderer market={marketByTitle('合计')} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} bettingClosed />
           </StateCard>
-          <StateCard title="非进球盘口" description="角球总数和红黄牌总数按自身状态处理。">
-            <MarketRenderer market={marketByTitle('角球总数', demoCornerMarket)} displayTitle="角球总数" matchId={liveSourceMatch.id} onSelect={noop} />
+          <StateCard title="赔率锁定" description="开赛后赔率停止变化，只保留开赛前最后一次报价。">
+            <BetSlipPreview title="盘口已封盘" lines={['弗拉门戈 vs 科林蒂安', '合计 · 高于 2.5 @2.05', '比赛已开始，赔率已锁定']} footer="不可提交" tone="warning" />
           </StateCard>
-          <StateCard title="投注单已有进球项" description="开关关闭后，该投注项不可提交，需要移除。">
-            <BetSlipPreview title="含不可用项" lines={['弗拉门戈 vs 科林蒂安', '合计 · 高于 2.5 @2.05', '进球类盘口已暂停']} footer="移除不可用项后再提交" tone="warning" />
+          <StateCard title="投注单已有该场比赛" description="开赛后，投注单中的相关项不可提交，需要移除。">
+            <BetSlipPreview title="含不可用项" lines={['弗拉门戈 vs 科林蒂安', '合计 · 高于 2.5 @2.05', '比赛已开始，盘口已封盘']} footer="移除不可用项后再提交" tone="warning" />
           </StateCard>
         </div>
       </BoardSection>
 
-      <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、单关、串关、复式、报价、提交反馈、设置和确认弹窗。">
+      <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、确认超时、提交反馈和设置。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview title="空单" lines={['投注单', '点击赔率按钮添加选项']} footer="不可提交" />
-          <BetSlipPreview title="单关" lines={['RJ博塔弗戈 vs 米拉索尔', '胜平负 · RJ博塔弗戈 @1.83', '投注 50 USDT · 可能返还 91.50']} footer="确认投注" />
+          <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '单笔 50 USDT', '分别计算赔率和返还']} footer="二次确认" />
           <BetSlipPreview title="串关" lines={['3 项 · 跨 3 场', '总赔率 7.42', '全部选项命中方可获胜']} footer="确认串关" />
-          <BetSlipPreview title="四项复式" lines={['4 个投注项 · 11 注', '单注 10 USDT', '总投注额 110 USDT']} footer="确认复式" />
           <BetSlipPreview title="多场分组" lines={['当前比赛 1 项', '其他比赛 2 项', '按比赛分组复核']} footer="跨场串关" />
           <BetSlipPreview title="折叠投注单" lines={['投注单已收起', '3 项 · 总赔率 7.42']} footer="点击展开" />
           <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '当前赔率 @1.83']} footer="可提交" tone="success" />
           <BetSlipPreview title="报价过期" lines={['报价已过期', '需要接受当前赔率']} footer="接受当前赔率" tone="warning" />
-          <BetSlipPreview title="赔率上涨" lines={['1.83 → 1.91', '按设置可自动接受']} footer="继续提交" tone="success" />
-          <BetSlipPreview title="赔率下跌" lines={['1.83 → 1.76', '需要手动接受']} footer="接受后提交" tone="warning" />
+          <BetSlipPreview title="二次确认" lines={['投注方式、明细、金额、赔率', '60 秒内确认']} footer="确认投注" />
+          <BetSlipPreview title="确认超时" lines={['二次确认超过 1 分钟', '确认按钮禁用']} footer="只能取消" tone="warning" />
+          <BetSlipPreview title="确认中赔率变化" lines={['1.83 → 1.76', '弹窗内接受当前赔率']} footer="接受后提交" tone="warning" />
           <BetSlipPreview title="未达最低投注金额" lines={['投注金额 0.5 USDT', '最低投注金额为 1 USDT']} footer="调整金额" tone="danger" />
           <BetSlipPreview title="余额不足" lines={['总投注额 12,000 USDT', '可用余额 10,000 USDT']} footer="降低金额" tone="danger" />
           <BetSlipPreview title="提交中" lines={['正在确认投注...', '按钮禁用，避免重复提交']} footer="请等待" />
@@ -471,7 +430,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="mybets-states" title="8. 我的注单" description="展示注单页、右栏摘要、单关卡、串关卡、复式卡和全部结算结果。">
+      <BoardSection id="mybets-states" title="8. 我的注单" description="展示注单页、右栏摘要、多笔单注卡、串关卡和结算结果。">
         <div className="grid gap-4 xl:grid-cols-2">
           <StateCard title="右栏我的注单摘要" description="最近注单、已实现盈亏、未结算本金和前往我的注单。">
             <MyBetsPanel bets={sampleBets.slice(0, 5)} />
@@ -485,20 +444,19 @@ export default function SoccerDesignBoardPage() {
             <MyBetCard key={bet.id} bet={bet} onCashOut={noop} onReplay={noop} onCopyCode={noop} />
           ))}
           <MyBetCard bet={parlayBet} onCashOut={noop} onReplay={noop} onCopyCode={noop} />
-          <MyBetCard bet={systemBet} onCashOut={noop} onReplay={noop} onCopyCode={noop} />
         </div>
       </BoardSection>
 
-      <BoardSection id="rule-states" title="9. 报价、提交反馈和复式规则" description="这些状态需要在用户提交前后给出清晰、可操作的提示。">
+      <BoardSection id="rule-states" title="9. 报价和提交反馈" description="这些状态需要在用户提交前后给出清晰、可操作的提示。">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {rejectReasons.map(([title, text]) => (
             <SmallState key={title} title={title} text={text} />
           ))}
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <SmallState title="三项复式" text="3 个投注项，生成 4 注，按单注金额分别计算。" />
-          <SmallState title="三项全包复式" text="3 个投注项，生成 7 注，包含单关、两项组合和三项组合。" />
-          <SmallState title="四项复式" text="4 个投注项，生成 11 注，包含两项、三项和四项组合。" />
+          <SmallState title="多笔单注" text="一次提交多个投注项，但每笔独立生成注单、独立结算。" />
+          <SmallState title="串关" text="多个投注项组成一张注单，全部命中方可获胜。" />
+          <SmallState title="开赛封盘" text="比赛开始后所有盘口不可再选，投注单内相关项不可提交。" />
         </div>
       </BoardSection>
     </div>
@@ -570,7 +528,7 @@ function MyBetsPagePreview() {
         <button className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">导出记录</button>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {['全部', '待结算', '已结算', '提前结清', '修正'].map((item, index) => (
+        {['全部', '待结算', '已结算', '提前结清'].map((item, index) => (
           <span key={item} className={`rounded-full px-3 py-1.5 text-xs ${index === 0 ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>{item}</span>
         ))}
       </div>

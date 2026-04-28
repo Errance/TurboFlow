@@ -1,16 +1,14 @@
 import { create } from 'zustand'
 import type { BetSlipItem, BetType, MyBetLeg } from '../data/soccer/types'
-import type { BetRejectReason, BetSubmissionResult, SystemType } from '../data/soccer/contracts'
+import type { BetRejectReason, BetSubmissionResult } from '../data/soccer/contracts'
 import { canCombine, getMarketFamily, type MarketFamily } from '../data/soccer/marketFamily'
 import { useToastStore } from './toastStore'
 import { useWalletStore } from './walletStore'
-import { useSettingsStore } from './settingsStore'
 import { useMyBetsStore } from './myBetsStore'
 import { attachPersist, loadState } from './persist'
 import { BETTING_LIMITS } from '../data/soccer/contracts'
 import { rejectMessage } from '../utils/betRejectMessages'
 import { generateBetCode } from '../utils/betCode'
-import { buildSystemBetProjection, getSystemMeta } from '../utils/systemBets'
 
 /**
  * 足球投注单全局 store。
@@ -20,8 +18,8 @@ import { buildSystemBetProjection, getSystemMeta } from '../utils/systemBets'
  * - 维护选项的增删（含相关性校验）
  * - 暴露按场分组的派生视图
  * - 在比赛状态变化（void / suspended / ended）时被动清理
- * - 跟踪赔率快照（oddsAtAdd）与当前赔率（oddsCurrent），供 acceptPolicy 判定
- * - 维护 betType / systemType（单式 / 串关 / 复式）
+ * - 跟踪赔率快照（oddsAtAdd）与当前赔率（oddsCurrent），供二次确认判定
+ * - 维护 betType（多笔单注 / 串关）
  *
  * 与 parlayStore（Events 串单）严格分离：
  * - parlayStore 服务 YES/NO 合约市场（0~1 价格）
@@ -37,7 +35,7 @@ export interface ExtendedBetSlipItem extends BetSlipItem {
   oddsAtAdd: number
   /** 最新赔率（ticker 刷新） */
   oddsCurrent: number
-  /** 锁定窗口到期时间戳（ms）；过期后 stale，下单按 acceptPolicy 处理 */
+  /** 锁定窗口到期时间戳（ms）；过期后 stale，需要在二次确认中重新接受 */
   oddsLockedUntil?: number
   /** 从持久化恢复或重投回填的报价需要用户重新确认 */
   quoteState?: 'fresh' | 'needs_refresh'
@@ -59,19 +57,13 @@ export type ToggleResult =
 interface SoccerBetSlipState {
   items: ExtendedBetSlipItem[]
   slipOpen: boolean
-  /** 投注类型（单式/串关/复式） */
+  /** 投注类型（多笔单注 / 串关） */
   betType: BetType
-  /** 复式子类型（仅 betType === 'system' 时有效） */
-  systemType: SystemType
   /** 下单提交中标志 */
   submitting: boolean
 
   toggleItem: (input: ToggleInput) => ToggleResult
-  replaceWithItems: (
-    inputs: ToggleInput[],
-    betType?: BetType,
-    systemType?: SystemType,
-  ) => ToggleResult
+  replaceWithItems: (inputs: ToggleInput[], betType?: BetType) => ToggleResult
   removeById: (id: string) => void
   removeByMatchTitle: (matchId: string, marketTitle: string) => void
   clearMatch: (matchId: string) => void
@@ -86,7 +78,6 @@ interface SoccerBetSlipState {
   acceptAllOddsChanges: () => void
 
   setBetType: (type: BetType) => void
-  setSystemType: (type: SystemType) => void
   setSubmitting: (value: boolean) => void
 
   /**
@@ -114,7 +105,7 @@ interface SoccerBetSlipState {
   getSelectedKeys: (matchId: string) => Set<string>
 
   // --- derived 快照 getters（UI 可调用但不订阅） ---
-  /** 串单 / 复式腿数是否满足 BETTING_LIMITS 要求 */
+  /** 多笔单注 / 串关腿数是否满足 BETTING_LIMITS 要求 */
   isParlayValid: () => boolean
   /** 累计赔率（所有 items 的 oddsCurrent 乘积） */
   totalOdds: () => number
@@ -129,7 +120,6 @@ const STORAGE_KEY = 'tf_soccer_betslip'
 interface PersistedSlip {
   items: ExtendedBetSlipItem[]
   betType: BetType
-  systemType: SystemType
 }
 
 function makeId(matchId: string, marketTitle: string, selection: string): string {
@@ -155,10 +145,7 @@ const restoredItems = restoreItems(persisted?.items)
 export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
   items: restoredItems,
   slipOpen: false,
-  betType: restoredItems.length > 1 && persisted?.betType === 'single'
-    ? 'accumulator'
-    : (persisted?.betType ?? 'single'),
-  systemType: persisted?.systemType ?? 'trixie',
+  betType: persisted?.betType === 'accumulator' ? 'accumulator' : 'multi_single',
   submitting: false,
 
   toggleItem: (input) => {
@@ -173,7 +160,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       const next = prev.filter((it) => it.id !== id)
       set({
         items: next,
-        betType: get().betType === 'accumulator' && next.length <= 1 ? 'single' : get().betType,
+        betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
       })
       return { ok: true, action: 'removed' }
     }
@@ -226,15 +213,12 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     }
 
     const prevBetType = get().betType
-    const nextBetType = prev.length >= 1 && prevBetType === 'single' ? 'accumulator' : prevBetType
+    const nextBetType = prevBetType === 'accumulator' ? 'accumulator' : 'multi_single'
     set({ items: [...prev, newItem], betType: nextBetType })
-    if (nextBetType !== prevBetType) {
-      addToast({ type: 'info', message: '已切换为串关，需全部选项命中方可获胜' })
-    }
     return { ok: true, action: 'added' }
   },
 
-  replaceWithItems: (inputs, nextBetType = inputs.length > 1 ? 'accumulator' : 'single', nextSystemType) => {
+  replaceWithItems: (inputs, nextBetType = inputs.length > 1 ? 'accumulator' : 'multi_single') => {
     if (inputs.length === 0) return { ok: false, reason: '没有可加入投注单的选项' }
 
     const addToast = useToastStore.getState().addToast
@@ -285,7 +269,6 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     set({
       items: next,
       betType: nextBetType,
-      systemType: nextSystemType ?? get().systemType,
       slipOpen: true,
     })
     return { ok: true, action: 'added' }
@@ -294,7 +277,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     const next = get().items.filter((it) => it.id !== id)
     set({
       items: next,
-      betType: get().betType === 'accumulator' && next.length <= 1 ? 'single' : get().betType,
+      betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
     })
   },
 
@@ -304,7 +287,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     )
     set({
       items: next,
-      betType: get().betType === 'accumulator' && next.length <= 1 ? 'single' : get().betType,
+      betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
     })
   },
 
@@ -312,11 +295,11 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     const next = get().items.filter((it) => it.matchId !== matchId)
     set({
       items: next,
-      betType: get().betType === 'accumulator' && next.length <= 1 ? 'single' : get().betType,
+      betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
     })
   },
 
-  clearAll: () => set({ items: [], slipOpen: false, betType: 'single' }),
+  clearAll: () => set({ items: [], slipOpen: false, betType: 'multi_single' }),
 
   purgeVoid: (matchId, voidMarketTitles) => {
     if (voidMarketTitles.size === 0) return
@@ -327,7 +310,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     if (next.length !== prev.length) {
       set({
         items: next,
-        betType: get().betType === 'accumulator' && next.length <= 1 ? 'single' : get().betType,
+        betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
       })
     }
   },
@@ -369,7 +352,6 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
   },
 
   setBetType: (type) => set({ betType: type }),
-  setSystemType: (type) => set({ systemType: type }),
   setSubmitting: (value) => set({ submitting: value }),
 
   openSlip: () => set({ slipOpen: true }),
@@ -403,6 +385,10 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
 
   potentialReturn: (stake) => {
     if (!Number.isFinite(stake) || stake <= 0) return 0
+    const { betType, items } = get()
+    if (betType === 'multi_single') {
+      return +items.reduce((sum, item) => sum + stake * item.oddsCurrent, 0).toFixed(2)
+    }
     return +(stake * get().totalOdds()).toFixed(2)
   },
 
@@ -430,11 +416,9 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
         ? crypto.randomUUID()
         : `bet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-    const settings = useSettingsStore.getState()
     const wallet = useWalletStore.getState()
     const items = state.items
     const betType = state.betType
-    const systemType = state.systemType
 
     // 2. 金额校验
     if (!Number.isFinite(stake) || stake < BETTING_LIMITS.minStake) return reject('stake_below_min')
@@ -443,22 +427,10 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     // 3. 腿数校验
     const minLegs = BETTING_LIMITS.minLegs[betType]
     if (items.length < minLegs) return reject('legs_too_few')
-    if (betType === 'single' && items.length > 1) return reject('legs_too_many')
     if (items.length > BETTING_LIMITS.maxLegs) return reject('legs_too_many')
-    if (betType === 'system') {
-      const meta = getSystemMeta(systemType)
-      if (items.length < meta.requiredLegs) return reject('legs_too_few')
-      if (items.length > meta.requiredLegs) return reject('legs_too_many')
-    }
 
-    const systemProjection =
-      betType === 'system'
-        ? buildSystemBetProjection(systemType, items)
-        : null
-    const currentTotalOdds = systemProjection
-      ? systemProjection.totalOdds
-      : items.reduce((acc, it) => acc * it.oddsCurrent, 1)
-    const totalStake = systemProjection ? +(stake * systemProjection.lineCount).toFixed(2) : stake
+    const currentTotalOdds = items.reduce((acc, it) => acc * it.oddsCurrent, 1)
+    const totalStake = betType === 'multi_single' ? +(stake * items.length).toFixed(2) : stake
 
     // 4. 余额校验
     if (!wallet.canAfford(totalStake)) return reject('balance_insufficient')
@@ -486,7 +458,9 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       }
     }
 
-    const potentialReturn = +(stake * currentTotalOdds).toFixed(2)
+    const potentialReturn = betType === 'multi_single'
+      ? +items.reduce((sum, it) => sum + stake * it.oddsCurrent, 0).toFixed(2)
+      : +(stake * currentTotalOdds).toFixed(2)
     if (potentialReturn > BETTING_LIMITS.maxReturn) return reject('payout_above_cap')
 
     // 7. 盘口/比赛状态
@@ -505,7 +479,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       }
     }
 
-    // 8. 报价有效期与赔率变动（按 acceptPolicy）
+    // 8. 报价有效期与赔率变动（需要先在二次确认弹窗内接受）
     const now = Date.now()
     const expired = items.filter(
       (it) => it.quoteState === 'needs_refresh' || !it.oddsLockedUntil || it.oddsLockedUntil <= now,
@@ -513,15 +487,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     if (expired.length > 0) return reject('odds_expired')
 
     const changed = items.filter((it) => it.oddsCurrent !== it.oddsAtAdd)
-    if (changed.length > 0) {
-      if (settings.acceptPolicy === 'none') return reject('odds_changed')
-      if (
-        settings.acceptPolicy === 'higher_only' &&
-        changed.some((c) => c.oddsCurrent < c.oddsAtAdd)
-      ) {
-        return reject('odds_changed')
-      }
-    }
+    if (changed.length > 0) return reject('odds_changed')
 
     // 9. loading
     set({ submitting: true })
@@ -541,59 +507,91 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       return reject('balance_insufficient')
     }
 
-    const betCode = generateBetCode()
     const placedAt = new Date().toISOString()
-    const legs: MyBetLeg[] = items.map((it) => ({
-      id: `${idempotencyKey}-${it.id}`,
-      matchId: it.matchId,
-      matchLabel: it.matchLabel,
-      marketTitle: it.marketTitle,
-      selection: it.selection,
-      oddsAtPlacement: it.oddsCurrent,
-      status: 'placed',
-    }))
+    const myBets = useMyBetsStore.getState()
+    const betCodes: string[] = []
 
-    // 展示用「主盘口」挑第一腿
-    const head = items[0]
-    const isSingle = betType === 'single' && items.length === 1
-    const systemLabel = systemProjection ? `${systemProjection.label} · ${systemProjection.lineCount} 注` : null
+    if (betType === 'multi_single') {
+      items.forEach((it, index) => {
+        const betCode = generateBetCode()
+        betCodes.push(betCode)
+        const singleReturn = +(stake * it.oddsCurrent).toFixed(2)
+        const leg: MyBetLeg = {
+          id: `${idempotencyKey}-${index}-${it.id}`,
+          matchId: it.matchId,
+          matchLabel: it.matchLabel,
+          marketTitle: it.marketTitle,
+          selection: it.selection,
+          oddsAtPlacement: it.oddsCurrent,
+          status: 'placed',
+        }
+        myBets.add({
+          id: `${idempotencyKey}-${index}`,
+          matchLabel: it.matchLabel,
+          marketTitle: it.marketTitle,
+          selection: it.selection,
+          odds: +it.oddsCurrent.toFixed(2),
+          amount: stake,
+          result: 'win',
+          payout: 0,
+          status: 'placed',
+          placedAt,
+          betCode,
+          betType,
+          legs: [leg],
+          stake,
+          currency: 'USDT',
+          potentialReturn: singleReturn,
+          potentialProfit: +(singleReturn - stake).toFixed(2),
+        })
+      })
+    } else {
+      const betCode = generateBetCode()
+      betCodes.push(betCode)
+      const legs: MyBetLeg[] = items.map((it) => ({
+        id: `${idempotencyKey}-${it.id}`,
+        matchId: it.matchId,
+        matchLabel: it.matchLabel,
+        marketTitle: it.marketTitle,
+        selection: it.selection,
+        oddsAtPlacement: it.oddsCurrent,
+        status: 'placed',
+      }))
 
-    useMyBetsStore.getState().add({
-      id: idempotencyKey,
-      matchLabel: isSingle ? head.matchLabel : `${items.length} 腿${betType === 'system' ? '复式' : '串关'}`,
-      marketTitle: isSingle ? head.marketTitle : betType === 'system' ? '复式注单' : '串关注单',
-      selection: isSingle ? head.selection : systemLabel ?? legs.map((l) => `${l.matchLabel} ${l.selection}`).join(' / '),
-      odds: +currentTotalOdds.toFixed(2),
-      amount: totalStake,
-      result: 'win', // 占位：Phase 5 结算环节会更新
-      payout: 0,
-
-      status: 'placed',
-      placedAt,
-      betCode,
-      betType,
-      systemType: betType === 'system' ? systemType : undefined,
-      systemLineCount: systemProjection?.lineCount,
-      legs,
-      stake: totalStake,
-      unitStake: betType === 'system' ? stake : undefined,
-      currency: 'USDT',
-      potentialReturn,
-      potentialProfit: +(potentialReturn - totalStake).toFixed(2),
-    })
+      myBets.add({
+        id: idempotencyKey,
+        matchLabel: `${items.length} 腿串关`,
+        marketTitle: '串关注单',
+        selection: legs.map((l) => `${l.matchLabel} ${l.selection}`).join(' / '),
+        odds: +currentTotalOdds.toFixed(2),
+        amount: totalStake,
+        result: 'win',
+        payout: 0,
+        status: 'placed',
+        placedAt,
+        betCode,
+        betType,
+        legs,
+        stake: totalStake,
+        currency: 'USDT',
+        potentialReturn,
+        potentialProfit: +(potentialReturn - totalStake).toFixed(2),
+      })
+    }
 
     set({ items: [], submitting: false, slipOpen: false })
     addToast({
       type: 'success',
-      message: `下单成功，注单号 ${betCode}`,
+      message: betType === 'multi_single'
+        ? `下单成功，已生成 ${betCodes.length} 笔单注`
+        : `下单成功，注单号 ${betCodes[0]}`,
       cta: { label: '查看注单', route: '/soccer/mybets' },
     })
-    return { ok: true, betCode }
+    return { ok: true, betCode: betCodes[0] }
   },
 }))
 
 attachPersist(useSoccerBetSlipStore, STORAGE_KEY, (s) => ({
   items: s.items,
   betType: s.betType,
-  systemType: s.systemType,
 }))

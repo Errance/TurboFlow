@@ -16,6 +16,7 @@ interface Props {
   conflictReason?: string
   conflictWith?: string
   onReplaceConflict?: () => void
+  bettingClosed?: boolean
 }
 
 const lockIcon = (
@@ -34,6 +35,7 @@ export default function MarketRenderer({
   conflictReason,
   conflictWith,
   onReplaceConflict,
+  bettingClosed,
 }: Props) {
   const status = market.status ?? 'open'
 
@@ -62,9 +64,10 @@ export default function MarketRenderer({
       break
   }
 
-  const isLocked = status === 'suspended' || status === 'void' || status === 'settled' || status === 'upcoming' || status === 'cancelled'
+  const isLocked = bettingClosed || status === 'suspended' || status === 'void' || status === 'settled' || status === 'upcoming' || status === 'cancelled'
 
   const overlayLabel = (() => {
+    if (bettingClosed) return '比赛已开始，盘口已封盘'
     switch (status) {
       case 'suspended': return '暂停'
       case 'void': return '作废'
@@ -130,13 +133,6 @@ export default function MarketRenderer({
           </div>
         )}
 
-        {status === 'corrected' && market.winningSelection && (
-          <div className="mt-2 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <span className="text-xs text-amber-400 font-medium">
-              结果已修正：{market.winningSelection}
-            </span>
-          </div>
-        )}
       </div>
     </MarketCard>
   )

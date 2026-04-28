@@ -1,0 +1,21 @@
+---
+description: Auto commit and push completed work in this repository
+alwaysApply: true
+---
+
+# Auto Commit And Push
+
+The user has given a standing instruction for this repository:
+
+- After completing user-requested code or document changes, run the appropriate verification.
+- If verification passes, create a git commit and push it to GitHub without asking for a separate confirmation.
+- Treat this as the user's explicit ongoing request to commit and push completed work in this repo.
+
+Do not auto-commit or push when:
+
+- The user explicitly asks not to commit or push.
+- Verification fails and the issue is not fixed.
+- The change includes likely secrets, credentials, private keys, or environment files.
+- The requested scope is unclear enough that committing would risk preserving the wrong behavior.
+
+When committing, use a concise message that reflects the product or engineering outcome, then report the commit and push result to the user.

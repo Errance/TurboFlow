@@ -3,7 +3,7 @@
  *
  * 责任：
  * - 持有可用余额和未结算本金
- * - 提供下注扣款、结算入账、修正扣回和重置
+ * - 提供下注扣款、结算入账和重置
  * - 首次加载注入 10,000 USDT 并提示用户
  * - 使用 localStorage 持久化
  *
@@ -27,7 +27,6 @@ interface WalletState {
   locked: number
   /** 返回 true 表示扣款成功；余额不足则不修改并返回 false */
   deduct: (amount: number) => boolean
-  debit: (amount: number) => boolean
   credit: (amount: number) => void
   releaseLocked: (amount: number) => void
   canAfford: (amount: number) => boolean
@@ -50,13 +49,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       balance: +(get().balance - amount).toFixed(2),
       locked: +(get().locked + amount).toFixed(2),
     })
-    return true
-  },
-
-  debit: (amount) => {
-    if (!Number.isFinite(amount) || amount <= 0) return false
-    if (get().balance < amount) return false
-    set({ balance: +(get().balance - amount).toFixed(2) })
     return true
   },
 

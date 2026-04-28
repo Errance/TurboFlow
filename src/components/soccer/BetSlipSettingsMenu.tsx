@@ -3,7 +3,6 @@
  *
  * 承载：
  * - 赔率格式（decimal / fractional / american）
- * - 赔率变化接受策略（any / higher_only / none）
  *
  * 设置保存到 settingsStore，持久化 tf_settings。
  * 点击外部关闭。
@@ -11,7 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSettingsStore } from '../../stores/settingsStore'
-import type { OddsAcceptPolicy, OddsFormat } from '../../data/soccer/contracts'
+import type { OddsFormat } from '../../data/soccer/contracts'
 
 const FORMAT_OPTIONS: { id: OddsFormat; label: string; hint: string }[] = [
   { id: 'decimal', label: '欧洲盘', hint: '示例 2.24' },
@@ -19,20 +18,12 @@ const FORMAT_OPTIONS: { id: OddsFormat; label: string; hint: string }[] = [
   { id: 'american', label: '美式盘', hint: '示例 +124' },
 ]
 
-const POLICY_OPTIONS: { id: OddsAcceptPolicy; label: string; hint: string }[] = [
-  { id: 'any', label: '接受所有变化', hint: '赔率升降都自动接受' },
-  { id: 'higher_only', label: '仅接受对我有利的变化', hint: '赔率上涨自动接受；下跌需确认' },
-  { id: 'none', label: '不接受任何变化', hint: '任何变动都需手工确认' },
-]
-
 export default function BetSlipSettingsMenu() {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   const oddsFormat = useSettingsStore((s) => s.oddsFormat)
-  const acceptPolicy = useSettingsStore((s) => s.acceptPolicy)
   const setOddsFormat = useSettingsStore((s) => s.setOddsFormat)
-  const setAcceptPolicy = useSettingsStore((s) => s.setAcceptPolicy)
 
   useEffect(() => {
     if (!open) return
@@ -74,23 +65,6 @@ export default function BetSlipSettingsMenu() {
                   label={opt.label}
                   hint={opt.hint}
                   onClick={() => setOddsFormat(opt.id)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-[var(--border)] pt-3">
-            <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
-              赔率变化
-            </p>
-            <div className="space-y-1">
-              {POLICY_OPTIONS.map((opt) => (
-                <OptionRow
-                  key={opt.id}
-                  active={acceptPolicy === opt.id}
-                  label={opt.label}
-                  hint={opt.hint}
-                  onClick={() => setAcceptPolicy(opt.id)}
                 />
               ))}
             </div>
