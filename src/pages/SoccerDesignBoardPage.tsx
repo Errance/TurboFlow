@@ -60,33 +60,6 @@ function matchWith(status: SoccerMatch['status'], overrides: Partial<SoccerMatch
 
 const allMarkets = sourceMatch.tabs.flatMap((tab) => tab.markets)
 
-const demoPlayerMarket: Market = {
-  type: 'playerList',
-  title: '任何时间进球队员',
-  tiers: [''],
-  players: [
-    { name: 'Pedro', odds: [2.45] },
-    { name: 'Gabriel Barbosa', odds: [2.80] },
-    { name: 'Bruno Henrique', odds: [3.20] },
-    { name: 'Arrascaeta', odds: [4.10] },
-  ],
-}
-
-const demoComboMarket: Market = {
-  type: 'comboGrid',
-  title: '胜平负 & 合计',
-  rowHeaders: ['主胜', '平局', '客胜'],
-  colHeaders: ['低于 2.5', '高于 2.5'],
-  cells: [
-    { label: '主胜且低于 2.5', odds: 4.60 },
-    { label: '主胜且高于 2.5', odds: 3.55 },
-    { label: '平局且低于 2.5', odds: 3.95 },
-    { label: '平局且高于 2.5', odds: 13.00 },
-    { label: '客胜且低于 2.5', odds: 6.20 },
-    { label: '客胜且高于 2.5', odds: 5.20 },
-  ],
-}
-
 function marketByTitle(title: string, fallback?: Market): Market {
   const market = allMarkets.find((item) => item.title === title)
   if (!market && fallback) return clone(fallback)
@@ -150,11 +123,6 @@ const leanMarketScenarios = LEAN_MARKET_ORDER.map((title) => ({
   market: marketByTitle(title),
 }))
 
-const nonLeanMarketScenarios: Array<{ label: string; note: string; market: Market }> = [
-  { label: '球员列表', note: '后续盘口扩展参考，不进入当前主流程。', market: demoPlayerMarket },
-  { label: '组合网格', note: '后续盘口扩展参考，不进入当前主流程。', market: demoComboMarket },
-]
-
 const marketStateScenarios: Array<{ label: string; note: string; market?: Market; selectedKey?: string; conflict?: boolean }> = [
   { label: '开放', note: '用户可以选择并加入投注单。', market: marketByTitle('胜平负') },
   { label: '选中', note: '同一盘口当前选项高亮。', market: marketByTitle('胜平负'), selectedKey: selectedKeyFor(marketByTitle('胜平负')) },
@@ -186,7 +154,7 @@ const rejectReasons = [
   ['预计返还超过限制', '预计返还已超过平台限制，请降低投注金额或减少选项。'],
   ['还需添加投注项', '当前投注方式需要更多选项，请继续添加或切换投注方式。'],
   ['投注项数量超过上限', '当前投注方式不支持这么多选项，请移除部分选项。'],
-  ['当前选项不可组合', '同场强相关盘口不能放入同一张串关。'],
+  ['不可同场串关', '同场强相关盘口不能放入同一张串关，可改为多笔单注。'],
   ['提交未成功', '投注单内容已保留，请稍后重试。'],
   ['投注正在确认中', '请等待当前提交结果返回后再操作。'],
 ]
@@ -223,7 +191,6 @@ const sampleBets: MyBetItem[] = [
   makeBet('bet-void', 'settled', { betCode: 'TF-VOID01', result: 'push', settlementResult: 'void', payout: 50, marketTitle: '合计', selection: '高于 2.5' }),
   makeBet('bet-halfwin', 'settled', { betCode: 'TF-HALFWN', result: 'win', settlementResult: 'half_win', payout: 70 }),
   makeBet('bet-halfloss', 'settled', { betCode: 'TF-HALFLS', result: 'loss', settlementResult: 'half_loss', payout: 25 }),
-  makeBet('bet-deadheat', 'settled', { betCode: 'TF-DEADHT', result: 'win', settlementResult: 'dead_heat', payout: 63 }),
   makeBet('bet-cashout', 'cashed_out', { betCode: 'TF-CASH01', payout: 286.5, odds: 5.62, marketTitle: '串关', selection: '3 项' }),
 ]
 
@@ -259,15 +226,15 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          暂未进入主流程的能力会单独说明，避免与当前可用范围混淆。
+          当前仅覆盖 v4.3 范围内的多笔单注、串关、报价确认和开赛封盘能力。
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-6">
           <Metric label="页面模块" value="5" />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="10" />
           <Metric label="盘口状态" value="11" />
-          <Metric label="投注单状态" value="16" />
-          <Metric label="注单状态" value="10" />
+          <Metric label="投注单状态" value="20" />
+          <Metric label="注单样例" value="11" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">本期盘口范围</p>
@@ -335,17 +302,10 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="lean-markets" title="3. 当前可用盘口" description="当前产品范围内的盘口需要在这里完整呈现。">
+      <BoardSection id="lean-markets" title="3. v4.3 本期盘口" description="仅平铺当前版本可用的 10 个盘口，不展示未进入本期范围的扩展盘口。">
         <div className="grid gap-4 xl:grid-cols-2">
           {leanMarketScenarios.map((item) => (
             <StateCard key={item.title} title={item.title} description="当前主流程盘口。">
-              <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={liveSourceMatch.id} onSelect={noop} />
-            </StateCard>
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          {nonLeanMarketScenarios.map((item) => (
-            <StateCard key={item.label} title={item.label} description={item.note}>
               <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={liveSourceMatch.id} onSelect={noop} />
             </StateCard>
           ))}
@@ -402,16 +362,20 @@ export default function SoccerDesignBoardPage() {
       <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、提交反馈和设置。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview title="空单" lines={['投注单', '点击赔率按钮添加选项']} footer="不可提交" />
-          <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '单笔 50 USDT', '分别计算赔率和返还']} footer="二次确认" />
+          <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '每项分别输入或套用金额', '提交后生成多张单腿注单']} footer="二次确认" />
           <BetSlipPreview title="串关" lines={['3 项 · 跨 3 场', '总赔率 7.42', '全部选项命中方可获胜']} footer="确认串关" />
-          <BetSlipPreview title="多场分组" lines={['当前比赛 1 项', '其他比赛 2 项', '按比赛分组复核']} footer="跨场串关" />
+          <BetSlipPreview title="同盘口替换" lines={['已选择：主胜 @1.83', '再选平局时替换原选项', '投注单只保留一个同盘口选项']} footer="替换后重新核对" />
+          <BetSlipPreview title="多笔单注同场多盘口" lines={['胜平负 + 正确进球', '作为独立单注提交', '不展示串关冲突遮罩']} footer="可继续提交" tone="success" />
+          <BetSlipPreview title="串关同场冲突" lines={['胜平负 × 正确进球', '正确比分会推出胜平负', '不能放入同一张串关']} footer="移除冲突项或改为多笔单注" tone="warning" />
           <BetSlipPreview title="折叠投注单" lines={['投注单已收起', '3 项 · 总赔率 7.42']} footer="点击展开" />
           <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '最新报价 @1.83']} footer="可提交" tone="success" />
           <BetSlipPreview title="报价过期" lines={['报价已过期', '请接受最新报价']} footer="接受最新报价" tone="warning" />
+          <BetSlipPreview title="下单区报价变化" lines={['1.83 → 1.76', '主按钮变为接受最新报价', '第一次点击只更新赔率快照']} footer="再次点击才进入确认" tone="warning" />
           <BetSlipPreview title="二次确认" lines={['投注方式、明细、金额、赔率', '核对后提交']} footer="确认投注" />
-          <BetSlipPreview title="确认中报价变化" lines={['1.83 → 1.76', '主按钮变为接受最新报价']} footer="接受最新报价" tone="warning" />
+          <BetSlipPreview title="确认中报价变化" lines={['1.83 → 1.76', '弹窗主按钮变为接受最新报价', '接受后回到确认弹窗复核']} footer="再次确认后提交" tone="warning" />
           <BetSlipPreview title="未达最低投注金额" lines={['投注金额 0.5 USDT', '最低投注金额为 1 USDT']} footer="调整金额" tone="danger" />
           <BetSlipPreview title="余额不足" lines={['总投注额 12,000 USDT', '可用余额 10,000 USDT']} footer="降低金额" tone="danger" />
+          <BetSlipPreview title="含开赛封盘项" lines={['比赛已开始', '该比赛盘口已封盘', '关联投注项不可提交']} footer="移除不可用项" tone="warning" />
           <BetSlipPreview title="提交中" lines={['正在确认投注...', '按钮禁用，避免重复提交']} footer="请等待" />
           <BetSlipPreview title="提交失败" lines={['盘口已关闭', '投注单和金额保留']} footer="移除后重试" tone="danger" />
           <SettingsPreview />
@@ -498,18 +462,18 @@ function LeagueSidebarPreview() {
 }
 
 function MatchDetailPreview() {
-  const markets = liveSourceMatch.tabs[0]?.markets.slice(0, 4) ?? []
+  const markets = sourceMatch.tabs[0]?.markets.slice(0, 4) ?? []
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
-        <span>足球</span><span>/</span><span>{liveSourceMatch.league}</span><span>/</span><span className="text-[var(--text-primary)]">比赛详情</span>
+        <span>足球</span><span>/</span><span>{sourceMatch.league}</span><span>/</span><span className="text-[var(--text-primary)]">比赛详情</span>
       </div>
-      <MatchHeader match={liveSourceMatch} />
+      <MatchHeader match={sourceMatch} />
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
         <span className="rounded-lg bg-[#2DD4BF]/10 px-3 py-1.5 text-xs text-[#2DD4BF]">所有盘口</span>
       </div>
       {markets.map((market) => (
-        <MarketRenderer key={market.title} market={market} displayTitle={market.title} matchId={liveSourceMatch.id} onSelect={noop} />
+        <MarketRenderer key={market.title} market={market} displayTitle={market.title} matchId={sourceMatch.id} onSelect={noop} />
       ))}
       <BetSlipPreview title="右栏投注单" lines={['当前选择：胜平负', '金额、报价、返还、提交状态']} footer="详情页右侧固定展示" />
     </div>
@@ -532,7 +496,7 @@ function MyBetsPagePreview() {
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {['今天', '7 天', '30 天', '全部'].map((item, index) => (
+        {['今天', '7 天', '全部'].map((item, index) => (
           <span key={item} className={`rounded-md px-2.5 py-1 text-[10px] ${index === 1 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>{item}</span>
         ))}
       </div>
@@ -580,16 +544,15 @@ function SettingsPreview() {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
       <h3 className="text-sm font-semibold text-[var(--text-primary)]">设置菜单</h3>
-      <p className="mt-1 text-xs text-[var(--text-secondary)]">赔率格式和赔率接受策略。</p>
+      <p className="mt-1 text-xs text-[var(--text-secondary)]">当前只提供赔率格式切换。</p>
       <div className="mt-3 space-y-3">
         <div>
           <p className="mb-2 text-[10px] text-[var(--text-secondary)]">赔率格式</p>
           <div className="flex gap-1.5">{['欧洲盘', '分数盘', '美式盘'].map((item) => <span key={item} className="rounded bg-[var(--bg-control)] px-2 py-1 text-[10px] text-[var(--text-primary)]">{item}</span>)}</div>
         </div>
-        <div>
-          <p className="mb-2 text-[10px] text-[var(--text-secondary)]">接受策略</p>
-          <div className="flex gap-1.5">{['自动接受全部变化', '仅自动接受有利变化', '每次变化都需确认'].map((item) => <span key={item} className="rounded bg-[var(--bg-control)] px-2 py-1 text-[10px] text-[var(--text-primary)]">{item}</span>)}</div>
-        </div>
+        <p className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-secondary)]">
+          报价变化统一由用户在下单区或二次确认弹窗内手动接受最新报价。
+        </p>
       </div>
     </div>
   )
