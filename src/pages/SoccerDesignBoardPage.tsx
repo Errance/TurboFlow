@@ -36,6 +36,7 @@ const boardSections = [
   ['float-states', '浮动投注单'],
   ['mybets-states', '我的注单'],
   ['rule-states', '报价和提交反馈'],
+  ['pool-states', 'v4.5 预测大赛'],
 ]
 
 function clone<T>(value: T): T {
@@ -228,16 +229,16 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。
+          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力，以及 v4.5 新增的淘汰赛对阵树预测大赛（按命中率分奖）。
         </p>
-        <div className="mt-4 grid gap-2 md:grid-cols-6">
-          <Metric label="页面模块" value="5" />
+        <div className="mt-4 grid gap-2 md:grid-cols-7">
+          <Metric label="页面模块" value="6" />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="10" />
           <Metric label="赛事级市场" value="6" />
           <Metric label="盘口状态" value="11" />
           <Metric label="投注单状态" value="20" />
-          <Metric label="注单样例" value="11" />
+          <Metric label="预测大赛状态" value="12" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
@@ -457,6 +458,158 @@ export default function SoccerDesignBoardPage() {
           <SmallState title="多笔单注" text="一次提交多个投注项，但每笔独立生成注单、独立结算。" />
           <SmallState title="串关" text="多个投注项组成一张注单，全部命中方可获胜。" />
           <SmallState title="开赛封盘" text="比赛开始后所有盘口不可再选，投注单内相关项不可提交。" />
+        </div>
+      </BoardSection>
+
+      <BoardSection
+        id="pool-states"
+        title="11. v4.5 预测大赛状态"
+        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。所有人入场费汇成奖金池，按命中率分奖；与 v4.4 个体盘并存，独立结算，不可串关。"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <BetSlipPreview
+            title="① 报名中｜空表 + 教学卡片"
+            lines={[
+              '首次进入弹一次教学卡片',
+              '3 步说明：入场 / 填表 / 派奖',
+              '附数字示例：得 12 分 → ≈ 21.6 USDT',
+            ]}
+            footer="知道了，去填表"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="② 报名中｜部分填写"
+            lines={[
+              'R16 已填 3/8',
+              '上游未填的 QF / SF / F slot 禁用',
+              '禁用 slot 提示：先填上游 slot',
+            ]}
+            footer="完成度 3 / 15"
+          />
+          <BetSlipPreview
+            title="③ 报名中｜已填满待提交"
+            lines={[
+              '15 / 15 slot + tiebreaker = 3',
+              '右栏：投影派奖 ≈ 21.6 USDT',
+              '本人占总分预估 0.32%',
+            ]}
+            footer="提交预测（10 USDT）"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="④ 二次确认弹窗"
+            lines={[
+              '入场费 10 USDT｜净池 37,962 USDT',
+              '⚠ 资金锁定提示：约 12 周',
+              '"我已了解上述规则" 勾选',
+            ]}
+            footer="确认提交"
+            tone="warning"
+          />
+          <BetSlipPreview
+            title="⑤ 已提交｜可改可撤回"
+            lines={[
+              '状态徽标：已提交',
+              '资金锁定提示常驻',
+              '操作：编辑预测 / 锁前撤回 / 分享',
+            ]}
+            footer="锁定倒计时 2 天 5 小时"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="⑥ 分享导出弹窗"
+            lines={[
+              '预览卡片：冠军预测 + 完成度',
+              '三个动作：复制链接 / 下载图片 / 复制文案',
+              '链接形如 /soccer/predictions/share/:shareId',
+            ]}
+            footer="只读视图，不显示资金"
+          />
+          <BetSlipPreview
+            title="⑦ 已撤回｜已退款"
+            lines={[
+              '状态徽标：已退款 · 用户锁前撤回',
+              '入场费 10 USDT 已退回钱包',
+              '可继续填新表（同赛事不可重复入场）',
+            ]}
+            footer="查看赛事"
+          />
+          <BetSlipPreview
+            title="⑧ 已锁定｜不可修改"
+            lines={[
+              '状态徽标：已锁定',
+              '锁定时间到达，所有操作禁用',
+              '等待第一场开赛',
+            ]}
+            footer="查看预测"
+          />
+          <BetSlipPreview
+            title="⑨ 进行中｜实时分数"
+            lines={[
+              'R16 已结算，QF 部分结算',
+              '本人当前 16 分｜占总分 0.04%',
+              '投影派奖 ≈ 15.93 USDT｜实时刷新',
+            ]}
+            footer="进行中｜每场结算后刷新"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="⑩ 已结算｜含赛后回顾"
+            lines={[
+              '决赛官方结果出',
+              '实得派奖 17.51 USDT 已到账',
+              '回顾：R16 6/8 · QF 3/4 · SF 2/2 · F 1/1',
+            ]}
+            footer="查看回顾"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="⑪ 赛事取消｜已退款"
+            lines={[
+              '运营触发取消',
+              '所有 entry 全额退款',
+              'refundReason = tournament_cancelled',
+            ]}
+            footer="赛事取消，已全额退款"
+            tone="warning"
+          />
+          <BetSlipPreview
+            title="⑫ aggregateScore = 0 兜底"
+            lines={[
+              '决赛后全员总分为 0（罕见）',
+              '所有 entry 全额退款，抽水降为 0',
+              'refundReason = aggregate_zero',
+            ]}
+            footer="本届无人命中，已全额退款"
+            tone="warning"
+          />
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <SmallState
+            title="信息架构"
+            text="足球首页一级 tab 第三项「预测大赛」，每个 tab 顶部加差异化文案带，避免与冠军与晋级混淆。"
+          />
+          <SmallState
+            title="资金锁定提示"
+            text="三处常驻：赛事头部 + 二次确认弹窗 + 我的预测大赛卡片。锁前可全额撤回，锁后无法取消。"
+          />
+          <SmallState
+            title="教学卡片"
+            text="首次进入弹一次，后续可在头部 「如何派奖」按钮重新打开。3 步 + 数字示例。"
+          />
+          <SmallState
+            title="用户预测分布（wisdom of crowds）"
+            text="每个 slot 显示双方占比条；锁前实时刷新，锁定瞬间冻结快照并标注时间。"
+          />
+          <SmallState
+            title="榜单形态"
+            text="详情页底部前 100 + 本人置顶；完整榜单页支持搜索、排序。页头明确『按命中率分奖、名次仅供展示』。"
+          />
+          <SmallState
+            title="不可串关 / 不可组合"
+            text="v4.5 预测大赛与 v4.4 个体盘 独立结算、互不冲销、可同时参与，但不可串关 / 不可组合下注。"
+          />
         </div>
       </BoardSection>
     </div>

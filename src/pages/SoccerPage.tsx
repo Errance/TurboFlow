@@ -2,14 +2,23 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { leagues, matches } from '../data/soccer/mockData'
 import { futuresCompetitions } from '../data/soccer/futuresData'
+import { bracketTournaments, describeStatus, formatLockCountdown } from '../data/soccer/bracketData'
 import MatchListCard from '../components/soccer/MatchListCard'
 import { SoccerListSkeleton } from '../components/soccer/SoccerSkeletons'
+
+type SoccerView = 'matches' | 'futures' | 'pools'
+
+function parseView(value: string | null): SoccerView {
+  if (value === 'futures') return 'futures'
+  if (value === 'pools') return 'pools'
+  return 'matches'
+}
 
 export default function SoccerPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedLeague, setSelectedLeague] = useState<string>(() => searchParams.get('league') ?? 'all')
-  const [view, setView] = useState<'matches' | 'futures'>(() => searchParams.get('view') === 'futures' ? 'futures' : 'matches')
+  const [view, setView] = useState<SoccerView>(() => parseView(searchParams.get('view')))
   const [bootstrapped, setBootstrapped] = useState(false)
 
   useEffect(() => {
@@ -17,7 +26,7 @@ export default function SoccerPage() {
     if (leagueParam && leagueParam !== selectedLeague) {
       setSelectedLeague(leagueParam)
     }
-    const nextView = searchParams.get('view') === 'futures' ? 'futures' : 'matches'
+    const nextView = parseView(searchParams.get('view'))
     if (nextView !== view) setView(nextView)
   }, [searchParams])
 
@@ -30,20 +39,18 @@ export default function SoccerPage() {
 
   const handleLeagueChange = (id: string) => {
     setSelectedLeague(id)
-    if (id === 'all') {
-      setSearchParams(view === 'futures' ? { view: 'futures' } : {})
-    } else {
-      setSearchParams(view === 'futures' ? { view: 'futures', league: id } : { league: id })
-    }
+    const params: Record<string, string> = {}
+    if (view !== 'matches') params.view = view
+    if (id !== 'all') params.league = id
+    setSearchParams(params)
   }
 
-  const handleViewChange = (nextView: 'matches' | 'futures') => {
+  const handleViewChange = (nextView: SoccerView) => {
     setView(nextView)
-    if (nextView === 'futures') {
-      setSearchParams(selectedLeague === 'all' ? { view: 'futures' } : { view: 'futures', league: selectedLeague })
-    } else {
-      setSearchParams(selectedLeague === 'all' ? {} : { league: selectedLeague })
-    }
+    const params: Record<string, string> = {}
+    if (nextView !== 'matches') params.view = nextView
+    if (selectedLeague !== 'all') params.league = selectedLeague
+    setSearchParams(params)
   }
 
   const filteredMatches = selectedLeague === 'all'
@@ -159,11 +166,12 @@ export default function SoccerPage() {
 
         {/* Main content - Match list */}
         <div className="flex-1 min-w-0">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
               {[
                 { id: 'matches' as const, label: '比赛' },
                 { id: 'futures' as const, label: '冠军与晋级' },
+                { id: 'pools' as const, label: '预测大赛' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -178,8 +186,24 @@ export default function SoccerPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Differentiated tagline per tab */}
+          <div className="mb-4">
+            {view === 'matches' && (
+              <p className="text-xs text-[var(--text-secondary)]">按比赛逐场下注。</p>
+            )}
             {view === 'futures' && (
-              <p className="text-xs text-[var(--text-secondary)]">冠军、晋级、赛季名次和两回合系列赛预测</p>
+              <p className="text-xs text-[var(--text-secondary)]">
+                <span className="text-[var(--text-primary)] font-medium">冠军与晋级｜</span>
+                对单个市场逐个押注，按赔率结算。
+              </p>
+            )}
+            {view === 'pools' && (
+              <p className="text-xs text-[var(--text-secondary)]">
+                <span className="text-[var(--text-primary)] font-medium">预测大赛｜</span>
+                一份对阵树预测，入场费汇成奖金池，按命中率分奖。
+              </p>
             )}
           </div>
 
@@ -238,6 +262,10 @@ export default function SoccerPage() {
             </div>
           )}
 
+          {view === 'pools' && (
+            <PoolsView onOpenPool={(id) => navigate(`/soccer/predictions/${id}`)} />
+          )}
+
           {view === 'matches' && filteredMatches.length === 0 && (
             <div className="text-center py-12">
               <p className="text-[var(--text-secondary)]">暂无赛事</p>
@@ -247,4 +275,130 @@ export default function SoccerPage() {
       </div>
     </div>
   )
+}
+
+// -----------------------------------------------------------------------------
+// 预测大赛 tab：分三段（正在报名 / 进行中 / 即将开放），每段卡片
+// -----------------------------------------------------------------------------
+
+function PoolsView({ onOpenPool }: { onOpenPool: (id: string) => void }) {
+  const sections = [
+    {
+      key: 'open',
+      label: '正在报名',
+      items: bracketTournaments.filter((t) => t.status === 'open'),
+    },
+    {
+      key: 'running',
+      label: '进行中',
+      items: bracketTournaments.filter((t) => t.status === 'locked' || t.status === 'running'),
+    },
+    {
+      key: 'upcoming',
+      label: '即将开放',
+      items: bracketTournaments.filter((t) => t.status === 'upcoming'),
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {sections.map((section) => (
+        <div key={section.key}>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{section.label}</h3>
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+              {section.items.length} 个赛事
+            </span>
+          </div>
+          {section.items.length === 0 ? (
+            <p className="text-xs text-[var(--text-secondary)] py-3 px-1">暂无</p>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {section.items.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => t.status !== 'upcoming' && onOpenPool(t.id)}
+                  disabled={t.status === 'upcoming'}
+                  className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left transition-colors ${
+                    t.status === 'upcoming'
+                      ? 'opacity-70 cursor-default'
+                      : 'hover:border-[#2DD4BF]/40'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">
+                        {t.region} · {t.phase}
+                      </p>
+                      <h4 className="mt-1 text-base font-semibold text-[var(--text-primary)] truncate">
+                        {t.shortName}
+                      </h4>
+                      <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">
+                        {t.headline}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${badgeClass(t.status)}`}>
+                      {describeStatus(t.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <Cell label="入场费" value={`${t.entryFee} ${t.currency}`} />
+                    <Cell
+                      label={t.status === 'upcoming' ? '报名开放' : '奖金池'}
+                      value={
+                        t.status === 'upcoming'
+                          ? formatLockCountdown(t.lockAt) + ' 后'
+                          : `${t.poolSnapshot.netPool.toLocaleString()} USDT`
+                      }
+                      highlight={t.status !== 'upcoming'}
+                    />
+                    <Cell
+                      label="锁定倒计时"
+                      value={formatLockCountdown(t.lockAt)}
+                    />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-5">
+        所有预测大赛均按命中率分奖（payout = 本人得分 / 全员总分 × 净池），平台抽水 10%。锁前可全额撤回。
+      </p>
+    </div>
+  )
+}
+
+function Cell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="rounded-lg bg-[var(--bg-control)] px-2.5 py-1.5">
+      <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
+      <p
+        className={`mt-0.5 text-xs font-mono ${
+          highlight ? 'text-[#2DD4BF] font-semibold' : 'text-[var(--text-primary)]'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function badgeClass(status: string): string {
+  switch (status) {
+    case 'open':
+      return 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
+    case 'upcoming':
+      return 'bg-[var(--bg-control)] text-[var(--text-secondary)]'
+    case 'locked':
+      return 'bg-[#3B82F6]/15 text-[#3B82F6]'
+    case 'running':
+      return 'bg-[#E85A7E]/15 text-[#E85A7E]'
+    case 'settled':
+      return 'bg-[#FFB347]/15 text-[#FFB347]'
+    default:
+      return 'bg-[var(--bg-control)] text-[var(--text-secondary)]'
+  }
 }

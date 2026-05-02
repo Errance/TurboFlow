@@ -17,9 +17,16 @@ import { useNavigate } from 'react-router-dom'
 import { useMyBetsStore } from '../stores/myBetsStore'
 import { useToastStore } from '../stores/toastStore'
 import MyBetCard from '../components/soccer/MyBetCard'
+import PredictionEntryCard from '../components/soccer/PredictionEntryCard'
 import Button from '../components/ui/Button'
 import type { MyBetItem } from '../data/soccer/types'
+import {
+  bracketTournaments,
+  getBracketTournamentById,
+  sampleEntries,
+} from '../data/soccer/bracketData'
 
+type TopTab = 'bets' | 'pools'
 type StatusFilter = 'all' | 'unsettled' | 'settled_any' | 'cashed_out'
 type DateFilter = 'today' | '7d' | '30d' | 'all'
 
@@ -69,6 +76,7 @@ function dateFloor(filter: DateFilter): string | null {
 
 export default function SoccerMyBetsPage() {
   const navigate = useNavigate()
+  const [topTab, setTopTab] = useState<TopTab>('bets')
   const [statusTab, setStatusTab] = useState<StatusFilter>('all')
   const [dateTab, setDateTab] = useState<DateFilter>('7d')
   const [page, setPage] = useState(1)
@@ -175,50 +183,32 @@ export default function SoccerMyBetsPage() {
         <span className="text-[var(--text-primary)] font-medium">我的注单</span>
       </nav>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">我的注单</h1>
           <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
             提前结清报价为参考报价，刷新后将更新。
           </p>
         </div>
-        <Button variant="ghost" onClick={handleExport} className="!py-1.5 !text-xs">
-          导出记录
-        </Button>
+        {topTab === 'bets' && (
+          <Button variant="ghost" onClick={handleExport} className="!py-1.5 !text-xs">
+            导出记录
+          </Button>
+        )}
       </div>
 
-      {/* Status filter */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {STATUS_TABS.map((t) => (
+      {/* Top tab: 传统注单 / 预测大赛 */}
+      <div className="mb-4 flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1 w-fit">
+        {[
+          { id: 'bets' as const, label: '传统注单' },
+          { id: 'pools' as const, label: '我的预测大赛' },
+        ].map((t) => (
           <button
             key={t.id}
-            onClick={() => {
-              setStatusTab(t.id)
-              setPage(1)
-            }}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-              statusTab === t.id
-                ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
-                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Date filter */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {DATE_TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setDateTab(t.id)
-              setPage(1)
-            }}
-            className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${
-              dateTab === t.id
-                ? 'bg-[var(--bg-card)] text-[var(--text-primary)]'
+            onClick={() => setTopTab(t.id)}
+            className={`rounded-lg px-4 py-2 text-sm transition-colors ${
+              topTab === t.id
+                ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] font-semibold'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
@@ -227,31 +217,151 @@ export default function SoccerMyBetsPage() {
         ))}
       </div>
 
-      {filtered.length === 0 && (
-        <div className="py-16 text-center">
-          <p className="text-sm text-[var(--text-secondary)]">当前无符合条件的注单</p>
-        </div>
+      {topTab === 'bets' && (
+        <>
+          {/* Status filter */}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setStatusTab(t.id)
+                  setPage(1)
+                }}
+                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                  statusTab === t.id
+                    ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Date filter */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {DATE_TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setDateTab(t.id)
+                  setPage(1)
+                }}
+                className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${
+                  dateTab === t.id
+                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="py-16 text-center">
+              <p className="text-sm text-[var(--text-secondary)]">当前无符合条件的注单</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {visible.map((b) => (
+              <MyBetCard
+                key={b.id}
+                bet={b}
+                onCashOut={handleCashOut}
+                onReplay={handleReplay}
+                onCopyCode={handleCopyCode}
+              />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="mt-4 text-center">
+              <Button variant="ghost" onClick={() => setPage((p) => p + 1)}>
+                加载更多（剩余 {filtered.length - visible.length} 条）
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
-      <div className="space-y-3">
-        {visible.map((b) => (
-          <MyBetCard
-            key={b.id}
-            bet={b}
-            onCashOut={handleCashOut}
-            onReplay={handleReplay}
-            onCopyCode={handleCopyCode}
-          />
-        ))}
+      {topTab === 'pools' && <PoolEntriesPanel />}
+    </div>
+  )
+}
+
+// -----------------------------------------------------------------------------
+// 我的预测大赛 panel：列出所有 entry，状态机独立于传统注单
+// -----------------------------------------------------------------------------
+
+function PoolEntriesPanel() {
+  const addToast = useToastStore((s) => s.addToast)
+
+  // mock 演示：按状态分组展示，同一赛事下多个状态都有示例
+  const groups = [
+    { key: 'active', label: '进行中 / 已锁定 / 已提交', match: (s: string) => s === 'submitted' || s === 'locked' },
+    { key: 'settled', label: '已结算', match: (s: string) => s === 'settled' },
+    { key: 'draft', label: '草稿', match: (s: string) => s === 'draft' },
+    { key: 'refunded', label: '已退款', match: (s: string) => s === 'refunded' },
+  ]
+
+  // 去重：每个赛事的同一状态保留最新一条（mock 中 self-locked 和 self-running 都是同一 entry 的不同形态，只展示其中一个）
+  const seen = new Set<string>()
+  const visibleEntries = sampleEntries.filter((e) => {
+    if (e.status === 'locked' && e.totalScore === undefined) return false
+    const key = `${e.tournamentId}|${e.status}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  if (visibleEntries.length === 0) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-sm text-[var(--text-secondary)]">还没有参加过任何预测大赛</p>
       </div>
+    )
+  }
 
-      {hasMore && (
-        <div className="mt-4 text-center">
-          <Button variant="ghost" onClick={() => setPage((p) => p + 1)}>
-            加载更多（剩余 {filtered.length - visible.length} 条）
-          </Button>
-        </div>
-      )}
+  return (
+    <div className="space-y-6">
+      <p className="text-[10px] text-[var(--text-secondary)] leading-5">
+        预测大赛走独立结算，与传统注单互不冲销。锁前可全额撤回入场费，锁后无法取消，按命中率分奖。
+      </p>
+      {groups.map((g) => {
+        const items = visibleEntries.filter((e) => g.match(e.status))
+        if (items.length === 0) return null
+        return (
+          <div key={g.key}>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">{g.label}</h3>
+              <span className="text-[10px] text-[var(--text-secondary)] font-mono">{items.length}</span>
+            </div>
+            <div className="space-y-3">
+              {items.map((entry) => {
+                const tournament = getBracketTournamentById(entry.tournamentId) ?? bracketTournaments[0]
+                return (
+                  <PredictionEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    tournament={tournament}
+                    onWithdraw={() => addToast({
+                      type: 'success',
+                      message: `已撤回，${tournament.entryFee.toFixed(2)} ${tournament.currency} 已退回钱包（演示）`,
+                    })}
+                    onReplay={() => addToast({
+                      type: 'info',
+                      message: '尚未开放下届赛事报名（演示）',
+                    })}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
