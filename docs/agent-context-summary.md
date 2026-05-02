@@ -5,7 +5,7 @@
 ## 项目与主线
 
 - 仓库：`/Users/errance/Documents/Turboflow_soccer`
-- 当前主文档：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.3.md`（内容已升级为 v4.4）
+- 当前主文档：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.4.md`
 - 当前主要页面：`/soccer`、`/soccer/match/:matchId`、`/soccer/futures/:competitionId`、`/soccer/mybets`、`/soccer/design-board`
 - 当前目标：让足球传统盘口 PRD v4.4 与前端 mock 完全一致。
 - 这是平台报价型足球传统盘口，不是 CLOB，不是订单簿撮合。
@@ -115,13 +115,21 @@
 
 ## PRD 现状
 
-主 PRD：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.3.md`（文件名暂未改，正文为 v4.4）
+主 PRD：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.4.md`
 
 已完成：
 
 - 在 v4.3 单场盘口基础上升级为 v4.4。
 - 对齐多笔单注、串关、报价确认、开赛封盘、赛事级市场关闭、我的注单和重投。
 - 新增冠军与晋级、赛季结果、两回合系列赛预测。
+- 已按 v4.3 文档规格补齐 v4.4 赛事级盘口：
+  - 赛事级下注成功流程 Mermaid
+  - 赛事级失败和关闭流程 Mermaid
+  - 冠军与晋级页、赛事级列表、赛事级详情、市场卡片
+  - 冠军、晋级、赛季名次、系列赛赛果逐类解释
+  - 赛事级市场状态机 Mermaid
+  - 赛事级 mock 数据字段示例
+  - 赛事级盘口专项验收表
 - 补充 10 个盘口的详细解释。
 - Mermaid 图修复：
   - `5.1 最短路径树` 已从 `text` 改为 Mermaid。
@@ -130,6 +138,7 @@
 注意：
 
 - PRD 所在目录可能被 `.gitignore` 忽略，提交文档时需要 `git add -f`。
+- `TurboFlow足球盘口产品需求文档_v4.3.md` 作为旧引用路径兼容保留，当前也承载 v4.4 内容；后续以 `TurboFlow足球盘口产品需求文档_v4.4.md` 为主文档。
 - 用户会把 Markdown 预览里的 Mermaid 图复制到 Notion，所以流程图不要写成 `text` 代码块。
 
 ## 关键代码文件
