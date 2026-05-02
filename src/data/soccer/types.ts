@@ -75,6 +75,17 @@ export interface SoccerMatch {
   stats?: MatchStats
 }
 
+export type BetSubjectScope = 'match' | 'competition' | 'tie' | 'season'
+
+export interface BetSubject {
+  scope: BetSubjectScope
+  subjectId: string
+  subjectLabel: string
+  closesAt?: string
+  resolutionTimeLabel?: string
+  resolutionSource?: string
+}
+
 export interface MatchTab {
   id: string
   label: string
@@ -155,6 +166,7 @@ export interface BetSlipItem {
   id: string
   matchId: string
   matchLabel: string
+  subject?: BetSubject
   marketTitle: string
   selection: string
   odds: number
@@ -170,6 +182,7 @@ export interface MyBetLeg {
   id: string
   matchId: string
   matchLabel: string
+  subject?: BetSubject
   marketTitle: string
   selection: string
   oddsAtPlacement: number
@@ -188,6 +201,7 @@ export interface MyBetLeg {
 export interface MyBetItem {
   id: string
   matchLabel: string
+  subject?: BetSubject
   marketTitle: string
   selection: string
   odds: number

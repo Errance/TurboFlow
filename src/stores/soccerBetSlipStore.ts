@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { BetSlipItem, BetType, MyBetLeg } from '../data/soccer/types'
+import type { BetSlipItem, BetSubject, BetType, MyBetLeg } from '../data/soccer/types'
 import type { BetRejectReason, BetSubmissionResult } from '../data/soccer/contracts'
 import { canCombine, getMarketFamily, type MarketFamily } from '../data/soccer/marketFamily'
 import { useToastStore } from './toastStore'
@@ -44,6 +44,7 @@ export interface ExtendedBetSlipItem extends BetSlipItem {
 export interface ToggleInput {
   matchId: string
   matchLabel: string
+  subject?: BetSubject
   marketTitle: string
   selection: string
   odds: number
@@ -122,16 +123,21 @@ interface PersistedSlip {
   betType: BetType
 }
 
-function makeId(matchId: string, marketTitle: string, selection: string): string {
-  return `${matchId}|${marketTitle}|${selection}`
+function subjectIdOf(input: { matchId: string; subject?: BetSubject }): string {
+  return input.subject?.subjectId ?? input.matchId
+}
+
+function makeId(matchId: string, marketTitle: string, selection: string, subject?: BetSubject): string {
+  return `${subject?.subjectId ?? matchId}|${marketTitle}|${selection}`
 }
 
 function findSameMatchConflict(items: ExtendedBetSlipItem[]) {
   const byMatch = new Map<string, ExtendedBetSlipItem[]>()
   for (const item of items) {
-    const group = byMatch.get(item.matchId) ?? []
+    const groupKey = subjectIdOf(item)
+    const group = byMatch.get(groupKey) ?? []
     group.push(item)
-    byMatch.set(item.matchId, group)
+    byMatch.set(groupKey, group)
   }
 
   for (const group of byMatch.values()) {
@@ -170,11 +176,12 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
   submitting: false,
 
   toggleItem: (input) => {
-    const { matchId, matchLabel, marketTitle, selection, odds } = input
-    const id = makeId(matchId, marketTitle, selection)
+    const { matchId, matchLabel, subject, marketTitle, selection, odds } = input
+    const id = makeId(matchId, marketTitle, selection, subject)
     const family = getMarketFamily(marketTitle)
     const addToast = useToastStore.getState().addToast
     const prev = get().items
+    const subjectId = subjectIdOf(input)
 
     // 1) id 已存在 → 取消选择
     if (prev.some((it) => it.id === id)) {
@@ -188,13 +195,21 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
 
     // 2) 同 matchId + 同 marketTitle 的既有 item → 替换（盘口内部天然互斥）
     const sameMarketIdx = prev.findIndex(
-      (it) => it.matchId === matchId && it.marketTitle === marketTitle,
+      (it) => subjectIdOf(it) === subjectId && it.marketTitle === marketTitle,
     )
+
+    if (get().betType === 'accumulator' && subject) {
+      addToast({
+        type: 'error',
+        message: '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交',
+      })
+      return { ok: false, reason: '冠军、晋级和系列赛类盘口暂不支持串关' }
+    }
 
     // 3) 多笔单注彼此独立，只有当前处于串关模式时才需要同场相关性校验
     if (get().betType === 'accumulator' && sameMarketIdx === -1) {
       for (const existing of prev) {
-        if (existing.matchId !== matchId) continue
+        if (subjectIdOf(existing) !== subjectId) continue
         if (existing.marketTitle === marketTitle) continue
         const verdict = canCombine(family, existing.marketFamily)
         if (!verdict.ok) {
@@ -212,6 +227,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
       id,
       matchId,
       matchLabel,
+      subject,
       marketTitle,
       selection,
       odds,
@@ -247,9 +263,10 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     const next: ExtendedBetSlipItem[] = inputs.map((input) => {
       const family = getMarketFamily(input.marketTitle)
       return {
-        id: makeId(input.matchId, input.marketTitle, input.selection),
+        id: makeId(input.matchId, input.marketTitle, input.selection, input.subject),
         matchId: input.matchId,
         matchLabel: input.matchLabel,
+        subject: input.subject,
         marketTitle: input.marketTitle,
         selection: input.selection,
         odds: input.odds,
@@ -266,6 +283,13 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     })
 
     if (nextBetType === 'accumulator') {
+      if (next.some((item) => item.subject)) {
+        addToast({
+          type: 'error',
+          message: '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交',
+        })
+        return { ok: false, reason: '冠军、晋级和系列赛类盘口暂不支持串关' }
+      }
       const conflict = findSameMatchConflict(next)
       if (conflict) {
         addToast({
@@ -293,7 +317,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
 
   removeByMatchTitle: (matchId, marketTitle) => {
     const next = get().items.filter(
-      (it) => !(it.matchId === matchId && it.marketTitle === marketTitle),
+      (it) => !(subjectIdOf(it) === matchId && it.marketTitle === marketTitle),
     )
     set({
       items: next,
@@ -302,7 +326,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
   },
 
   clearMatch: (matchId) => {
-    const next = get().items.filter((it) => it.matchId !== matchId)
+    const next = get().items.filter((it) => subjectIdOf(it) !== matchId)
     set({
       items: next,
       betType: get().betType === 'accumulator' && next.length <= 1 ? 'multi_single' : get().betType,
@@ -315,7 +339,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
     if (voidMarketTitles.size === 0) return
     const prev = get().items
     const next = prev.filter(
-      (it) => !(it.matchId === matchId && voidMarketTitles.has(it.marketTitle)),
+      (it) => !(subjectIdOf(it) === matchId && voidMarketTitles.has(it.marketTitle)),
     )
     if (next.length !== prev.length) {
       set({
@@ -368,12 +392,12 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
   closeSlip: () => set({ slipOpen: false }),
   toggleSlipOpen: () => set({ slipOpen: !get().slipOpen }),
 
-  getItemsByMatch: (matchId) => get().items.filter((it) => it.matchId === matchId),
+  getItemsByMatch: (matchId) => get().items.filter((it) => subjectIdOf(it) === matchId),
 
   getSelectedKeys: (matchId) => {
     const keys = new Set<string>()
     for (const it of get().items) {
-      if (it.matchId === matchId) keys.add(`${it.marketTitle}|${it.selection}`)
+      if (subjectIdOf(it) === matchId) keys.add(`${it.marketTitle}|${it.selection}`)
     }
     return keys
   },
@@ -447,6 +471,13 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
 
     // 5. 相关性校验只适用于串关；多笔单注独立生成注单，不互相组合。
     if (betType === 'accumulator') {
+      if (items.some((it) => it.subject)) {
+        addToast({
+          type: 'error',
+          message: '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交',
+        })
+        return { ok: false, reason: 'conflict_detected' }
+      }
       const conflict = findSameMatchConflict(items)
       if (conflict) {
         addToast({
@@ -519,6 +550,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
           id: `${idempotencyKey}-${index}-${it.id}`,
           matchId: it.matchId,
           matchLabel: it.matchLabel,
+          subject: it.subject,
           marketTitle: it.marketTitle,
           selection: it.selection,
           oddsAtPlacement: it.oddsCurrent,
@@ -527,6 +559,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
         myBets.add({
           id: `${idempotencyKey}-${index}`,
           matchLabel: it.matchLabel,
+          subject: it.subject,
           marketTitle: it.marketTitle,
           selection: it.selection,
           odds: +it.oddsCurrent.toFixed(2),
@@ -551,6 +584,7 @@ export const useSoccerBetSlipStore = create<SoccerBetSlipState>((set, get) => ({
         id: `${idempotencyKey}-${it.id}`,
         matchId: it.matchId,
         matchLabel: it.matchLabel,
+        subject: it.subject,
         marketTitle: it.marketTitle,
         selection: it.selection,
         oddsAtPlacement: it.oddsCurrent,

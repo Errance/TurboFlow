@@ -12,6 +12,7 @@ import { useOddsLockCountdown } from '../../services/oddsLock'
 import { BETTING_LIMITS } from '../../data/soccer/contracts'
 import type { BetType } from '../../data/soccer/types'
 import { getMatchById } from '../../data/soccer/mockData'
+import { getFutureMarket } from '../../data/soccer/futuresData'
 import { formatOdds } from '../../utils/oddsFormat'
 import { canCombine } from '../../data/soccer/marketFamily'
 
@@ -54,9 +55,10 @@ type Group = { matchId: string; matchLabel: string; items: ExtendedBetSlipItem[]
 function groupByMatch(items: ExtendedBetSlipItem[], currentMatchId: string): Group[] {
   const map = new Map<string, Group>()
   for (const it of items) {
-    const g = map.get(it.matchId)
+    const groupId = it.subject?.subjectId ?? it.matchId
+    const g = map.get(groupId)
     if (g) g.items.push(it)
-    else map.set(it.matchId, { matchId: it.matchId, matchLabel: it.matchLabel, items: [it] })
+    else map.set(groupId, { matchId: groupId, matchLabel: it.matchLabel, items: [it] })
   }
   const groups = Array.from(map.values())
   groups.sort((a, b) => {
@@ -72,6 +74,15 @@ function fmtMoney(n: number): string {
 }
 
 function findAccumulatorConflict(items: ExtendedBetSlipItem[]) {
+  const futureItem = items.find((item) => item.subject)
+  if (futureItem) {
+    return {
+      left: futureItem,
+      right: futureItem,
+      reason: '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交',
+    }
+  }
+
   const byMatch = new Map<string, ExtendedBetSlipItem[]>()
   for (const item of items) {
     const group = byMatch.get(item.matchId) ?? []
@@ -102,6 +113,14 @@ function collectClosedMarketTitles(matchId: string): Set<string> {
     }
   }
   return closed
+}
+
+function isFutureItemClosed(item: ExtendedBetSlipItem): boolean {
+  if (!item.subject) return false
+  const futureMarket = getFutureMarket(item.subject.subjectId, item.marketTitle)
+  if (!futureMarket || futureMarket.status !== 'open') return true
+  const closesAt = item.subject.closesAt ? new Date(item.subject.closesAt).getTime() : Number.POSITIVE_INFINITY
+  return Number.isFinite(closesAt) && closesAt <= Date.now()
 }
 
 export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchStatus }: Props) {
@@ -149,10 +168,14 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   const crossMatchCount = groups.filter((g) => g.matchId !== currentMatchId).length
 
   const isMatchUnavailable = matchStatus ? UNAVAILABLE_MATCH_STATUSES.has(matchStatus) : false
-  const hasCurrentMatchItems = items.some((it) => it.matchId === currentMatchId)
+  const hasCurrentMatchItems = items.some((it) => (it.subject?.subjectId ?? it.matchId) === currentMatchId)
   const unavailableItemIds = useMemo(() => {
     const ids = new Set<string>()
     for (const it of items) {
+      if (it.subject) {
+        if (isFutureItemClosed(it)) ids.add(it.id)
+        continue
+      }
       const match = getMatchById(it.matchId)
       if (!match || UNAVAILABLE_MATCH_STATUSES.has(match.status)) {
         ids.add(it.id)
@@ -191,16 +214,19 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
   const doPlaceBet = async () => {
     const suspendedSelectionKeys = new Set<string>()
     const endedMatchIds = new Set<string>()
-    const matchIds = new Set(items.map((it) => it.matchId))
-
-    for (const id of matchIds) {
-      const match = getMatchById(id)
-      if (!match || UNAVAILABLE_MATCH_STATUSES.has(match.status)) {
-        endedMatchIds.add(id)
+    for (const item of items) {
+      if (item.subject) {
+        if (isFutureItemClosed(item)) suspendedSelectionKeys.add(`${item.subject.subjectId}|${item.marketTitle}`)
         continue
       }
-      for (const title of collectClosedMarketTitles(id)) {
-        suspendedSelectionKeys.add(`${id}|${title}`)
+
+      const match = getMatchById(item.matchId)
+      if (!match || UNAVAILABLE_MATCH_STATUSES.has(match.status)) {
+        endedMatchIds.add(item.matchId)
+        continue
+      }
+      for (const title of collectClosedMarketTitles(item.matchId)) {
+        suspendedSelectionKeys.add(`${item.matchId}|${title}`)
       }
     }
 
@@ -246,7 +272,9 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
     if (type === 'accumulator' && accumulatorConflict) {
       addToast({
         type: 'error',
-        message: `${accumulatorConflict.left.marketTitle} 与 ${accumulatorConflict.right.marketTitle} 不可同场串关，可继续作为多笔单注提交`,
+        message: accumulatorConflict.left === accumulatorConflict.right
+          ? accumulatorConflict.reason
+          : `${accumulatorConflict.left.marketTitle} 与 ${accumulatorConflict.right.marketTitle} 不可同场串关，可继续作为多笔单注提交`,
       })
       return
     }
@@ -374,11 +402,12 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
             <div className="space-y-3 mb-4">
               {groups.map((g) => {
                 const isCurrent = g.matchId === currentMatchId
+                const isFutureGroup = g.items.some((item) => item.subject)
                 return (
                   <div key={g.matchId}>
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] truncate">
-                        {isCurrent ? '当前场' : '其他比赛'} · {g.matchLabel}
+                        {isFutureGroup ? '赛事级盘口' : isCurrent ? '当前场' : '其他比赛'} · {g.matchLabel}
                       </p>
                       {!isCurrent && (
                         <button
@@ -391,8 +420,8 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                     </div>
                     <div className="space-y-1.5">
                       {g.items.map((item) => {
-                        const match = getMatchById(item.matchId)
-                        const matchUnavailable = !match || UNAVAILABLE_MATCH_STATUSES.has(match.status)
+                        const match = item.subject ? undefined : getMatchById(item.matchId)
+                        const matchUnavailable = item.subject ? false : !match || UNAVAILABLE_MATCH_STATUSES.has(match.status)
                         const isSuspended =
                           unavailableItemIds.has(item.id) ||
                           (isCurrent && suspendedMarkets?.has(item.marketTitle))
@@ -414,6 +443,11 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                               ×
                             </button>
                             <p className="text-xs text-[var(--text-primary)] mb-0.5 pr-6">{item.marketTitle}</p>
+                            {item.subject && (
+                              <p className="mb-1 text-[10px] text-[var(--text-secondary)]">
+                                {item.subject.scope === 'tie' ? '系列赛预测' : '冠军与晋级'} · {item.subject.resolutionTimeLabel}
+                              </p>
+                            )}
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-medium text-[#2DD4BF]">{item.selection}</span>
                               <span className="text-sm font-bold font-mono text-[var(--text-primary)]">
@@ -439,7 +473,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
                                   <line x1="12" y1="8" x2="12" y2="12" />
                                   <line x1="12" y1="16" x2="12.01" y2="16" />
                                 </svg>
-                                {matchUnavailable ? '该比赛暂不支持投注' : '盘口已关闭'}
+                                {item.subject ? '该赛事级盘口已关闭' : matchUnavailable ? '该比赛暂不支持投注' : '盘口已关闭'}
                               </div>
                             )}
                           </div>

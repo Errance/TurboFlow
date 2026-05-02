@@ -107,6 +107,11 @@ export default function ConfirmBetDialog({
                 <div className="flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="text-xs text-[var(--text-primary)] truncate">{it.marketTitle}</p>
+                    {it.subject && (
+                      <p className="text-[10px] text-[var(--text-secondary)] truncate">
+                        {it.subject.scope === 'tie' ? '系列赛预测' : '赛事级盘口'} · {it.subject.resolutionTimeLabel}
+                      </p>
+                    )}
                     <span className="text-xs text-[#2DD4BF]">{it.selection}</span>
                   </div>
                   <span className="text-xs font-mono font-bold text-[var(--text-primary)] ml-2 shrink-0">

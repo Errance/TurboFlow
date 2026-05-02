@@ -5,6 +5,7 @@ import MarketRenderer from '../components/soccer/MarketRenderer'
 import MyBetCard from '../components/soccer/MyBetCard'
 import MyBetsPanel from '../components/soccer/MyBetsPanel'
 import { SoccerListSkeleton, SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
+import { futuresCompetitions } from '../data/soccer/futuresData'
 import { matches } from '../data/soccer/mockData'
 import type { Market, MyBetItem, SettlementResult, SoccerMatch } from '../data/soccer/types'
 
@@ -28,6 +29,7 @@ const boardSections = [
   ['page-states', '页面级状态'],
   ['match-states', '比赛状态'],
   ['lean-markets', '本期盘口'],
+  ['future-markets', '冠军与晋级'],
   ['market-states', '盘口状态'],
   ['goal-toggle', '开赛封盘'],
   ['betslip-states', '投注单状态'],
@@ -226,21 +228,25 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前仅覆盖 v4.3 范围内的多笔单注、串关、报价确认和开赛封盘能力。
+          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-6">
           <Metric label="页面模块" value="5" />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="10" />
+          <Metric label="赛事级市场" value="6" />
           <Metric label="盘口状态" value="11" />
           <Metric label="投注单状态" value="20" />
           <Metric label="注单样例" value="11" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">本期盘口范围</p>
+          <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {LEAN_MARKET_ORDER.map((title) => (
               <span key={title} className="rounded-full bg-[#2DD4BF]/10 px-2.5 py-1 text-[10px] text-[#2DD4BF]">{title}</span>
+            ))}
+            {['冠军', '晋级', '赛季名次', '两回合系列赛'].map((title) => (
+              <span key={title} className="rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] text-[#E85A7E]">{title}</span>
             ))}
           </div>
         </div>
@@ -302,7 +308,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="lean-markets" title="3. v4.3 本期盘口" description="仅平铺当前版本可用的 10 个盘口，不展示未进入本期范围的扩展盘口。">
+      <BoardSection id="lean-markets" title="3. v4.4 单场本期盘口" description="单场比赛仍平铺当前 10 个盘口；冠军与晋级等赛事级盘口在下一节单独展示。">
         <div className="grid gap-4 xl:grid-cols-2">
           {leanMarketScenarios.map((item) => (
             <StateCard key={item.title} title={item.title} description="当前主流程盘口。">
@@ -312,7 +318,38 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="market-states" title="4. 盘口状态和串关互斥" description="暂停、作废、结算、封盘和串关冲突都需要给出清晰反馈；多笔单注不做同场组合限制。">
+      <BoardSection id="future-markets" title="4. v4.4 冠军、晋级和系列赛预测" description="赛事级盘口与单场盘口并列展示，借鉴预测市场的问题组织方式，但仍使用平台报价和传统投注单。">
+        <div className="grid gap-4 xl:grid-cols-2">
+          {futuresCompetitions.map((competition) => (
+            <StateCard key={competition.id} title={competition.shortName} description={competition.headline}>
+              <div className="space-y-3">
+                <div className="grid gap-2 md:grid-cols-3">
+                  <SmallState title="市场粒度" text="赛事、赛季或淘汰赛阶段，不挂在某一场 match 上。" />
+                  <SmallState title="投注方式" text="支持单注和多笔单注；第一版暂不支持串关。" />
+                  <SmallState title="结算来源" text="按官方赛事结果、积分榜或晋级结果结算。" />
+                </div>
+                {competition.markets.slice(0, 2).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
+                    </div>
+                    <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
+                    <p className="mt-2 text-[10px] text-[var(--text-secondary)]">结算来源：{item.subject.resolutionSource}</p>
+                  </div>
+                ))}
+              </div>
+            </StateCard>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <BetSlipPreview title="长期盘多笔单注" lines={['欧冠冠军 · 皇家马德里 @4.20', '晋级决赛 · 曼城 是 @2.55', '每项独立生成注单']} footer="二次确认" />
+          <BetSlipPreview title="系列赛预测" lines={['皇家马德里 vs 巴塞罗那 · 两回合系列赛', '选择：皇家马德里晋级 @1.92', '包含加时和点球晋级结果']} footer="按 UEFA 官方结果结算" />
+          <BetSlipPreview title="暂不支持串关" lines={['冠军与晋级类强相关边界复杂', '第一版作为多笔单注提交', '串关按钮给出明确说明']} footer="可改为多笔单注" tone="warning" />
+        </div>
+      </BoardSection>
+
+      <BoardSection id="market-states" title="5. 盘口状态和串关互斥" description="暂停、作废、结算、封盘和串关冲突都需要给出清晰反馈；多笔单注不做同场组合限制。">
         <div className="grid gap-4 xl:grid-cols-2">
           {marketStateScenarios.map((item) => (
             <StateCard key={item.label} title={item.label} description={item.note}>
@@ -342,7 +379,7 @@ export default function SoccerDesignBoardPage() {
         </StateCard>
       </BoardSection>
 
-      <BoardSection id="goal-toggle" title="5. 开赛封盘" description="比赛开始后所有盘口封盘，赔率停止变化，不能新增投注或提交未确认投注单。">
+      <BoardSection id="goal-toggle" title="6. 开赛封盘和市场关闭" description="单场比赛开始后封盘；冠军、晋级和系列赛类盘口按市场关闭时间、阶段开始、数学确定或官方暂停关闭。">
         <div className="grid gap-4 lg:grid-cols-4">
           <StateCard title="赛前可投注" description="比赛未开始，开放盘口可以选择。">
             <MarketRenderer market={marketByTitle('合计')} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} />
@@ -359,7 +396,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="betslip-states" title="6. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、提交反馈和设置。">
+      <BoardSection id="betslip-states" title="7. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、提交反馈和设置。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview title="空单" lines={['投注单', '点击赔率按钮添加选项']} footer="不可提交" />
           <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '每项分别输入或套用金额', '提交后生成多张单腿注单']} footer="二次确认" />
@@ -384,7 +421,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="float-states" title="7. 浮动投注单" description="用户离开比赛详情页后，已有足球投注单仍可通过浮动条返回。">
+      <BoardSection id="float-states" title="8. 浮动投注单" description="用户离开比赛详情页或赛事级预测页后，已有足球投注单仍可通过浮动条返回。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SmallState title="无投注项" text="不展示浮动条。" />
           <FloatPreview title="1 项" subtitle="总赔率 1.83" />
@@ -393,7 +430,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="mybets-states" title="8. 我的注单" description="展示注单页、右栏摘要、多笔单注卡、串关卡和结算结果。">
+      <BoardSection id="mybets-states" title="9. 我的注单" description="展示注单页、右栏摘要、多笔单注卡、串关卡、赛事级注单和结算结果。">
         <div className="grid gap-4 xl:grid-cols-2">
           <StateCard title="右栏我的注单摘要" description="最近注单、已实现盈亏、未结算本金和前往我的注单。">
             <MyBetsPanel bets={sampleBets.slice(0, 5)} />
@@ -410,7 +447,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="rule-states" title="9. 报价和提交反馈" description="这些状态需要在用户提交前后给出清晰、可操作的提示。">
+      <BoardSection id="rule-states" title="10. 报价和提交反馈" description="这些状态需要在用户提交前后给出清晰、可操作的提示。">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {rejectReasons.map(([title, text]) => (
             <SmallState key={title} title={title} text={text} />

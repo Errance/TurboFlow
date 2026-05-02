@@ -15,6 +15,10 @@ export type MarketFamily =
   | 'total_bucket' // 总进球数离散档位 0/1/2/3/4/5+
   | 'overunder' // 大小球（合计） 2.5 / 3.0 等
   | 'score_exact' // 正确比分矩阵
+  | 'future_winner' // 冠军 / 赛事优胜者
+  | 'qualification' // 晋级 / 出线 / 获得资格
+  | 'stage_result' // 系列赛 / 淘汰赛阶段结果
+  | 'season_position' // 联赛名次 / 升降级
   | 'novelty' // 开球权等趣味盘，与赛果独立
   | 'unknown' // 未分类盘口，默认按保守相关性处理
 
@@ -32,6 +36,10 @@ export function getMarketFamily(title: string): MarketFamily {
   if (title === '总进球数') return 'total_bucket'
   if (title === '合计') return 'overunder'
   if (title === '正确进球') return 'score_exact'
+  if (title.includes('冠军')) return 'future_winner'
+  if (title.includes('晋级') || title.includes('资格')) return 'qualification'
+  if (title.includes('系列赛') || title.includes('两回合')) return 'stage_result'
+  if (title.includes('降级') || title.includes('升级') || title.includes('前四') || title.includes('前六')) return 'season_position'
   if (title.startsWith('让分')) return 'handicap_eu'
   return 'unknown'
 }
@@ -82,6 +90,9 @@ export type CombineResult =
  * - 任一为 novelty：放行
  */
 export function canCombine(a: MarketFamily, b: MarketFamily): CombineResult {
+  if (a.startsWith('future_') || b.startsWith('future_') || a === 'qualification' || b === 'qualification' || a === 'stage_result' || b === 'stage_result' || a === 'season_position' || b === 'season_position') {
+    return { ok: false, reason: '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交' }
+  }
   if (a === 'novelty' || b === 'novelty') return { ok: true }
   if (a === 'unknown' || b === 'unknown') {
     return { ok: false, reason: '该盘口暂不可与本场其他玩法组合' }

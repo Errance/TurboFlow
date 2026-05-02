@@ -110,6 +110,11 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
             )}
           </div>
           <p className="text-xs text-[var(--text-primary)] truncate">{bet.matchLabel}</p>
+          {bet.subject && (
+            <p className="mt-0.5 text-[10px] text-[var(--text-secondary)] truncate">
+              {bet.subject.scope === 'tie' ? '系列赛预测' : '赛事级盘口'} · {bet.subject.resolutionTimeLabel}
+            </p>
+          )}
         </div>
         <div className="text-right shrink-0">
           <p className="text-[10px] text-[var(--text-secondary)]">{relativeTime(bet.placedAt)}</p>
@@ -130,6 +135,9 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
       {!isParlay && (
         <>
           <p className="text-[11px] text-[var(--text-primary)]">{bet.marketTitle}</p>
+          {bet.subject?.resolutionSource && (
+            <p className="text-[10px] text-[var(--text-secondary)]">结算来源：{bet.subject.resolutionSource}</p>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#2DD4BF]">{bet.selection}</span>
             <span className="text-xs font-mono text-[var(--text-primary)]">
@@ -163,6 +171,9 @@ export default function MyBetCard({ bet, onCashOut, onReplay, onCopyCode }: Prop
                   <div key={l.id} className="bg-[var(--bg-card)] rounded-md p-2">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] text-[var(--text-secondary)] truncate">{l.matchLabel}</p>
+                      {l.subject && (
+                        <p className="text-[9px] text-[var(--text-secondary)] truncate">{l.subject.resolutionTimeLabel}</p>
+                      )}
                       {l.result && (
                         <span
                           className={`text-[10px] ${

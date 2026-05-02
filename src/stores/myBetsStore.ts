@@ -312,6 +312,7 @@ export const useMyBetsStore = create<MyBetsState>((set, get) => ({
       return {
         matchId: leg.matchId,
         matchLabel: leg.matchLabel,
+        subject: leg.subject,
         marketTitle: leg.marketTitle,
         selection: leg.selection,
         odds: currentOdds ?? leg.oddsAtPlacement,

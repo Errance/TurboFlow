@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { leagues, matches } from '../data/soccer/mockData'
+import { futuresCompetitions } from '../data/soccer/futuresData'
 import MatchListCard from '../components/soccer/MatchListCard'
 import { SoccerListSkeleton } from '../components/soccer/SoccerSkeletons'
 
 export default function SoccerPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedLeague, setSelectedLeague] = useState<string>(() => searchParams.get('league') ?? 'all')
+  const [view, setView] = useState<'matches' | 'futures'>(() => searchParams.get('view') === 'futures' ? 'futures' : 'matches')
   const [bootstrapped, setBootstrapped] = useState(false)
 
   useEffect(() => {
@@ -14,6 +17,8 @@ export default function SoccerPage() {
     if (leagueParam && leagueParam !== selectedLeague) {
       setSelectedLeague(leagueParam)
     }
+    const nextView = searchParams.get('view') === 'futures' ? 'futures' : 'matches'
+    if (nextView !== view) setView(nextView)
   }, [searchParams])
 
   useEffect(() => {
@@ -26,9 +31,18 @@ export default function SoccerPage() {
   const handleLeagueChange = (id: string) => {
     setSelectedLeague(id)
     if (id === 'all') {
-      setSearchParams({})
+      setSearchParams(view === 'futures' ? { view: 'futures' } : {})
     } else {
-      setSearchParams({ league: id })
+      setSearchParams(view === 'futures' ? { view: 'futures', league: id } : { league: id })
+    }
+  }
+
+  const handleViewChange = (nextView: 'matches' | 'futures') => {
+    setView(nextView)
+    if (nextView === 'futures') {
+      setSearchParams(selectedLeague === 'all' ? { view: 'futures' } : { view: 'futures', league: selectedLeague })
+    } else {
+      setSearchParams(selectedLeague === 'all' ? {} : { league: selectedLeague })
     }
   }
 
@@ -145,7 +159,31 @@ export default function SoccerPage() {
 
         {/* Main content - Match list */}
         <div className="flex-1 min-w-0">
-          {Object.entries(groupedByLeague).map(([league, leagueMatches]) => (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
+              {[
+                { id: 'matches' as const, label: '比赛' },
+                { id: 'futures' as const, label: '冠军与晋级' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleViewChange(item.id)}
+                  className={`rounded-lg px-4 py-2 text-sm transition-colors ${
+                    view === item.id
+                      ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] font-semibold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            {view === 'futures' && (
+              <p className="text-xs text-[var(--text-secondary)]">冠军、晋级、赛季名次和两回合系列赛预测</p>
+            )}
+          </div>
+
+          {view === 'matches' && Object.entries(groupedByLeague).map(([league, leagueMatches]) => (
             <div key={league} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">{league}</h3>
@@ -169,7 +207,38 @@ export default function SoccerPage() {
             </div>
           ))}
 
-          {filteredMatches.length === 0 && (
+          {view === 'futures' && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {futuresCompetitions.map((competition) => (
+                <button
+                  key={competition.id}
+                  onClick={() => navigate(`/soccer/futures/${competition.id}`)}
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 text-left transition-colors hover:border-[#2DD4BF]/40"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2DD4BF]">{competition.region} · {competition.phase}</p>
+                      <h3 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
+                      <p className="mt-2 text-sm text-[var(--text-secondary)]">{competition.headline}</p>
+                    </div>
+                    <span className="rounded-full bg-[var(--bg-control)] px-2.5 py-1 text-[10px] text-[var(--text-secondary)]">
+                      {competition.markets.length} 个市场
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    {competition.markets.slice(0, 3).map((item) => (
+                      <div key={item.id} className="rounded-xl bg-[var(--bg-control)] px-3 py-2">
+                        <p className="text-[10px] text-[var(--text-secondary)]">{item.group}</p>
+                        <p className="mt-1 truncate text-xs text-[var(--text-primary)]">{item.market.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {view === 'matches' && filteredMatches.length === 0 && (
             <div className="text-center py-12">
               <p className="text-[var(--text-secondary)]">暂无赛事</p>
             </div>
