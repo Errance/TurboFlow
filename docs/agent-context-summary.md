@@ -138,7 +138,7 @@
 注意：
 
 - PRD 所在目录可能被 `.gitignore` 忽略，提交文档时需要 `git add -f`。
-- `TurboFlow足球盘口产品需求文档_v4.3.md` 作为旧引用路径兼容保留，当前也承载 v4.4 内容；后续以 `TurboFlow足球盘口产品需求文档_v4.4.md` 为主文档。
+- `TurboFlow足球盘口产品需求文档_v4.3.md` 保持 v4.3 原范围，不承载 v4.4 内容；v4.4 后续以 `TurboFlow足球盘口产品需求文档_v4.4.md` 为主文档。
 - 用户会把 Markdown 预览里的 Mermaid 图复制到 Notion，所以流程图不要写成 `text` 代码块。
 
 ## 关键代码文件
