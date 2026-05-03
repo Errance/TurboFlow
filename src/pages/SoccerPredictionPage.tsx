@@ -22,6 +22,7 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import PredictionConfirmDialog from '../components/soccer/PredictionConfirmDialog'
 import PredictionShareDialog from '../components/soccer/PredictionShareDialog'
+import { useSoccerBracketEntryStore } from '../stores/soccerBracketEntryStore'
 import { useToastStore } from '../stores/toastStore'
 import {
   bracketTournaments,
@@ -47,6 +48,12 @@ export default function SoccerPredictionPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
+  const storeEntry = useSoccerBracketEntryStore((s) => s.entries[tournamentId ?? ''])
+  const updateDraft = useSoccerBracketEntryStore((s) => s.updateDraft)
+  const submitEntry = useSoccerBracketEntryStore((s) => s.submitEntry)
+  const saveEntry = useSoccerBracketEntryStore((s) => s.saveEntry)
+  const withdrawEntry = useSoccerBracketEntryStore((s) => s.withdrawEntry)
+  const createShareSnapshot = useSoccerBracketEntryStore((s) => s.createShareSnapshot)
 
   const tournament = useMemo<BracketTournament>(() => {
     return (
@@ -56,14 +63,15 @@ export default function SoccerPredictionPage() {
   }, [tournamentId])
 
   const initialEntry = useMemo<UserBracketEntry | undefined>(() => {
+    if (storeEntry) return storeEntry
     if (tournament.status === 'settled') {
       return sampleEntries.find((e) => e.tournamentId === tournament.id && e.status === 'settled')
     }
     if (tournament.status === 'running' || tournament.status === 'locked') {
       return sampleEntries.find((e) => e.tournamentId === tournament.id && e.totalScore !== undefined)
     }
-    return sampleEntries.find((e) => e.tournamentId === tournament.id && e.status === 'submitted')
-  }, [tournament])
+    return undefined
+  }, [storeEntry, tournament])
 
   const [picks, setPicks] = useState<Record<string, string>>(initialEntry?.picks ?? {})
   const [tiebreakerGuess, setTiebreakerGuess] = useState<number | undefined>(
@@ -76,7 +84,18 @@ export default function SoccerPredictionPage() {
   )
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [shareEntry, setShareEntry] = useState<UserBracketEntry | null>(null)
   const [teachingOpen, setTeachingOpen] = useState(false)
+
+  useEffect(() => {
+    setPicks(initialEntry?.picks ?? {})
+    setTiebreakerGuess(initialEntry?.tiebreakerGuess)
+    setHasSubmitted(
+      initialEntry?.status === 'submitted' ||
+        initialEntry?.status === 'locked' ||
+        initialEntry?.status === 'settled',
+    )
+  }, [initialEntry?.id, initialEntry?.status, tournament.id])
 
   // 首次进入弹一次教学卡片
   useEffect(() => {
@@ -89,12 +108,14 @@ export default function SoccerPredictionPage() {
     }
   }, [tournament.id])
 
+  const hasTimeLocked = Date.now() >= new Date(tournament.lockAt).getTime()
   const isReadonly =
     tournament.status === 'locked' ||
     tournament.status === 'running' ||
     tournament.status === 'settled' ||
     tournament.status === 'cancelled' ||
-    tournament.status === 'upcoming'
+    tournament.status === 'upcoming' ||
+    hasTimeLocked
 
   // 计算每个 slot 的可选两支队伍（R16 直接看 candidates；上游看子 slot 已选）
   const candidatesForSlot = (slot: BracketSlot): [string, string] | null => {
@@ -144,6 +165,7 @@ export default function SoccerPredictionPage() {
       // 如果改了一个 slot 的选择，下游所有依赖此 slot 的 slot 都要清空
       const cleared = clearDownstream(slotId, next, tournament.slots)
       cleared[slotId] = teamId
+      updateDraft({ tournamentId: tournament.id, picks: cleared, tiebreakerGuess })
       return cleared
     })
   }
@@ -160,10 +182,16 @@ export default function SoccerPredictionPage() {
       addToast({ type: 'error', message: '请填写决赛总进球数预测' })
       return
     }
+    if (hasSubmitted) {
+      saveEntry({ tournamentId: tournament.id, picks, tiebreakerGuess })
+      addToast({ type: 'success', message: '预测已保存，入场费不重复扣除。' })
+      return
+    }
     setConfirmOpen(true)
   }
 
   const handleConfirmSubmit = () => {
+    submitEntry({ tournamentId: tournament.id, picks, tiebreakerGuess })
     setConfirmOpen(false)
     setHasSubmitted(true)
     addToast({
@@ -174,11 +202,25 @@ export default function SoccerPredictionPage() {
 
   const handleWithdraw = () => {
     if (!window.confirm('确认锁前撤回？入场费将退回钱包，并清空当前预测。')) return
+    withdrawEntry(tournament.id)
     setHasSubmitted(false)
+    setPicks({})
+    setTiebreakerGuess(undefined)
     addToast({
       type: 'success',
       message: `已撤回预测，${tournament.entryFee.toFixed(2)} ${tournament.currency} 已退回钱包`,
     })
+  }
+
+  const handleShare = () => {
+    const snapshot = createShareSnapshot(tournament.id)
+    if (snapshot) {
+      setShareEntry(snapshot)
+      setShareOpen(true)
+      return
+    }
+    setShareEntry(settledEntryForShare)
+    setShareOpen(true)
   }
 
   const settledEntryForShare: UserBracketEntry = useMemo(() => {
@@ -189,7 +231,8 @@ export default function SoccerPredictionPage() {
       picks,
       tiebreakerGuess,
       status: hasSubmitted ? 'submitted' : 'draft',
-      shareId: hasSubmitted ? 'share-self-submitted' : undefined,
+      submittedAt: hasSubmitted ? new Date().toISOString() : undefined,
+      shareId: undefined,
       totalScore: liveScore || undefined,
       projectedPayout: projectedSelfPayout || undefined,
       scoreShare:
@@ -361,6 +404,11 @@ export default function SoccerPredictionPage() {
               <p className="mt-1 text-sm font-mono text-[#2DD4BF] font-semibold">
                 {projectedSelfPayout > 0 ? `≈ ${projectedSelfPayout.toFixed(2)} USDT` : '—'}
               </p>
+              {tournament.status === 'open' && (
+                <p className="mt-0.5 text-[10px] text-[var(--text-secondary)]">
+                  报名期仅作奖金池示例；真实投影在赛事进行中刷新。
+                </p>
+              )}
               {liveScore > 0 && tournament.poolSnapshot.aggregateScore > 0 && (
                 <p className="mt-0.5 text-[10px] text-[var(--text-secondary)]">
                   占总分 {((liveScore / tournament.poolSnapshot.aggregateScore) * 100).toFixed(2)}%
@@ -381,7 +429,9 @@ export default function SoccerPredictionPage() {
                 onChange={(e) => {
                   if (isReadonly) return
                   const v = e.target.value
-                  setTiebreakerGuess(v === '' ? undefined : Number(v))
+                  const nextGuess = v === '' ? undefined : Number(v)
+                  setTiebreakerGuess(nextGuess)
+                  updateDraft({ tournamentId: tournament.id, picks, tiebreakerGuess: nextGuess })
                 }}
                 disabled={isReadonly}
                 placeholder="例如 3"
@@ -427,7 +477,7 @@ export default function SoccerPredictionPage() {
                 </p>
               )}
               {(hasSubmitted || tournament.status !== 'open') && (
-                <Button variant="secondary" fullWidth onClick={() => setShareOpen(true)}>
+                <Button variant="secondary" fullWidth onClick={handleShare}>
                   分享我的预测
                 </Button>
               )}
@@ -490,7 +540,7 @@ export default function SoccerPredictionPage() {
         isOpen={shareOpen}
         onClose={() => setShareOpen(false)}
         tournament={tournament}
-        entry={settledEntryForShare}
+        entry={shareEntry ?? settledEntryForShare}
       />
     </div>
   )

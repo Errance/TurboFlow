@@ -16,6 +16,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../components/ui/Button'
+import { useSoccerBracketEntryStore } from '../stores/soccerBracketEntryStore'
 import {
   bracketTournaments,
   getEntryByShareId,
@@ -29,8 +30,11 @@ import {
 export default function SoccerPredictionShareView() {
   const { shareId } = useParams<{ shareId: string }>()
   const navigate = useNavigate()
+  const getShareSnapshot = useSoccerBracketEntryStore((s) => s.getShareSnapshot)
 
-  const entry: UserBracketEntry | undefined = shareId ? getEntryByShareId(shareId) : undefined
+  const entry: UserBracketEntry | undefined = shareId
+    ? (getShareSnapshot(shareId) ?? getEntryByShareId(shareId))
+    : undefined
   const tournament: BracketTournament | undefined = entry
     ? bracketTournaments.find((t) => t.id === entry.tournamentId)
     : undefined

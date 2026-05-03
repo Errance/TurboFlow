@@ -69,7 +69,7 @@ export default function PredictionShareDialog({ isOpen, onClose, tournament, ent
   const handleDownload = () => {
     addToast({
       type: 'info',
-      message: '示例环境暂未生成图片，仅展示分享卡片预览。',
+      message: '当前为 mock 导出预览，真实图片生成留给后续接入。',
     })
   }
 
@@ -94,19 +94,8 @@ export default function PredictionShareDialog({ isOpen, onClose, tournament, ent
               <p className="mt-1 text-base font-mono font-semibold text-[var(--text-primary)]">
                 {Object.keys(entry.picks).length} / {tournament.slots.length}
               </p>
-              {entry.totalScore !== undefined && (
-                <>
-                  <p className="text-[10px] text-[var(--text-secondary)] mt-2">本人得分</p>
-                  <p className="text-base font-mono text-[#2DD4BF]">{entry.totalScore} 分</p>
-                </>
-              )}
             </div>
           </div>
-          {entry.projectedPayout !== undefined && entry.projectedPayout > 0 && (
-            <p className="mt-3 text-[10px] text-[var(--text-secondary)]">
-              当前投影派奖：约 {entry.projectedPayout.toFixed(2)} USDT
-            </p>
-          )}
           <p className="mt-3 text-[10px] text-[var(--text-secondary)] truncate">
             {shareUrl || '—'}
           </p>
@@ -117,7 +106,7 @@ export default function PredictionShareDialog({ isOpen, onClose, tournament, ent
             复制链接
           </Button>
           <Button variant="secondary" onClick={handleDownload}>
-            下载图片
+            导出预览
           </Button>
           <Button variant="secondary" onClick={handleCopyText}>
             复制文案

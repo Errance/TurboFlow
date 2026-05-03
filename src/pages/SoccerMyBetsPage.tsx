@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMyBetsStore } from '../stores/myBetsStore'
+import { useSoccerBracketEntryStore } from '../stores/soccerBracketEntryStore'
 import { useToastStore } from '../stores/toastStore'
 import MyBetCard from '../components/soccer/MyBetCard'
 import PredictionEntryCard from '../components/soccer/PredictionEntryCard'
@@ -298,6 +299,8 @@ export default function SoccerMyBetsPage() {
 
 function PoolEntriesPanel() {
   const addToast = useToastStore((s) => s.addToast)
+  const entries = useSoccerBracketEntryStore((s) => s.entries)
+  const withdrawEntry = useSoccerBracketEntryStore((s) => s.withdrawEntry)
 
   // mock 演示：按状态分组展示，同一赛事下多个状态都有示例
   const groups = [
@@ -309,7 +312,8 @@ function PoolEntriesPanel() {
 
   // 去重：每个赛事的同一状态保留最新一条（mock 中 self-locked 和 self-running 都是同一 entry 的不同形态，只展示其中一个）
   const seen = new Set<string>()
-  const visibleEntries = sampleEntries.filter((e) => {
+  const storeEntries = Object.values(entries)
+  const visibleEntries = [...storeEntries, ...sampleEntries].filter((e) => {
     if (e.status === 'locked' && e.totalScore === undefined) return false
     const key = `${e.tournamentId}|${e.status}`
     if (seen.has(key)) return false
@@ -347,10 +351,13 @@ function PoolEntriesPanel() {
                     key={entry.id}
                     entry={entry}
                     tournament={tournament}
-                    onWithdraw={() => addToast({
-                      type: 'success',
-                      message: `已撤回，${tournament.entryFee.toFixed(2)} ${tournament.currency} 已退回钱包（演示）`,
-                    })}
+                    onWithdraw={() => {
+                      withdrawEntry(entry.tournamentId)
+                      addToast({
+                        type: 'success',
+                        message: `已撤回，${tournament.entryFee.toFixed(2)} ${tournament.currency} 已退回钱包（演示）`,
+                      })
+                    }}
                     onReplay={() => addToast({
                       type: 'info',
                       message: '尚未开放下届赛事报名（演示）',

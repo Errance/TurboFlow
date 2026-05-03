@@ -68,6 +68,8 @@ export default function PredictionConfirmDialog({
         <div className="grid grid-cols-2 gap-3">
           <Stat label="入场费" value={`${tournament.entryFee.toFixed(2)} ${tournament.currency}`} highlight />
           <Stat label="当前奖金池" value={`${tournament.poolSnapshot.netPool.toLocaleString()} USDT`} />
+          <Stat label="保底池" value={`${tournament.guaranteedPool.toLocaleString()} USDT`} />
+          <Stat label="最低成团" value={`${tournament.minEntrants.toLocaleString()} 人`} />
           <Stat label="抽水比例" value={`${(tournament.rake * 100).toFixed(0)}%`} />
           <Stat
             label="完成度"
@@ -94,6 +96,7 @@ export default function PredictionConfirmDialog({
           <p className="text-xs text-[var(--text-secondary)] leading-5">
             按命中率分奖：派奖 = (本人得分 / 全员总分) × 净池。R16=1pt × 8 / QF=2pt × 4 / SF=4pt × 2 / 决赛=8pt，满分 32 分。
             得 0 分者不派奖。{tournament.tiebreakerLabel} 仅用于榜单展示排序，不影响派奖。
+            {tournament.lateStrategyLabel}
           </p>
         </div>
 

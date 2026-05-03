@@ -31,7 +31,7 @@ export type UserBracketEntryStatus =
   | 'settled'
   | 'refunded'
 
-export type BracketRefundReason = 'user_withdraw' | 'tournament_cancelled' | 'aggregate_zero'
+export type BracketRefundReason = 'user_withdraw' | 'tournament_cancelled' | 'aggregate_zero' | 'minimum_not_met'
 
 export interface BracketRound {
   id: BracketRoundId
@@ -107,13 +107,18 @@ export interface BracketTournament {
   status: BracketTournamentStatus
   rounds: BracketRound[]
   slots: BracketSlot[]
+  openAt: string
   entryFee: number
   currency: 'USDT'
   rake: number
+  minEntrants: number
+  guaranteedPool: number
   lockAt: string
   settleAt: string
   fundLockHint: string
   tiebreakerLabel: string
+  lateStrategyLabel: string
+  distributionPolicyLabel: string
   teachingCard: TeachingCard
   poolSnapshot: BracketPoolSnapshot
   distribution: PoolDistributionSnapshot[]
@@ -313,8 +318,11 @@ export function teamLabel(id: string): string {
   return TEAM_LABEL[id] ?? id
 }
 
-const UCL_LOCK_AT = '2026-02-17T20:00:00.000Z'
-const UCL_SETTLE_AT = '2026-05-30T19:00:00.000Z'
+export const SAMPLE_FINAL_TOTAL_GOALS = 3
+
+const UCL_OPEN_AT = '2026-05-01T10:00:00.000Z'
+const UCL_LOCK_AT = '2026-05-20T20:00:00.000Z'
+const UCL_SETTLE_AT = '2026-07-12T19:00:00.000Z'
 
 function makeTieSubject(slotId: string, label: string, closesAt: string, resolutionLabel: string): BetSubject {
   return {
@@ -410,29 +418,33 @@ function buildSlots(): BracketSlot[] {
 }
 
 function makeDistribution(slots: BracketSlot[], totalPicks: number): PoolDistributionSnapshot[] {
-  // 用稳定哈希给每个 slot 分配一个 majority share，让数字看起来真实但可预测
+  // 用稳定哈希生成仿真分布。R16 只有两队；下游 slot 覆盖所有潜在球队，
+  // UI 再按当前候选过滤展示，避免 QF/SF/F 使用 placeholder 后查不到占比。
   const result: PoolDistributionSnapshot[] = []
-  const captured = '2026-02-15T10:00:00.000Z'
+  const captured = '2026-05-03T00:30:00.000Z'
+  const allTeamIds = Object.keys(TEAM_LABEL)
   for (const slot of slots) {
-    let pair: [string, string] | undefined = slot.candidates
-    if (!pair) {
-      // QF/SF/F 的两支队伍来自上游，这里给个 placeholder，UI 会按上游已选项显示
-      pair = ['(上游胜者 A)', '(上游胜者 B)']
-    }
+    const candidates = slot.candidates ?? allTeamIds
     const seed = Array.from(slot.id).reduce((sum, c) => sum + c.charCodeAt(0), 0)
-    const aShare = 0.4 + ((seed * 13) % 30) / 100 // 0.40 ~ 0.69
-    const bShare = 1 - aShare
-    const aCount = Math.round(totalPicks * aShare)
-    const bCount = totalPicks - aCount
+    const rawWeights = candidates.map((teamId, index) => {
+      const teamSeed = Array.from(teamId).reduce((sum, c) => sum + c.charCodeAt(0), 0)
+      return 8 + ((seed + teamSeed + index * 17) % 33)
+    })
+    const rawTotal = rawWeights.reduce((sum, value) => sum + value, 0)
+    const shares = candidates.map((teamId, index) => {
+      const pickShare = rawWeights[index] / rawTotal
+      return {
+        teamId,
+        pickCount: Math.round(totalPicks * pickShare),
+        pickShare,
+      }
+    })
     result.push({
       slotId: slot.id,
       capturedAt: captured,
       frozen: false,
       totalPicks,
-      shares: [
-        { teamId: pair[0], pickCount: aCount, pickShare: aShare },
-        { teamId: pair[1], pickCount: bCount, pickShare: bShare },
-      ],
+      shares,
     })
   }
   return result
@@ -499,20 +511,25 @@ export const UCL_BRACKET: BracketTournament = {
     { id: 'F', label: '决赛', weight: 8, slotCount: 1 },
   ],
   slots: UCL_SLOTS,
+  openAt: UCL_OPEN_AT,
   entryFee: 10,
   currency: 'USDT',
   rake: 0.1,
+  minEntrants: 1000,
+  guaranteedPool: 50000,
   lockAt: UCL_LOCK_AT,
   settleAt: UCL_SETTLE_AT,
-  fundLockHint: '入场费将锁定约 12 周（2026-02-17 锁定，2026-05-30 决赛后派奖）。锁前可全额撤回，锁后无法取消。',
+  fundLockHint: '入场费将锁定约 8 周（2026-05-20 锁定，2026-07-12 决赛后派奖）。锁前可全额撤回，锁后无法取消。',
   tiebreakerLabel: '决赛总进球数（含加时）',
+  lateStrategyLabel: '用户预测分布为约 15 分钟延迟快照，锁定前 2 小时冻结。',
+  distributionPolicyLabel: '分布按 slot 展示；下游轮次会根据你当前 bracket 候选球队过滤展示。',
   teachingCard: UCL_TEACHING,
   poolSnapshot: {
     entrants: 4218,
     grossPool: 42180,
-    netPool: 37962,
+    netPool: 45000,
     aggregateScore: 38104,
-    capturedAt: '2026-02-15T10:00:00.000Z',
+    capturedAt: '2026-05-03T00:30:00.000Z',
   },
   distribution: makeDistribution(UCL_SLOTS, 4218),
   configMeta: UCL_CONFIG_META,
@@ -538,13 +555,18 @@ export const WC_BRACKET_PLACEHOLDER: BracketTournament = {
     { id: 'F', label: '决赛', weight: 8, slotCount: 1 },
   ],
   slots: [],
+  openAt: '2026-06-28T12:00:00.000Z',
   entryFee: 10,
   currency: 'USDT',
   rake: 0.1,
+  minEntrants: 2000,
+  guaranteedPool: 100000,
   lockAt: '2026-07-04T16:00:00.000Z',
   settleAt: '2026-07-19T19:00:00.000Z',
   fundLockHint: '入场费将锁定约 2 周（2026-07-04 锁定，2026-07-19 决赛后派奖）。锁前可全额撤回。',
   tiebreakerLabel: '决赛总进球数（含加时）',
+  lateStrategyLabel: '报名开放后展示约 15 分钟延迟的用户预测分布。',
+  distributionPolicyLabel: '对阵树确认前不展示 slot 分布；开放报名后按 slot 展示。',
   teachingCard: UCL_TEACHING,
   poolSnapshot: {
     entrants: 0,
@@ -618,13 +640,13 @@ const SETTLED_RESULTS: Record<string, string> = {
 const RUNNING_BREAKDOWN = scoreEntry(SELF_SUBMITTED_PICKS, RUNNING_RESULTS, UCL_SLOTS).breakdown
 const RUNNING_TOTAL = RUNNING_BREAKDOWN.reduce((s, b) => s + b.points, 0)
 const RUNNING_AGG = 38104
-const RUNNING_NET = 37962
+const RUNNING_NET = 45000
 const RUNNING_PROJECTED = projectPayout(RUNNING_TOTAL, RUNNING_AGG, RUNNING_NET)
 
 const SETTLED_BREAKDOWN = scoreEntry(SELF_SUBMITTED_PICKS, SETTLED_RESULTS, UCL_SLOTS).breakdown
 const SETTLED_TOTAL = SETTLED_BREAKDOWN.reduce((s, b) => s + b.points, 0)
 const SETTLED_AGG = 41200
-const SETTLED_NET = 37962
+const SETTLED_NET = 45000
 const SETTLED_FINAL = projectPayout(SETTLED_TOTAL, SETTLED_AGG, SETTLED_NET)
 const SETTLED_REVIEW = buildSettlementReview(SELF_SUBMITTED_PICKS, SETTLED_RESULTS, UCL_SLOTS)
 // 把 review 中的 teamId/Label 替换为可读球队名
@@ -707,6 +729,17 @@ export const sampleEntries: UserBracketEntry[] = [
     refundedAt: '2026-02-11T09:05:00.000Z',
     refundReason: 'user_withdraw',
   },
+  {
+    id: 'entry-self-minimum-refunded',
+    tournamentId: UCL_BRACKET.id,
+    userName: '我',
+    picks: SELF_SUBMITTED_PICKS,
+    tiebreakerGuess: 3,
+    status: 'refunded',
+    submittedAt: '2026-05-03T09:20:00.000Z',
+    refundedAt: '2026-05-20T20:05:00.000Z',
+    refundReason: 'minimum_not_met',
+  },
 ]
 
 export function getEntryByShareId(shareId: string): UserBracketEntry | undefined {
@@ -726,13 +759,14 @@ function makeLeaderboard(): LeaderboardRow[] {
     'goalden_eyes', 'guardiola_x', 'roberto.c', 'beckhamLite', 'aniki_kane', 'iker.casillas',
     'frabbie', 'thiago_brasil', 'darksisko', 'monchi.fan', 'kaka_22',
   ]
-  for (let rank = 1; rank <= 100; rank++) {
+  for (let rank = 1; rank <= 360; rank++) {
     let score: number
     if (rank === 1) score = 28
     else if (rank <= 10) score = 26 - Math.floor((rank - 1) * 0.4)
     else if (rank <= 30) score = 22 - Math.floor((rank - 10) * 0.3)
     else if (rank <= 60) score = 16 - Math.floor((rank - 30) * 0.15)
-    else score = 12 - Math.floor((rank - 60) * 0.08)
+    else if (rank <= 180) score = 12 - Math.floor((rank - 60) * 0.04)
+    else score = 8 - Math.floor((rank - 180) * 0.025)
     if (score < 1) score = 1
 
     let name: string
@@ -819,5 +853,7 @@ export function describeRefundReason(reason: BracketRefundReason): string {
       return '赛事取消'
     case 'aggregate_zero':
       return '全员总分为 0 兜底退款'
+    case 'minimum_not_met':
+      return '未达最低参赛人数'
   }
 }

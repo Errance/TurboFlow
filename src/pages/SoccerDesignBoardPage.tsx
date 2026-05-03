@@ -464,7 +464,7 @@ export default function SoccerDesignBoardPage() {
       <BoardSection
         id="pool-states"
         title="11. v4.5 预测大赛状态"
-        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。所有人入场费汇成奖金池，按命中率分奖；与 v4.4 个体盘并存，独立结算，不可串关。"
+        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。所有人入场费汇成奖金池，按命中率分奖；与 v4.4 个体盘并存，独立结算，不可串关。本展板不覆盖 KYC、身份认证、地域限制相关状态。"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview
@@ -499,8 +499,9 @@ export default function SoccerDesignBoardPage() {
           <BetSlipPreview
             title="④ 二次确认弹窗"
             lines={[
-              '入场费 10 USDT｜净池 37,962 USDT',
-              '⚠ 资金锁定提示：约 12 周',
+              '入场费 10 USDT｜净池 45,000 USDT｜保底池 50,000 USDT',
+              '最低 1,000 人成团；未达最低人数全额退款',
+              '资金锁定提示：约 8 周',
               '"我已了解上述规则" 勾选',
             ]}
             footer="确认提交"
@@ -511,7 +512,7 @@ export default function SoccerDesignBoardPage() {
             lines={[
               '状态徽标：已提交',
               '资金锁定提示常驻',
-              '操作：编辑预测 / 锁前撤回 / 分享',
+              '操作：保存修改 / 锁前撤回 / 分享',
             ]}
             footer="锁定倒计时 2 天 5 小时"
             tone="success"
@@ -519,8 +520,9 @@ export default function SoccerDesignBoardPage() {
           <BetSlipPreview
             title="⑥ 分享导出弹窗"
             lines={[
-              '预览卡片：冠军预测 + 完成度',
-              '三个动作：复制链接 / 下载图片 / 复制文案',
+              '预览卡片：冠军预测 + 完成度 + 提交时间',
+              '公开链接不显示资金、得分、投影派奖',
+              '三个动作：复制链接 / 导出预览 / 复制文案',
               '链接形如 /soccer/predictions/share/:shareId',
             ]}
             footer="只读视图，不显示资金"
@@ -548,7 +550,7 @@ export default function SoccerDesignBoardPage() {
             lines={[
               'R16 已结算，QF 部分结算',
               '本人当前 16 分｜占总分 0.04%',
-              '投影派奖 ≈ 15.93 USDT｜实时刷新',
+              '投影派奖 ≈ 18.90 USDT｜每场结算后刷新',
             ]}
             footer="进行中｜每场结算后刷新"
             tone="success"
@@ -557,7 +559,7 @@ export default function SoccerDesignBoardPage() {
             title="⑩ 已结算｜含赛后回顾"
             lines={[
               '决赛官方结果出',
-              '实得派奖 17.51 USDT 已到账',
+              '实得派奖 19.66 USDT 已到账',
               '回顾：R16 6/8 · QF 3/4 · SF 2/2 · F 1/1',
             ]}
             footer="查看回顾"
@@ -583,6 +585,35 @@ export default function SoccerDesignBoardPage() {
             footer="本届无人命中，已全额退款"
             tone="warning"
           />
+          <BetSlipPreview
+            title="⑬ 保存修改｜不重复扣费"
+            lines={[
+              '已提交用户锁前修改 bracket 或 tiebreaker',
+              '按钮文案：保存修改，而不是再次提交',
+              '提示：预测已保存，入场费不重复扣除',
+            ]}
+            footer="保存成功 toast"
+            tone="success"
+          />
+          <BetSlipPreview
+            title="⑭ 未达最低人数｜全额退款"
+            lines={[
+              '锁定时有效 entry 数低于 minEntrants',
+              '本届不进入 locked / running',
+              'refundReason = minimum_not_met',
+            ]}
+            footer="未达最低参赛人数，已全额退款"
+            tone="warning"
+          />
+          <BetSlipPreview
+            title="⑮ 分布延迟与冻结"
+            lines={[
+              '用户预测分布为约 15 分钟延迟快照',
+              '锁定前 2 小时冻结 crowds 占比',
+              '锁后分享和回顾使用冻结快照',
+            ]}
+            footer="减少压秒晚交优势"
+          />
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -600,15 +631,19 @@ export default function SoccerDesignBoardPage() {
           />
           <SmallState
             title="用户预测分布（wisdom of crowds）"
-            text="每个 slot 显示双方占比条；锁前实时刷新，锁定瞬间冻结快照并标注时间。"
+            text="每个 slot 显示当前候选球队的占比条；报名期为约 15 分钟延迟快照，锁定前 2 小时冻结，锁后永久使用冻结快照。"
           />
           <SmallState
             title="榜单形态"
-            text="详情页底部前 100 + 本人置顶；完整榜单页支持搜索、排序。页头明确『按命中率分奖、名次仅供展示』。"
+            text="详情页底部前 100 + 本人置顶；完整榜单页支持搜索、排序和 300+ 名模拟数据。同分时按 tiebreaker 距离排序，派奖仍只看得分占比。"
           />
           <SmallState
             title="不可串关 / 不可组合"
             text="v4.5 预测大赛与 v4.4 个体盘 独立结算、互不冲销、可同时参与，但不可串关 / 不可组合下注。"
+          />
+          <SmallState
+            title="运营配置必须露出"
+            text="openAt、lockAt、minEntrants、guaranteedPool、fundLockHint、lateStrategyLabel 都要在首页卡片、详情页或二次确认中有明确用户可见文案。"
           />
         </div>
       </BoardSection>

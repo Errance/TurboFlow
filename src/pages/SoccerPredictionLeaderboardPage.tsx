@@ -15,6 +15,7 @@ import Button from '../components/ui/Button'
 import {
   bracketTournaments,
   getBracketTournamentById,
+  SAMPLE_FINAL_TOTAL_GOALS,
   sampleLeaderboard,
   sampleSelfRunningRow,
   type BracketTournament,
@@ -48,7 +49,10 @@ export default function SoccerPredictionLeaderboardPage() {
       : all
     const sorted = [...matched].sort((a, b) => {
       if (sortKey === 'tiebreaker') {
-        return (a.tiebreakerGuess ?? 99) - (b.tiebreakerGuess ?? 99)
+        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore
+        const aDistance = Math.abs((a.tiebreakerGuess ?? 99) - SAMPLE_FINAL_TOTAL_GOALS)
+        const bDistance = Math.abs((b.tiebreakerGuess ?? 99) - SAMPLE_FINAL_TOTAL_GOALS)
+        return aDistance - bDistance
       }
       return b.totalScore - a.totalScore
     })
@@ -114,7 +118,7 @@ export default function SoccerPredictionLeaderboardPage() {
         <div className="flex rounded-lg bg-[var(--bg-card)] border border-[var(--border)] p-0.5">
           {[
             { id: 'score' as const, label: '按得分' },
-            { id: 'tiebreaker' as const, label: '按 tiebreaker' },
+            { id: 'tiebreaker' as const, label: '同分 tiebreaker' },
           ].map((opt) => (
             <button
               key={opt.id}
