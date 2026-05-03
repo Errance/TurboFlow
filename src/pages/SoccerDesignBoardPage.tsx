@@ -238,7 +238,7 @@ export default function SoccerDesignBoardPage() {
           <Metric label="赛事级市场" value="6" />
           <Metric label="盘口状态" value="11" />
           <Metric label="投注单状态" value="20" />
-          <Metric label="预测大赛状态" value="12" />
+          <Metric label="预测大赛状态" value="20" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
@@ -464,7 +464,7 @@ export default function SoccerDesignBoardPage() {
       <BoardSection
         id="pool-states"
         title="11. v4.5 预测大赛状态"
-        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。所有人入场费汇成奖金池，按命中率分奖；与 v4.4 个体盘并存，独立结算，不可串关。本展板不覆盖 KYC、身份认证、地域限制相关状态。"
+        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。本轮补充 Perp DEX 现有推广码 / 邀请码归因、分享不覆盖归属、赛后下一届承接；不覆盖 KYC、身份认证、地域限制和用户准入筛选状态。"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BetSlipPreview
@@ -614,6 +614,52 @@ export default function SoccerDesignBoardPage() {
             ]}
             footer="减少压秒晚交优势"
           />
+          <BetSlipPreview
+            title="⑯ Perp DEX 站内入口"
+            lines={[
+              '定位：TurboFlow 预测市场新板块',
+              '当前约 500 DAU，先做站内轻量验证',
+              '不做独立大型 campaign / 任务中心',
+            ]}
+            footer="从 Perp 用户自然进入预测大赛"
+          />
+          <BetSlipPreview
+            title="⑰ 代理推广码归因"
+            lines={[
+              'sourceType = promo_code',
+              '展示脱敏推广码 AGT-•••-88',
+              '返佣按平台收入口径，不改变奖金池净池',
+            ]}
+            footer="沿用既有代理 / 伞下 / 无限级返佣体系"
+          />
+          <BetSlipPreview
+            title="⑱ 普通邀请码归因"
+            lines={[
+              'sourceType = invite_code',
+              '普通用户一级邀请，比例不可调整',
+              '预测大赛不新增第二套邀请码体系',
+            ]}
+            footer="沿用平台普通邀请码"
+          />
+          <BetSlipPreview
+            title="⑲ 分享页不覆盖归属"
+            lines={[
+              '访问 shareId 只记录分享来源',
+              '用户已有推广 / 邀请归属保持不变',
+              'entry 记录 shareSourceEntryId 用于产品分析',
+            ]}
+            footer="分享不是返佣链接"
+          />
+          <BetSlipPreview
+            title="⑳ 赛后下一届承接"
+            lines={[
+              '已结算回顾后展示“查看下届”',
+              '世界杯预测大赛作为即将开放承接',
+              '不做自动续投，只做轻量跳转 / 预约心智',
+            ]}
+            footer="从一次性活动过渡到预测市场板块"
+            tone="success"
+          />
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -644,6 +690,22 @@ export default function SoccerDesignBoardPage() {
           <SmallState
             title="运营配置必须露出"
             text="openAt、lockAt、minEntrants、guaranteedPool、fundLockHint、lateStrategyLabel 都要在首页卡片、详情页或二次确认中有明确用户可见文案。"
+          />
+          <SmallState
+            title="推广 / 邀请归因"
+            text="预测大赛不新造 referral 体系。推广码沿用代理和伞下规则；邀请码沿用普通用户一级返佣。UI 只展示归因提示，不展示比例配置。"
+          />
+          <SmallState
+            title="返佣和奖池分离"
+            text="返佣按平台预测市场收入口径计算，不从净池二次扣除，也不改变按命中率分奖公式。"
+          />
+          <SmallState
+            title="分享不覆盖归属"
+            text="分享页 CTA 可以带来回流，但只记录 shareSourceEntryId；访问者已有推广码或邀请码归属时保持原归属。"
+          />
+          <SmallState
+            title="下一届承接"
+            text="赛后回顾和我的预测大赛卡片要有下一届入口。v1 只展示世界杯占位或即将开放状态，不做自动续投。"
           />
         </div>
       </BoardSection>

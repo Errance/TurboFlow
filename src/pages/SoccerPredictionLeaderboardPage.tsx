@@ -38,9 +38,9 @@ export default function SoccerPredictionLeaderboardPage() {
   const [page, setPage] = useState(1)
 
   const filtered: LeaderboardRow[] = useMemo(() => {
-    const all = [...sampleLeaderboard]
+    const all = sampleLeaderboard.filter((row) => row.tournamentId === tournament.id)
     // 把"我"也插入榜单（mock 中不在前 100，单独高亮）
-    if (!all.some((r) => r.isSelf)) {
+    if (!all.some((r) => r.isSelf) && sampleSelfRunningRow.tournamentId === tournament.id) {
       all.push(sampleSelfRunningRow)
     }
     const lower = search.trim().toLowerCase()
@@ -57,7 +57,7 @@ export default function SoccerPredictionLeaderboardPage() {
       return b.totalScore - a.totalScore
     })
     return sorted
-  }, [sortKey, search])
+  }, [sortKey, search, tournament.id])
 
   const visible = filtered.slice(0, page * PAGE_SIZE)
   const hasMore = filtered.length > visible.length

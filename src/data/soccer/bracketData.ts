@@ -33,6 +33,17 @@ export type UserBracketEntryStatus =
 
 export type BracketRefundReason = 'user_withdraw' | 'tournament_cancelled' | 'aggregate_zero' | 'minimum_not_met'
 
+export type BracketAttributionSourceType = 'promo_code' | 'invite_code' | 'share' | 'organic'
+
+export interface BracketAttribution {
+  sourceType: BracketAttributionSourceType
+  sourceLabel: string
+  sourceCodeMasked?: string
+  shareSourceEntryId?: string
+  keepExistingAttribution: boolean
+  rebateBasisLabel: string
+}
+
 export interface BracketRound {
   id: BracketRoundId
   label: string
@@ -96,6 +107,28 @@ export interface BracketPoolSnapshot {
   capturedAt: string
 }
 
+export interface BracketGrowthContext {
+  baseBusiness: 'perp_dex'
+  marketVertical: 'prediction_market'
+  currentDau: number
+  tabImpressions: number
+  detailViews: number
+  submittedEntries: number
+  sourceMix: Array<{
+    sourceType: BracketAttributionSourceType
+    label: string
+    share: number
+  }>
+  lightweightOpsLabel: string
+}
+
+export interface BracketAffiliatePolicy {
+  enabled: boolean
+  label: string
+  basis: 'platform_revenue'
+  note: string
+}
+
 export interface BracketTournament {
   id: string
   name: string
@@ -123,6 +156,10 @@ export interface BracketTournament {
   poolSnapshot: BracketPoolSnapshot
   distribution: PoolDistributionSnapshot[]
   configMeta: TournamentConfigMeta
+  marketVertical: 'prediction_market'
+  growthContext: BracketGrowthContext
+  affiliatePolicy: BracketAffiliatePolicy
+  invitePolicy: BracketAffiliatePolicy
 }
 
 export interface BracketScoreBreakdownItem {
@@ -169,9 +206,11 @@ export interface UserBracketEntry {
   finalPayout?: number
   shareId?: string
   review?: SettlementReview
+  attribution?: BracketAttribution
 }
 
 export interface LeaderboardRow {
+  tournamentId: string
   rankDisplay: number
   userName: string
   isSelf: boolean
@@ -495,6 +534,44 @@ const UCL_CONFIG_META: TournamentConfigMeta = {
   notes: '一旦赛事进入 open 状态，资金参数和评分权重不得变更，确保参赛公平。',
 }
 
+const PLATFORM_GROWTH_CONTEXT: BracketGrowthContext = {
+  baseBusiness: 'perp_dex',
+  marketVertical: 'prediction_market',
+  currentDau: 500,
+  tabImpressions: 386,
+  detailViews: 214,
+  submittedEntries: 126,
+  sourceMix: [
+    { sourceType: 'promo_code', label: '代理推广码', share: 0.38 },
+    { sourceType: 'invite_code', label: '普通邀请码', share: 0.21 },
+    { sourceType: 'organic', label: '站内自然访问', share: 0.31 },
+    { sourceType: 'share', label: '预测表分享回流', share: 0.1 },
+  ],
+  lightweightOpsLabel: '站内轻量验证：预测市场新板块，不新增独立增长系统。',
+}
+
+const AFFILIATE_POLICY: BracketAffiliatePolicy = {
+  enabled: true,
+  label: '支持既有代理推广码归因',
+  basis: 'platform_revenue',
+  note: '返佣沿用平台代理体系，按预测市场平台收入口径计算，不改变奖金池净池。',
+}
+
+const INVITE_POLICY: BracketAffiliatePolicy = {
+  enabled: true,
+  label: '支持既有普通邀请码归因',
+  basis: 'platform_revenue',
+  note: '普通用户邀请码沿用一级返佣和固定比例；分享预测表不覆盖已有归属。',
+}
+
+export const DEFAULT_ATTRIBUTION: BracketAttribution = {
+  sourceType: 'promo_code',
+  sourceLabel: '代理推广码归因',
+  sourceCodeMasked: 'AGT-•••-88',
+  keepExistingAttribution: true,
+  rebateBasisLabel: '按平台预测市场收入口径归因，不从奖金池二次扣除。',
+}
+
 export const UCL_BRACKET: BracketTournament = {
   id: 'pool-ucl-2026',
   name: 'UEFA Champions League 2026 淘汰赛预测大赛',
@@ -533,6 +610,10 @@ export const UCL_BRACKET: BracketTournament = {
   },
   distribution: makeDistribution(UCL_SLOTS, 4218),
   configMeta: UCL_CONFIG_META,
+  marketVertical: 'prediction_market',
+  growthContext: PLATFORM_GROWTH_CONTEXT,
+  affiliatePolicy: AFFILIATE_POLICY,
+  invitePolicy: INVITE_POLICY,
 }
 
 // -----------------------------------------------------------------------------
@@ -577,6 +658,16 @@ export const WC_BRACKET_PLACEHOLDER: BracketTournament = {
   },
   distribution: [],
   configMeta: UCL_CONFIG_META,
+  marketVertical: 'prediction_market',
+  growthContext: {
+    ...PLATFORM_GROWTH_CONTEXT,
+    tabImpressions: 148,
+    detailViews: 0,
+    submittedEntries: 0,
+    lightweightOpsLabel: '即将开放赛事仅承接预约心智，不做单独大促。',
+  },
+  affiliatePolicy: AFFILIATE_POLICY,
+  invitePolicy: INVITE_POLICY,
 }
 
 export const bracketTournaments: BracketTournament[] = [UCL_BRACKET, WC_BRACKET_PLACEHOLDER]
@@ -662,6 +753,13 @@ export const sampleEntries: UserBracketEntry[] = [
     userName: '我（草稿）',
     picks: SELF_DRAFT_PICKS,
     status: 'draft',
+    attribution: {
+      sourceType: 'invite_code',
+      sourceLabel: '普通邀请码归因',
+      sourceCodeMasked: 'INV-•••-31',
+      keepExistingAttribution: true,
+      rebateBasisLabel: '沿用普通用户一级邀请口径。',
+    },
   },
   {
     id: 'entry-self-submitted',
@@ -672,6 +770,7 @@ export const sampleEntries: UserBracketEntry[] = [
     status: 'submitted',
     submittedAt: '2026-02-12T18:30:00.000Z',
     shareId: 'share-self-submitted',
+    attribution: DEFAULT_ATTRIBUTION,
   },
   {
     id: 'entry-self-locked',
@@ -683,6 +782,7 @@ export const sampleEntries: UserBracketEntry[] = [
     submittedAt: '2026-02-12T18:30:00.000Z',
     lockedAt: UCL_LOCK_AT,
     shareId: 'share-self-locked',
+    attribution: DEFAULT_ATTRIBUTION,
   },
   {
     id: 'entry-self-running',
@@ -699,6 +799,7 @@ export const sampleEntries: UserBracketEntry[] = [
     scoreShare: RUNNING_AGG > 0 ? RUNNING_TOTAL / RUNNING_AGG : 0,
     projectedPayout: +RUNNING_PROJECTED.toFixed(2),
     shareId: 'share-self-running',
+    attribution: DEFAULT_ATTRIBUTION,
   },
   {
     id: 'entry-self-settled',
@@ -718,6 +819,14 @@ export const sampleEntries: UserBracketEntry[] = [
     finalPayout: +SETTLED_FINAL.toFixed(2),
     shareId: 'share-self-settled',
     review: SETTLED_REVIEW,
+    attribution: {
+      sourceType: 'share',
+      sourceLabel: '预测表分享回流',
+      sourceCodeMasked: 'share-self-running',
+      shareSourceEntryId: 'entry-self-running',
+      keepExistingAttribution: true,
+      rebateBasisLabel: '记录分享来源，但保留用户既有推广 / 邀请归属。',
+    },
   },
   {
     id: 'entry-self-refunded',
@@ -728,6 +837,7 @@ export const sampleEntries: UserBracketEntry[] = [
     submittedAt: '2026-02-10T11:20:00.000Z',
     refundedAt: '2026-02-11T09:05:00.000Z',
     refundReason: 'user_withdraw',
+    attribution: DEFAULT_ATTRIBUTION,
   },
   {
     id: 'entry-self-minimum-refunded',
@@ -739,6 +849,7 @@ export const sampleEntries: UserBracketEntry[] = [
     submittedAt: '2026-05-03T09:20:00.000Z',
     refundedAt: '2026-05-20T20:05:00.000Z',
     refundReason: 'minimum_not_met',
+    attribution: DEFAULT_ATTRIBUTION,
   },
 ]
 
@@ -774,6 +885,7 @@ function makeLeaderboard(): LeaderboardRow[] {
     else name = `predictor_${String(rank).padStart(3, '0')}`
 
     rows.push({
+      tournamentId: UCL_BRACKET.id,
       rankDisplay: rank,
       userName: name,
       isSelf: false,
@@ -789,6 +901,7 @@ function makeLeaderboard(): LeaderboardRow[] {
 export const sampleLeaderboard = makeLeaderboard()
 
 export const sampleSelfRunningRow: LeaderboardRow = {
+  tournamentId: UCL_BRACKET.id,
   rankDisplay: 312,
   userName: '我',
   isSelf: true,
@@ -856,4 +969,12 @@ export function describeRefundReason(reason: BracketRefundReason): string {
     case 'minimum_not_met':
       return '未达最低参赛人数'
   }
+}
+
+export function describeAttribution(attribution?: BracketAttribution): string {
+  if (!attribution) return '站内自然访问'
+  if (attribution.sourceCodeMasked) {
+    return `${attribution.sourceLabel} · ${attribution.sourceCodeMasked}`
+  }
+  return attribution.sourceLabel
 }

@@ -19,6 +19,7 @@ import Button from '../components/ui/Button'
 import { useSoccerBracketEntryStore } from '../stores/soccerBracketEntryStore'
 import {
   bracketTournaments,
+  describeAttribution,
   getEntryByShareId,
   teamLabel,
   type BracketRoundId,
@@ -49,11 +50,11 @@ export default function SoccerPredictionShareView() {
   }, [slots])
 
   const distributionMap = useMemo(() => {
-    const map: Record<string, Record<string, number>> = {}
+    const map: Record<string, { shares: Record<string, number>; frozen: boolean; capturedAt: string }> = {}
     for (const snap of distribution) {
       const shares: Record<string, number> = {}
       for (const s of snap.shares) shares[s.teamId] = s.pickShare
-      map[snap.slotId] = shares
+      map[snap.slotId] = { shares, frozen: snap.frozen, capturedAt: snap.capturedAt }
     }
     return map
   }, [distribution])
@@ -91,6 +92,9 @@ export default function SoccerPredictionShareView() {
                 ` · ${tournament.tiebreakerLabel}：${entry.tiebreakerGuess}`}
             </p>
           )}
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)] leading-4">
+            分享页只记录回流来源，不覆盖访问者已有的推广码 / 邀请码归属。
+          </p>
         </div>
         <Button
           variant="primary"
@@ -107,6 +111,9 @@ export default function SoccerPredictionShareView() {
             该用户预测冠军
           </p>
           <p className="mt-2 text-2xl font-semibold text-[#2DD4BF]">{teamLabel(champion)}</p>
+          <p className="mt-2 text-[10px] text-[var(--text-secondary)]">
+            原 entry 来源：{describeAttribution(entry.attribution)}
+          </p>
         </div>
       )}
 
@@ -150,7 +157,7 @@ export default function SoccerPredictionShareView() {
       </section>
 
       <p className="mt-4 text-[10px] text-[var(--text-secondary)] text-center">
-        本视图仅展示对阵树和当时的用户预测分布快照，不显示资金或本人得分。访问者可随时按上方按钮加入预测大赛。
+        本视图仅展示对阵树和当时的用户预测分布快照，不显示资金或本人得分。访问者可按上方按钮加入预测大赛；如已有平台推广 / 邀请归属，将保持原归属。
       </p>
     </div>
   )
@@ -177,7 +184,7 @@ function ReadonlySlotCard({
   slot: BracketSlot
   candidates: [string, string] | null
   picked?: string
-  distribution?: Record<string, number>
+  distribution?: { shares: Record<string, number>; frozen: boolean; capturedAt: string }
 }) {
   if (!candidates) {
     return (
@@ -192,10 +199,15 @@ function ReadonlySlotCard({
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-control)]/40 p-2">
       <p className="text-[10px] text-[var(--text-secondary)] font-mono mb-1">{slot.id}</p>
+      {distribution && (
+        <p className="mb-1 text-[9px] text-[var(--text-secondary)]">
+          {distribution.frozen ? '已冻结' : '延迟快照'} · {formatShortTime(distribution.capturedAt)}
+        </p>
+      )}
       <div className="space-y-1">
         {candidates.map((teamId) => {
           const isSelected = picked === teamId
-          const share = distribution?.[teamId]
+          const share = distribution?.shares[teamId]
           return (
             <div
               key={teamId}
@@ -226,6 +238,12 @@ function ReadonlySlotCard({
       </div>
     </div>
   )
+}
+
+function formatShortTime(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function formatTime(iso: string): string {

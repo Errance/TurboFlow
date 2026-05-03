@@ -332,7 +332,7 @@ function PoolEntriesPanel() {
   return (
     <div className="space-y-6">
       <p className="text-[10px] text-[var(--text-secondary)] leading-5">
-        预测大赛走独立结算，与传统注单互不冲销。锁前可全额撤回入场费，锁后无法取消，按命中率分奖。
+        预测大赛走独立结算，与传统注单互不冲销。锁前可全额撤回入场费，锁后无法取消，按命中率分奖。推广码 / 邀请码归因沿用平台现有体系。
       </p>
       {groups.map((g) => {
         const items = visibleEntries.filter((e) => g.match(e.status))

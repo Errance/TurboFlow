@@ -16,6 +16,7 @@ import PredictionReviewView from './PredictionReviewView'
 import {
   type BracketTournament,
   type UserBracketEntry,
+  describeAttribution,
   describeEntryStatus,
   describeRefundReason,
 } from '../../data/soccer/bracketData'
@@ -99,6 +100,10 @@ export default function PredictionEntryCard({ entry, tournament, onWithdraw, onR
         </p>
       )}
 
+      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
+        归因：{describeAttribution(entry.attribution)}。返佣按平台规则，不改变预测大赛净池。
+      </p>
+
       {/* Action buttons */}
       <div className="mt-3 flex flex-wrap gap-2">
         {entry.status === 'draft' && (
@@ -134,7 +139,7 @@ export default function PredictionEntryCard({ entry, tournament, onWithdraw, onR
             </Button>
             {onReplay && (
               <Button variant="ghost" onClick={() => onReplay(entry.id)} className="!py-1.5 !text-xs">
-                重投下届
+                查看下届
               </Button>
             )}
           </>

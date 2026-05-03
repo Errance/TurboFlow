@@ -98,6 +98,9 @@ export default function PredictionConfirmDialog({
             得 0 分者不派奖。{tournament.tiebreakerLabel} 仅用于榜单展示排序，不影响派奖。
             {tournament.lateStrategyLabel}
           </p>
+          <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
+            推广 / 邀请返佣按平台收入口径计算，不改变本届预测大赛净池和派奖公式。
+          </p>
         </div>
 
         <label className="flex items-start gap-2 cursor-pointer select-none">

@@ -304,6 +304,18 @@ function PoolsView({ onOpenPool }: { onOpenPool: (id: string) => void }) {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">
+          TurboFlow 预测市场新板块
+        </p>
+        <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+          从 Perp 用户自然扩展到足球预测
+        </h3>
+        <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">
+          当前站内约 {bracketTournaments[0]?.growthContext.currentDau ?? 500} DAU，预测大赛复用既有推广码和邀请码体系；分享预测表只记录回流来源，不覆盖已有归属。
+        </p>
+      </div>
+
       {sections.map((section) => (
         <div key={section.key}>
           <div className="flex items-center gap-2 mb-2">
@@ -325,7 +337,7 @@ function PoolsView({ onOpenPool }: { onOpenPool: (id: string) => void }) {
       ))}
 
       <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-5">
-        所有预测大赛均按命中率分奖（payout = 本人得分 / 全员总分 × 净池），平台抽水 10%。锁前可全额撤回。
+        所有预测大赛均按命中率分奖（payout = 本人得分 / 全员总分 × 净池），平台抽水 10%。锁前可全额撤回。推广 / 邀请返佣按平台收入口径计算，不改变净池派奖。
       </p>
     </div>
   )
@@ -391,6 +403,9 @@ function PoolCard({
       </div>
       <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
         保底池 {tournament.guaranteedPool.toLocaleString()} USDT · {tournament.lateStrategyLabel}
+      </p>
+      <p className="mt-1 text-[10px] text-[var(--text-secondary)] leading-4">
+        {tournament.affiliatePolicy.label} / {tournament.invitePolicy.label}
       </p>
     </button>
   )

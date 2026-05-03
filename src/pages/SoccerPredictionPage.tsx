@@ -35,6 +35,8 @@ import {
   sampleSelfRunningRow,
   scoreEntry,
   teamLabel,
+  DEFAULT_ATTRIBUTION,
+  describeAttribution,
   type BracketRoundId,
   type BracketSlot,
   type BracketTournament,
@@ -104,9 +106,15 @@ export default function SoccerPredictionPage() {
     const seen = window.localStorage.getItem(key)
     if (!seen) {
       setTeachingOpen(true)
-      window.localStorage.setItem(key, '1')
     }
   }, [tournament.id])
+
+  const handleCloseTeaching = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(TEACHING_KEY_PREFIX + tournament.id, '1')
+    }
+    setTeachingOpen(false)
+  }
 
   const hasTimeLocked = Date.now() >= new Date(tournament.lockAt).getTime()
   const isReadonly =
@@ -213,7 +221,7 @@ export default function SoccerPredictionPage() {
   }
 
   const handleShare = () => {
-    const snapshot = createShareSnapshot(tournament.id)
+    const snapshot = createShareSnapshot(tournament.id, settledEntryForShare)
     if (snapshot) {
       setShareEntry(snapshot)
       setShareOpen(true)
@@ -239,15 +247,16 @@ export default function SoccerPredictionPage() {
         tournament.poolSnapshot.aggregateScore > 0 && liveScore
           ? liveScore / tournament.poolSnapshot.aggregateScore
           : undefined,
+      attribution: storeEntry?.attribution ?? DEFAULT_ATTRIBUTION,
     }
-  }, [picks, tiebreakerGuess, hasSubmitted, tournament, liveScore, projectedSelfPayout])
+  }, [picks, tiebreakerGuess, hasSubmitted, tournament, liveScore, projectedSelfPayout, storeEntry?.attribution])
 
   const distributionMap = useMemo(() => {
-    const map: Record<string, { totalPicks: number; shares: Record<string, number> }> = {}
+    const map: Record<string, { totalPicks: number; shares: Record<string, number>; frozen: boolean; capturedAt: string }> = {}
     for (const snap of tournament.distribution) {
       const shares: Record<string, number> = {}
       for (const s of snap.shares) shares[s.teamId] = s.pickShare
-      map[snap.slotId] = { totalPicks: snap.totalPicks, shares }
+      map[snap.slotId] = { totalPicks: snap.totalPicks, shares, frozen: snap.frozen, capturedAt: snap.capturedAt }
     }
     return map
   }, [tournament.distribution])
@@ -285,6 +294,9 @@ export default function SoccerPredictionPage() {
             </div>
             <h1 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{tournament.name}</h1>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">{tournament.headline}</p>
+            <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
+              TurboFlow 预测市场新板块 · 当前约 {tournament.growthContext.currentDau} DAU 站内轻量验证 · {tournament.growthContext.lightweightOpsLabel}
+            </p>
           </div>
           <button
             onClick={() => setTeachingOpen(true)}
@@ -303,6 +315,15 @@ export default function SoccerPredictionPage() {
           <Stat label="锁定倒计时" value={formatLockCountdown(tournament.lockAt)} />
         </div>
 
+        <div className="mt-3 rounded-xl bg-[var(--bg-control)] px-4 py-3">
+          <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold">
+            推广 / 邀请归因
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">
+            {tournament.affiliatePolicy.label}；{tournament.invitePolicy.label}。分享预测表只记录回流来源，不覆盖你已有的推广码或邀请码归属。
+          </p>
+        </div>
+
         {/* Fund lock hint band */}
         <div className="mt-4 rounded-xl border border-[#FFB347]/40 bg-[#FFB347]/10 px-4 py-3">
           <p className="text-[10px] text-[#FFB347] uppercase tracking-wider font-semibold">
@@ -318,9 +339,14 @@ export default function SoccerPredictionPage() {
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-[var(--text-primary)]">对阵树预测</h2>
-              <p className="text-[10px] text-[var(--text-secondary)]">
-                按命中率分奖，名次仅供展示
-              </p>
+              <div className="text-right">
+                <p className="text-[10px] text-[var(--text-secondary)]">
+                  按命中率分奖，名次仅供展示
+                </p>
+                <p className="text-[10px] text-[var(--text-secondary)]">
+                  {tournament.lateStrategyLabel}
+                </p>
+              </div>
             </div>
 
             {tournament.slots.length === 0 ? (
@@ -382,7 +408,7 @@ export default function SoccerPredictionPage() {
                 查看完整榜单 ›
               </button>
             </div>
-            <LeaderboardSection />
+            <LeaderboardSection tournamentId={tournament.id} />
           </section>
         </div>
 
@@ -392,6 +418,9 @@ export default function SoccerPredictionPage() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">我的预测</h2>
             <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
               {hasSubmitted ? '已提交，锁前可改可撤回' : '尚未提交，锁前可任意修改'}
+            </p>
+            <p className="mt-1 text-[10px] text-[var(--text-secondary)] leading-4">
+              {describeAttribution(storeEntry?.attribution ?? DEFAULT_ATTRIBUTION)}
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -494,7 +523,7 @@ export default function SoccerPredictionPage() {
       </div>
 
       {/* Teaching modal */}
-      <Modal isOpen={teachingOpen} onClose={() => setTeachingOpen(false)} title="3 步看懂派奖">
+      <Modal isOpen={teachingOpen} onClose={handleCloseTeaching} title="3 步看懂派奖">
         <div className="space-y-3">
           {tournament.teachingCard.steps.map((step, idx) => (
             <div key={idx} className="rounded-xl bg-[var(--bg-control)] px-4 py-3">
@@ -520,7 +549,7 @@ export default function SoccerPredictionPage() {
               。
             </p>
           </div>
-          <Button variant="primary" fullWidth onClick={() => setTeachingOpen(false)}>
+          <Button variant="primary" fullWidth onClick={handleCloseTeaching}>
             知道了，去填表
           </Button>
         </div>
@@ -554,7 +583,7 @@ interface SlotCardProps {
   slot: BracketSlot
   candidates: [string, string] | null
   picked?: string
-  distribution?: { totalPicks: number; shares: Record<string, number> }
+  distribution?: { totalPicks: number; shares: Record<string, number>; frozen: boolean; capturedAt: string }
   readonly: boolean
   onPick: (teamId: string) => void
 }
@@ -577,6 +606,11 @@ function SlotCard({ slot, candidates, picked, distribution, readonly, onPick }: 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-control)]/40 p-2">
       <p className="text-[10px] text-[var(--text-secondary)] font-mono mb-1">{slot.id}</p>
+      {distribution && (
+        <p className="mb-1 text-[9px] text-[var(--text-secondary)]">
+          {distribution.frozen ? '已冻结快照' : '延迟快照'} · {formatShortTime(distribution.capturedAt)}
+        </p>
+      )}
       <div className="space-y-1">
         {candidates.map((teamId) => {
           const isSelected = picked === teamId
@@ -623,17 +657,19 @@ function SlotCard({ slot, candidates, picked, distribution, readonly, onPick }: 
 // Leaderboard section
 // -----------------------------------------------------------------------------
 
-function LeaderboardSection() {
-  const top = sampleLeaderboard.slice(0, 100)
+function LeaderboardSection({ tournamentId }: { tournamentId: string }) {
+  const tournamentRows = sampleLeaderboard.filter((row) => row.tournamentId === tournamentId)
+  const top = tournamentRows.slice(0, 100)
   const selfInTop = top.some((r) => r.isSelf)
+  const selfRow = sampleSelfRunningRow.tournamentId === tournamentId ? sampleSelfRunningRow : undefined
   return (
     <div>
-      {!selfInTop && (
+      {!selfInTop && selfRow && (
         <div className="rounded-lg border border-[#2DD4BF]/40 bg-[#2DD4BF]/10 px-3 py-2 mb-2">
           <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold mb-1">
             你的位置
           </p>
-          <LeaderboardRow row={sampleSelfRunningRow} />
+          <LeaderboardRow row={selfRow} />
         </div>
       )}
       <div className="space-y-1 max-h-[480px] overflow-y-auto">
@@ -643,6 +679,12 @@ function LeaderboardSection() {
       </div>
     </div>
   )
+}
+
+function formatShortTime(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function LeaderboardRow({ row }: { row: LeaderboardRowType }) {

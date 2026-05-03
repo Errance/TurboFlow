@@ -2,7 +2,7 @@
  * v4.5 预测大赛截图导出弹窗。
  *
  * 三个动作：
- * - 复制链接（带签名 token 的只读视图）
+ * - 复制链接（mock shareId 的只读视图）
  * - 下载图片（mock 不实现真截图，用 SVG 卡片占位）
  * - 复制文案
  */
@@ -12,7 +12,7 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { useToastStore } from '../../stores/toastStore'
 import type { BracketTournament, UserBracketEntry } from '../../data/soccer/bracketData'
-import { teamLabel } from '../../data/soccer/bracketData'
+import { describeAttribution, teamLabel } from '../../data/soccer/bracketData'
 
 interface Props {
   isOpen: boolean
@@ -99,6 +99,9 @@ export default function PredictionShareDialog({ isOpen, onClose, tournament, ent
           <p className="mt-3 text-[10px] text-[var(--text-secondary)] truncate">
             {shareUrl || '—'}
           </p>
+          <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
+            来源：{describeAttribution(entry.attribution)}
+          </p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -114,7 +117,7 @@ export default function PredictionShareDialog({ isOpen, onClose, tournament, ent
         </div>
 
         <p className="text-[10px] text-[var(--text-secondary)] leading-4">
-          分享视图仅显示对阵树和当时的用户预测分布快照，不显示资金、入场费、投影派奖。访问链接后任何人都可以查看你的预测，但不能修改。
+          分享视图仅显示对阵树和当时的用户预测分布快照，不显示资金、入场费、投影派奖。分享访问只记录回流来源，不覆盖访问者已有的推广码或邀请码归属。
         </p>
       </div>
     </Modal>

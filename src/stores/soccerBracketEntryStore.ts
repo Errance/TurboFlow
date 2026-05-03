@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { UserBracketEntry } from '../data/soccer/bracketData'
-import { sampleEntries } from '../data/soccer/bracketData'
+import { DEFAULT_ATTRIBUTION, sampleEntries } from '../data/soccer/bracketData'
 
 type EntryPatch = {
   tournamentId: string
@@ -17,7 +17,7 @@ interface SoccerBracketEntryState {
   submitEntry: (patch: EntryPatch) => UserBracketEntry
   saveEntry: (patch: EntryPatch) => UserBracketEntry
   withdrawEntry: (tournamentId: string) => UserBracketEntry | undefined
-  createShareSnapshot: (tournamentId: string) => UserBracketEntry | undefined
+  createShareSnapshot: (tournamentId: string, fallbackEntry?: UserBracketEntry) => UserBracketEntry | undefined
   getShareSnapshot: (shareId: string) => UserBracketEntry | undefined
 }
 
@@ -55,6 +55,7 @@ export const useSoccerBracketEntryStore = create<SoccerBracketEntryState>((set, 
       status: existing?.status === 'submitted' ? 'submitted' : 'draft',
       submittedAt: existing?.submittedAt,
       shareId: existing?.shareId,
+      attribution: existing?.attribution ?? DEFAULT_ATTRIBUTION,
     }
     set((state) => ({
       entries: { ...state.entries, [patch.tournamentId]: next },
@@ -74,6 +75,7 @@ export const useSoccerBracketEntryStore = create<SoccerBracketEntryState>((set, 
       status: 'submitted',
       submittedAt: existing?.submittedAt ?? now,
       shareId: existing?.shareId,
+      attribution: existing?.attribution ?? DEFAULT_ATTRIBUTION,
     }
     set((state) => ({
       entries: { ...state.entries, [patch.tournamentId]: next },
@@ -110,8 +112,8 @@ export const useSoccerBracketEntryStore = create<SoccerBracketEntryState>((set, 
     return next
   },
 
-  createShareSnapshot: (tournamentId) => {
-    const existing = get().entries[tournamentId]
+  createShareSnapshot: (tournamentId, fallbackEntry) => {
+    const existing = get().entries[tournamentId] ?? fallbackEntry
     if (!existing || existing.status === 'draft') return undefined
     const shareId = existing.shareId ?? makeShareId(tournamentId)
     const snapshot = cloneEntry({ ...existing, shareId })
