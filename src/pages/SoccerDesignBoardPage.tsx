@@ -4,7 +4,21 @@ import MatchListCard from '../components/soccer/MatchListCard'
 import MarketRenderer from '../components/soccer/MarketRenderer'
 import MyBetCard from '../components/soccer/MyBetCard'
 import MyBetsPanel from '../components/soccer/MyBetsPanel'
+import PredictionEntryCard from '../components/soccer/PredictionEntryCard'
+import PredictionReviewView from '../components/soccer/PredictionReviewView'
 import { SoccerListSkeleton, SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
+import {
+  bracketTournaments,
+  describeAttribution,
+  describeStatus,
+  formatLockCountdown,
+  sampleEntries,
+  sampleLeaderboard,
+  sampleSelfRunningRow,
+  teamLabel,
+  type BracketTournament,
+  type UserBracketEntry,
+} from '../data/soccer/bracketData'
 import { futuresCompetitions } from '../data/soccer/futuresData'
 import { matches } from '../data/soccer/mockData'
 import type { Market, MyBetItem, SettlementResult, SoccerMatch } from '../data/soccer/types'
@@ -26,6 +40,7 @@ const LEAN_MARKET_ORDER = [
 
 const boardSections = [
   ['coverage', '范围说明'],
+  ['coverage-matrix', '覆盖矩阵'],
   ['page-states', '页面级状态'],
   ['match-states', '比赛状态'],
   ['lean-markets', '本期盘口'],
@@ -36,7 +51,66 @@ const boardSections = [
   ['float-states', '浮动投注单'],
   ['mybets-states', '我的注单'],
   ['rule-states', '报价和提交反馈'],
-  ['pool-states', 'v4.5 预测大赛'],
+  ['component-matrix', '组件覆盖'],
+  ['pool-entry-states', 'v4.5 入口'],
+  ['pool-detail-states', 'v4.5 详情'],
+  ['pool-dialog-states', 'v4.5 弹窗'],
+  ['pool-asset-states', 'v4.5 资产'],
+  ['pool-share-states', 'v4.5 榜单分享'],
+  ['edge-states', '异常与边界'],
+  ['compliance-degrade', '合规降级'],
+]
+
+const soccerRouteCoverage = [
+  ['SoccerPage', '/soccer', '首页三 tab、左侧导航、比赛列表、预测大赛入口'],
+  ['SoccerMatchPage', '/soccer/match/:matchId', '比赛详情、右栏信息、盘口列表、投注单'],
+  ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级赛事级详情'],
+  ['SoccerPredictionPage', '/soccer/predictions/:tournamentId', '预测大赛详情、对阵树、榜单摘要'],
+  ['SoccerPredictionLeaderboardPage', '/soccer/predictions/:tournamentId/leaderboard', '完整榜单、搜索、排序、分页'],
+  ['SoccerPredictionShareView', '/soccer/predictions/share/:shareId', '只读分享、归属不覆盖、失效态'],
+  ['SoccerMyBetsPage', '/soccer/mybets', '传统注单与我的预测大赛双 tab'],
+  ['SoccerDesignBoardPage', '/soccer/design-board', '设计状态总览'],
+]
+
+const soccerComponentCoverage = [
+  ['MatchHeader', '比赛状态头部'],
+  ['MatchInfoPanel', '右栏赛事信息'],
+  ['MatchListCard', '首页比赛卡'],
+  ['MarketRenderer', '盘口分发器'],
+  ['ButtonGroupMarket', '胜平负 / 开球权'],
+  ['RangeButtonsMarket', '让分 / 大小球区间'],
+  ['OddsTableMarket', '亚盘表格'],
+  ['ScoreGridMarket', '正确比分网格'],
+  ['ComboGridMarket', '组合盘口网格'],
+  ['PlayerListMarket', '球员列表盘口'],
+  ['OddsDisplay', '赔率格式'],
+  ['MarketCard', '盘口折叠容器'],
+  ['SoccerBetSlip', '右栏投注单'],
+  ['SoccerBetSlipFloat', '跨页浮动投注单'],
+  ['ConfirmBetDialog', '传统投注二次确认'],
+  ['BetSlipSettingsMenu', '投注单设置'],
+  ['MyBetCard', '我的注单卡'],
+  ['MyBetsPanel', '右栏我的注单摘要'],
+  ['SoccerSkeletons', '列表 / 详情骨架'],
+  ['KickoffCountdown', '开赛倒计时'],
+  ['MatchTimeline', '比赛事件'],
+  ['MatchStatsBar', '统计条'],
+  ['FormationPitch', '阵型图'],
+  ['HeadToHeadPanel', '历史交锋'],
+  ['PredictionConfirmDialog', '预测大赛确认'],
+  ['PredictionShareDialog', '预测大赛分享'],
+  ['PredictionEntryCard', '我的预测大赛资产'],
+  ['PredictionReviewView', '赛后回顾'],
+]
+
+const soccerStateCoverage = [
+  ['v4.3 单场', '赛前 / 进行中 / 已结束 / 中断 / 腰斩 / 延期 / 取消'],
+  ['盘口状态', '开放 / 选中 / 暂停 / 即将开放 / 作废 / 取消 / 结算 / 串关互斥 / 隐藏'],
+  ['投注单', '空单 / 多笔单注 / 串关 / 报价变化 / 余额不足 / 提交失败 / 二次确认'],
+  ['v4.4 赛事级', '冠军 / 晋级 / 赛季名次 / 两回合系列赛 / 官方待确认 / 不可串关'],
+  ['v4.5 预测大赛', '空表 / 部分填写 / 提交 / 保存 / 锁定 / 进行中 / 已结算 / 退款'],
+  ['增长归因', '推广码 / 邀请码 / 分享来源 / 分享不覆盖归属 / 返佣奖池分离'],
+  ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
 ]
 
 function clone<T>(value: T): T {
@@ -232,13 +306,13 @@ export default function SoccerDesignBoardPage() {
           当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力，以及 v4.5 新增的淘汰赛对阵树预测大赛（按命中率分奖）。
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-7">
-          <Metric label="页面模块" value="6" />
+          <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
+          <Metric label="足球组件" value={String(soccerComponentCoverage.length)} />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="10" />
           <Metric label="赛事级市场" value="6" />
-          <Metric label="盘口状态" value="11" />
-          <Metric label="投注单状态" value="20" />
-          <Metric label="预测大赛状态" value="20" />
+          <Metric label="投注单状态" value="20+" />
+          <Metric label="预测大赛状态" value="30+" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
@@ -260,6 +334,20 @@ export default function SoccerDesignBoardPage() {
         </nav>
       </header>
 
+      <BoardSection id="coverage-matrix" title="0. 覆盖矩阵" description="按页面、组件和状态三条线核对 Design Board 覆盖范围，避免新增功能只停留在文字摘要里。">
+        <div className="grid gap-4 xl:grid-cols-3">
+          <StateCard title="足球路由页面" description="App.tsx 中所有 /soccer 相关路由都必须能在展板找到对应预览或状态说明。">
+            <CoverageList items={soccerRouteCoverage} />
+          </StateCard>
+          <StateCard title="足球组件清单" description="28 个 soccer 组件按真实组件或说明性状态进入展板。">
+            <CoverageList items={soccerComponentCoverage} compact />
+          </StateCard>
+          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / v4.5 / 合规降级的状态族。">
+            <CoverageList items={soccerStateCoverage} />
+          </StateCard>
+        </div>
+      </BoardSection>
+
       <BoardSection id="page-states" title="1. 页面级状态" description="先展示页面整体，再展示关键元素状态。这里包含首页、比赛详情、我的注单、异常页和加载骨架。">
         <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
           <StateCard title="首页左侧导航" description="联赛筛选、全部赛事、进行中数量、进行中比赛和即将开赛。">
@@ -272,6 +360,18 @@ export default function SoccerDesignBoardPage() {
         <div className="grid gap-4 xl:grid-cols-2">
           <StateCard title="比赛详情页布局" description="路径导航、比赛头部、所有盘口、盘口列表、右栏信息和投注单。">
             <MatchDetailPreview />
+          </StateCard>
+          <StateCard title="冠军与晋级详情页" description="赛事级详情页：赛事头部、市场分组、官方结算来源和不可串关提示。">
+            <FuturesDetailPreview />
+          </StateCard>
+          <StateCard title="预测大赛详情页" description="v4.5 详情页完整区域：头部、增长归因、对阵树、我的预测、榜单摘要。">
+            <PredictionDetailPreview />
+          </StateCard>
+          <StateCard title="完整榜单页" description="搜索、按得分 / tiebreaker 排序、分页和本人位置。">
+            <LeaderboardPagePreview />
+          </StateCard>
+          <StateCard title="分享只读页" description="分享入口、冠军预测、冻结快照和不覆盖归属说明。">
+            <SharePagePreview />
           </StateCard>
           <StateCard title="我的注单页布局" description="状态筛选、日期筛选、导出、列表、加载更多和空态。">
             <MyBetsPagePreview />
@@ -461,9 +561,17 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
+      <BoardSection id="component-matrix" title="11. 足球组件覆盖" description="逐个核对足球组件目录，复杂组件在对应业务 section 中真实展示，基础组件在此说明覆盖位置。">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {soccerComponentCoverage.map(([name, text]) => (
+            <SmallState key={name} title={name} text={text} />
+          ))}
+        </div>
+      </BoardSection>
+
       <BoardSection
-        id="pool-states"
-        title="11. v4.5 预测大赛状态"
+        id="pool-entry-states"
+        title="12. v4.5 预测大赛入口"
         description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。本轮补充 Perp DEX 现有推广码 / 邀请码归因、分享不覆盖归属、赛后下一届承接；不覆盖 KYC、身份认证、地域限制和用户准入筛选状态。"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -709,6 +817,363 @@ export default function SoccerDesignBoardPage() {
           />
         </div>
       </BoardSection>
+
+      <BoardSection id="pool-detail-states" title="13. v4.5 预测大赛详情" description="用 mock 数据呈现对阵树、用户预测分布、tiebreaker、榜单摘要和进行中/结算态，而不是只用文字说明。">
+        <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <StateCard title="对阵树与冻结快照" description="R16 到决赛的 slot、当前选择、延迟/冻结分布和下游依赖。">
+            <BracketTreePreview tournament={bracketTournaments[0]} entry={sampleEntries.find((entry) => entry.status === 'submitted') ?? sampleEntries[1]} />
+          </StateCard>
+          <StateCard title="我的预测右栏" description="完成度、tiebreaker、投影派奖、推广/邀请归因、锁前操作。">
+            <PredictionSidePanelPreview entry={sampleEntries[1]} tournament={bracketTournaments[0]} />
+          </StateCard>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <StateCard title="进行中榜单摘要" description="前 100 + 本人位置，榜单只展示名次，派奖仍按得分占比。">
+            <LeaderboardPagePreview compact />
+          </StateCard>
+          <StateCard title="即将开放赛事" description="世界杯预测大赛占位，只承接预约心智，不开放入场。">
+            <PoolTournamentCardPreview tournament={bracketTournaments[1]} />
+          </StateCard>
+        </div>
+      </BoardSection>
+
+      <BoardSection id="pool-dialog-states" title="14. v4.5 预测大赛弹窗" description="弹窗类组件不直接以 fixed modal 打开展板；这里用等价框架展示真实字段和关键状态，避免遮挡整个 Design Board。">
+        <div className="grid gap-4 xl:grid-cols-2">
+          <PredictionConfirmPreview />
+          <PredictionSharePreview />
+        </div>
+      </BoardSection>
+
+      <BoardSection id="pool-asset-states" title="15. v4.5 预测大赛资产" description="复用真实 PredictionEntryCard 和 PredictionReviewView，覆盖 draft/submitted/locked/settled/refunded 状态。">
+        <div className="grid gap-4 xl:grid-cols-2">
+          {sampleEntries.map((entry) => (
+            <PredictionEntryCard
+              key={entry.id}
+              entry={entry}
+              tournament={bracketTournaments[0]}
+              onWithdraw={noop}
+              onReplay={noop}
+            />
+          ))}
+        </div>
+        {sampleEntries.find((entry) => entry.review)?.review && (
+          <StateCard title="独立赛后回顾组件" description="逐轮命中、最终派奖、每个 slot 对错。">
+            <PredictionReviewView
+              review={sampleEntries.find((entry) => entry.review)!.review!}
+              totalScore={sampleEntries.find((entry) => entry.review)!.totalScore ?? 0}
+              finalPayout={sampleEntries.find((entry) => entry.review)!.finalPayout}
+              scoreShare={sampleEntries.find((entry) => entry.review)!.scoreShare}
+            />
+          </StateCard>
+        )}
+      </BoardSection>
+
+      <BoardSection id="pool-share-states" title="16. 完整榜单与分享页" description="展示完整榜单页、分享只读页、分享链接失效态和归属不覆盖说明。">
+        <div className="grid gap-4 xl:grid-cols-2">
+          <StateCard title="完整榜单页" description="搜索、排序、分页、本人高亮和 tiebreaker 排序口径。">
+            <LeaderboardPagePreview />
+          </StateCard>
+          <StateCard title="分享只读页" description="只展示 bracket 和冻结快照，不展示资金、得分或投影派奖。">
+            <SharePagePreview />
+          </StateCard>
+          <StateCard title="分享链接失效" description="无效 shareId 或已失效链接的返回路径。">
+            <ShareExpiredPreview />
+          </StateCard>
+          <StateCard title="分享不覆盖归属" description="访问者已有推广码/邀请码归属时，分享只记录回流来源。">
+            <AttributionPreview />
+          </StateCard>
+        </div>
+      </BoardSection>
+
+      <BoardSection id="edge-states" title="17. 异常与边界" description="集中展示所有用户可见异常：赛事取消、全员 0 分兜底、最低人数未达、空数据、骨架和无效入口。">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <BetSlipPreview title="赛事取消退款" lines={['运营触发取消', '所有 entry 全额退款', 'refundReason = tournament_cancelled']} footer="已全额退款" tone="warning" />
+          <BetSlipPreview title="全员 0 分兜底" lines={['aggregateScore = 0', '抽水降为 0', '所有 entry 全额退款']} footer="本届无人命中" tone="warning" />
+          <BetSlipPreview title="最低人数未达" lines={['有效 entry < minEntrants', '本届不进入 locked', '展示 minimum_not_met 退款']} footer="未成团退款" tone="warning" />
+          <NotFoundPreview />
+          <SmallState title="预测大赛空列表" text="无正在报名 / 进行中 / 即将开放赛事时，分段展示“暂无”。" />
+          <SmallState title="榜单搜索空态" text="完整榜单页未匹配用户时展示空结果，不影响返回详情页。" />
+          <SmallState title="对阵树未确定" text="即将开放赛事 slots 为空时，展示“对阵树尚未确定”。" />
+          <SmallState title="加载骨架" text="列表和详情仍使用 SoccerListSkeleton / SoccerMatchSkeleton。" />
+        </div>
+      </BoardSection>
+
+      <BoardSection id="compliance-degrade" title="18. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
+        <ComplianceDegradePreview />
+      </BoardSection>
+    </div>
+  )
+}
+
+function CoverageList({ items, compact }: { items: string[][]; compact?: boolean }) {
+  return (
+    <div className={`grid gap-2 ${compact ? 'md:grid-cols-2' : ''}`}>
+      {items.map(([name, pathOrText, detail]) => (
+        <div key={name} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">{name}</span>
+            <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[9px] text-[#2DD4BF]">covered</span>
+          </div>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)] leading-4">{detail ?? pathOrText}</p>
+          {detail && <p className="mt-0.5 text-[9px] font-mono text-[var(--text-secondary)]">{pathOrText}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FuturesDetailPreview() {
+  const competition = futuresCompetitions[0]
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <p className="text-[10px] text-[#E85A7E] uppercase tracking-wider font-semibold">{competition.region} · {competition.phase}</p>
+        <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
+        <p className="mt-1 text-xs text-[var(--text-secondary)]">{competition.headline}</p>
+      </div>
+      {competition.markets.slice(0, 3).map((item) => (
+        <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
+            <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
+          </div>
+          <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PredictionDetailPreview() {
+  return (
+    <div className="space-y-4">
+      <PoolTournamentCardPreview tournament={bracketTournaments[0]} />
+      <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+        <BracketTreePreview tournament={bracketTournaments[0]} entry={sampleEntries[1]} compact />
+        <PredictionSidePanelPreview entry={sampleEntries[1]} tournament={bracketTournaments[0]} />
+      </div>
+    </div>
+  )
+}
+
+function PoolTournamentCardPreview({ tournament }: { tournament: BracketTournament }) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">预测市场 · {tournament.region}</p>
+          <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">{tournament.shortName}</h3>
+          <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">{tournament.headline}</p>
+        </div>
+        <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] text-[#2DD4BF]">{describeStatus(tournament.status)}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <MiniStat label="入场费" value={`${tournament.entryFee} ${tournament.currency}`} />
+        <MiniStat label={tournament.status === 'upcoming' ? '开放倒计时' : '净奖池'} value={tournament.status === 'upcoming' ? formatLockCountdown(tournament.openAt) : `${tournament.poolSnapshot.netPool.toLocaleString()} USDT`} highlight />
+        <MiniStat label="最低成团" value={`${tournament.minEntrants.toLocaleString()} 人`} />
+      </div>
+      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
+        {tournament.affiliatePolicy.label} / {tournament.invitePolicy.label}；分享不覆盖既有归属。
+      </p>
+    </div>
+  )
+}
+
+function BracketTreePreview({ tournament, entry, compact }: { tournament: BracketTournament; entry: UserBracketEntry; compact?: boolean }) {
+  const rounds = compact ? (['R16', 'QF', 'SF'] as const) : (['R16', 'QF', 'SF', 'F'] as const)
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex min-w-fit gap-3">
+        {rounds.map((round) => {
+          const slots = tournament.slots.filter((slot) => slot.round === round).slice(0, compact ? 3 : undefined)
+          return (
+            <div key={round} className="w-52 shrink-0 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">{round}</span>
+                <span className="text-[10px] text-[#2DD4BF]">{tournament.rounds.find((item) => item.id === round)?.weight} pt</span>
+              </div>
+              {slots.map((slot) => {
+                const picked = entry.picks[slot.id]
+                const distribution = tournament.distribution.find((snap) => snap.slotId === slot.id)
+                const candidates = slot.candidates ?? slot.childSlotIds?.map((id) => entry.picks[id]).filter(Boolean)
+                return (
+                  <div key={slot.id} className="rounded-lg border border-[var(--border)] bg-[var(--bg-control)]/40 p-2">
+                    <p className="text-[10px] font-mono text-[var(--text-secondary)]">{slot.id}</p>
+                    {distribution && (
+                      <p className="mb-1 text-[9px] text-[var(--text-secondary)]">{distribution.frozen ? '已冻结' : '延迟快照'} · {distribution.totalPicks.toLocaleString()} picks</p>
+                    )}
+                    <div className="space-y-1">
+                      {(candidates ?? ['待上游胜者']).slice(0, 2).map((teamId) => {
+                        const share = distribution?.shares.find((item) => item.teamId === teamId)?.pickShare
+                        return (
+                          <div key={teamId} className={`rounded-md px-2 py-1.5 text-xs ${picked === teamId ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-primary)]'}`}>
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="truncate">{teamId === '待上游胜者' ? teamId : teamLabel(teamId)}</span>
+                              {share !== undefined && <span className="text-[9px] text-[var(--text-secondary)]">{(share * 100).toFixed(0)}%</span>}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function PredictionSidePanelPreview({ entry, tournament }: { entry: UserBracketEntry; tournament: BracketTournament }) {
+  const filled = Object.keys(entry.picks).length
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)]">我的预测</h3>
+      <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{describeAttribution(entry.attribution)}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MiniStat label="完成度" value={`${filled} / ${tournament.slots.length}`} />
+        <MiniStat label="tiebreaker" value={String(entry.tiebreakerGuess ?? '—')} />
+        <MiniStat label="投影派奖" value={entry.projectedPayout ? `≈ ${entry.projectedPayout}` : '报名期示例'} highlight />
+        <MiniStat label="锁定" value={formatLockCountdown(tournament.lockAt)} />
+      </div>
+      <p className="mt-3 rounded-lg border border-[#FFB347]/30 bg-[#FFB347]/5 px-3 py-2 text-[10px] text-[var(--text-secondary)] leading-4">{tournament.fundLockHint}</p>
+      <div className="mt-3 flex gap-2">
+        <span className="rounded-lg bg-[#2DD4BF]/10 px-3 py-1.5 text-xs text-[#2DD4BF]">保存修改</span>
+        <span className="rounded-lg bg-[var(--bg-control)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">分享</span>
+      </div>
+    </div>
+  )
+}
+
+function LeaderboardPagePreview({ compact }: { compact?: boolean }) {
+  const rows = [sampleSelfRunningRow, ...sampleLeaderboard.slice(0, compact ? 6 : 12)]
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden">
+      <div className="border-b border-[var(--border)] bg-[var(--bg-control)]/40 p-3">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">全员得分榜｜欧冠 2026 淘汰赛</h3>
+        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">按命中率分奖，名次仅供展示；同分时按 tiebreaker 距离排序。</p>
+      </div>
+      <div className="divide-y divide-[var(--border)]">
+        {rows.map((row) => (
+          <div key={`${row.rankDisplay}-${row.userName}`} className={`flex items-center gap-2 px-3 py-2 text-xs ${row.isSelf ? 'bg-[#2DD4BF]/10' : ''}`}>
+            <span className="w-12 font-mono text-[10px] text-[var(--text-secondary)]">#{row.rankDisplay}</span>
+            <span className={`flex-1 truncate ${row.isSelf ? 'text-[#2DD4BF] font-semibold' : 'text-[var(--text-primary)]'}`}>{row.userName}{row.isSelf ? '（你）' : ''}</span>
+            <span className="w-14 text-right font-mono">{row.totalScore} 分</span>
+            <span className="w-20 text-right font-mono text-[#2DD4BF]">{row.projectedPayout.toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+      {!compact && <p className="p-3 text-center text-xs text-[#2DD4BF]">加载更多（剩余 348 条）</p>}
+    </div>
+  )
+}
+
+function SharePagePreview() {
+  const entry = sampleEntries.find((item) => item.shareId === 'share-self-settled') ?? sampleEntries[4]
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-[#2DD4BF]/30 bg-[var(--bg-card)] p-4">
+        <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">预测大赛｜分享视图</p>
+        <h3 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{entry.userName} 的欧冠 2026 预测</h3>
+        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">分享页只记录回流来源，不覆盖访问者已有推广 / 邀请归属。</p>
+        <p className="mt-2 rounded-lg bg-[#2DD4BF]/10 px-3 py-2 text-xs text-[#2DD4BF]">CTA：加入这届预测大赛</p>
+      </div>
+      <BracketTreePreview tournament={bracketTournaments[0]} entry={entry} compact />
+    </div>
+  )
+}
+
+function ShareExpiredPreview() {
+  return (
+    <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
+      <p className="text-sm text-[var(--text-secondary)]">分享链接已失效或不存在。</p>
+      <button className="mt-4 rounded-lg bg-[var(--bg-control)] px-4 py-2 text-xs text-[#2DD4BF]">返回足球首页</button>
+    </div>
+  )
+}
+
+function AttributionPreview() {
+  const entries = sampleEntries.filter((entry) => entry.attribution).slice(0, 4)
+  return (
+    <div className="space-y-2">
+      {entries.map((entry) => (
+        <div key={entry.id} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">{entry.userName} · {entry.status}</p>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{describeAttribution(entry.attribution)}</p>
+          <p className="text-[10px] text-[var(--text-secondary)]">{entry.attribution?.rebateBasisLabel}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PredictionConfirmPreview() {
+  const tournament = bracketTournaments[0]
+  return (
+    <StateCard title="预测大赛二次确认" description="等价展示 PredictionConfirmDialog 的字段；真实 Modal 不在展板中 fixed 打开。">
+      <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <p className="text-sm font-semibold text-[var(--text-primary)]">{tournament.name}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <MiniStat label="入场费" value={`${tournament.entryFee} ${tournament.currency}`} highlight />
+          <MiniStat label="当前奖金池" value={`${tournament.poolSnapshot.netPool.toLocaleString()} USDT`} />
+          <MiniStat label="保底池" value={`${tournament.guaranteedPool.toLocaleString()} USDT`} />
+          <MiniStat label="最低成团" value={`${tournament.minEntrants.toLocaleString()} 人`} />
+        </div>
+        <p className="rounded-lg border border-[#FFB347]/30 bg-[#FFB347]/5 px-3 py-2 text-xs text-[var(--text-secondary)]">{tournament.fundLockHint}</p>
+        <p className="text-[10px] text-[var(--text-secondary)]">推广 / 邀请返佣按平台收入口径计算，不改变净池和派奖公式。</p>
+      </div>
+    </StateCard>
+  )
+}
+
+function PredictionSharePreview() {
+  const entry = sampleEntries[1]
+  return (
+    <StateCard title="预测大赛分享弹窗" description="复制链接、导出预览、复制文案；公开链接不显示资金、得分或投影派奖。">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">欧冠 2026 淘汰赛</p>
+        <h3 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">我预测冠军：{teamLabel(entry.picks['F-1'])}</h3>
+        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">决赛总进球数（含加时）：{entry.tiebreakerGuess}</p>
+        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">来源：{describeAttribution(entry.attribution)}</p>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">复制链接</span>
+          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">导出预览</span>
+          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">复制文案</span>
+        </div>
+      </div>
+    </StateCard>
+  )
+}
+
+function ComplianceDegradePreview() {
+  const hidden = ['赔率', '投注单', '入场费', '奖金池', '派奖', '抽水', 'Cash Out', '推广 / 邀请返佣']
+  const visible = ['赛程', '球队', '比分', '赛事资讯', '免费预测', '非金钱排行榜', '赛后复盘']
+  return (
+    <div className="grid gap-4 xl:grid-cols-3">
+      <StateCard title="大陆可见版" description="只展示资讯和免费预测，不展示真钱交易元素。">
+        <div className="flex flex-wrap gap-2">
+          {visible.map((item) => <span key={item} className="rounded-full bg-[#2DD4BF]/10 px-2.5 py-1 text-[10px] text-[#2DD4BF]">{item}</span>)}
+        </div>
+      </StateCard>
+      <StateCard title="大陆隐藏项" description="设计上需要确认这些元素在大陆语境下不可见。">
+        <div className="flex flex-wrap gap-2">
+          {hidden.map((item) => <span key={item} className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] text-red-400">{item}</span>)}
+        </div>
+      </StateCard>
+      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示完整 v4.3/v4.4/v4.5 功能。">
+        <SmallState title="完整模式" text="保留赔率、下注、入场费、奖金池、派奖、推广归因等能力；实际上线需按当地牌照和法务意见执行。" />
+      </StateCard>
+    </div>
+  )
+}
+
+function MiniStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="rounded-lg bg-[var(--bg-control)] px-2.5 py-2">
+      <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
+      <p className={`mt-1 text-xs font-mono ${highlight ? 'text-[#2DD4BF] font-semibold' : 'text-[var(--text-primary)]'}`}>{value}</p>
     </div>
   )
 }
