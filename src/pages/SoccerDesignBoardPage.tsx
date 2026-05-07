@@ -4,21 +4,7 @@ import MatchListCard from '../components/soccer/MatchListCard'
 import MarketRenderer from '../components/soccer/MarketRenderer'
 import MyBetCard from '../components/soccer/MyBetCard'
 import MyBetsPanel from '../components/soccer/MyBetsPanel'
-import PredictionEntryCard from '../components/soccer/PredictionEntryCard'
-import PredictionReviewView from '../components/soccer/PredictionReviewView'
 import { SoccerListSkeleton, SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
-import {
-  bracketTournaments,
-  describeAttribution,
-  describeStatus,
-  formatLockCountdown,
-  sampleEntries,
-  sampleLeaderboard,
-  sampleSelfRunningRow,
-  teamLabel,
-  type BracketTournament,
-  type UserBracketEntry,
-} from '../data/soccer/bracketData'
 import { futuresCompetitions } from '../data/soccer/futuresData'
 import { matches } from '../data/soccer/mockData'
 import type { Market, MyBetItem, SettlementResult, SoccerMatch } from '../data/soccer/types'
@@ -52,23 +38,16 @@ const boardSections = [
   ['mybets-states', '我的注单'],
   ['rule-states', '报价和提交反馈'],
   ['component-matrix', '组件覆盖'],
-  ['pool-entry-states', 'v4.5 入口'],
-  ['pool-detail-states', 'v4.5 详情'],
-  ['pool-dialog-states', 'v4.5 弹窗'],
-  ['pool-asset-states', 'v4.5 资产'],
-  ['pool-share-states', 'v4.5 榜单分享'],
+  ['deferred-prediction-pool', '已隐藏能力'],
   ['edge-states', '异常与边界'],
   ['compliance-degrade', '合规降级'],
 ]
 
 const soccerRouteCoverage = [
-  ['SoccerPage', '/soccer', '首页三 tab、左侧导航、比赛列表、预测大赛入口'],
+  ['SoccerPage', '/soccer', '首页比赛 / 冠军与晋级两个 tab、左侧导航、比赛列表'],
   ['SoccerMatchPage', '/soccer/match/:matchId', '比赛详情、右栏信息、盘口列表、投注单'],
   ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级赛事级详情'],
-  ['SoccerPredictionPage', '/soccer/predictions/:tournamentId', '预测大赛详情、对阵树、榜单摘要'],
-  ['SoccerPredictionLeaderboardPage', '/soccer/predictions/:tournamentId/leaderboard', '完整榜单、搜索、排序、分页'],
-  ['SoccerPredictionShareView', '/soccer/predictions/share/:shareId', '只读分享、归属不覆盖、失效态'],
-  ['SoccerMyBetsPage', '/soccer/mybets', '传统注单与我的预测大赛双 tab'],
+  ['SoccerMyBetsPage', '/soccer/mybets', '传统注单列表、筛选、cash out、导出'],
   ['SoccerDesignBoardPage', '/soccer/design-board', '设计状态总览'],
 ]
 
@@ -97,10 +76,6 @@ const soccerComponentCoverage = [
   ['MatchStatsBar', '统计条'],
   ['FormationPitch', '阵型图'],
   ['HeadToHeadPanel', '历史交锋'],
-  ['PredictionConfirmDialog', '预测大赛确认'],
-  ['PredictionShareDialog', '预测大赛分享'],
-  ['PredictionEntryCard', '我的预测大赛资产'],
-  ['PredictionReviewView', '赛后回顾'],
 ]
 
 const soccerStateCoverage = [
@@ -108,8 +83,7 @@ const soccerStateCoverage = [
   ['盘口状态', '开放 / 选中 / 暂停 / 即将开放 / 作废 / 取消 / 结算 / 串关互斥 / 隐藏'],
   ['投注单', '空单 / 多笔单注 / 串关 / 报价变化 / 余额不足 / 提交失败 / 二次确认'],
   ['v4.4 赛事级', '冠军 / 晋级 / 赛季名次 / 两回合系列赛 / 官方待确认 / 不可串关'],
-  ['v4.5 预测大赛', '空表 / 部分填写 / 提交 / 保存 / 锁定 / 进行中 / 已结算 / 退款'],
-  ['增长归因', '推广码 / 邀请码 / 分享来源 / 分享不覆盖归属 / 返佣奖池分离'],
+  ['暂缓能力', 'Battle Pass 式整届赛事预测大赛已隐藏，暂不进入当前设计范围'],
   ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
 ]
 
@@ -303,7 +277,7 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力，以及 v4.5 新增的淘汰赛对阵树预测大赛（按命中率分奖）。
+          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。整届赛事预测大赛已因无法稳定获得外部报价而从当前 mock 和设计范围隐藏。
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-7">
           <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
@@ -312,7 +286,7 @@ export default function SoccerDesignBoardPage() {
           <Metric label="本期盘口" value="10" />
           <Metric label="赛事级市场" value="6" />
           <Metric label="投注单状态" value="20+" />
-          <Metric label="预测大赛状态" value="30+" />
+          <Metric label="隐藏能力" value="1" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
@@ -342,7 +316,7 @@ export default function SoccerDesignBoardPage() {
           <StateCard title="足球组件清单" description="28 个 soccer 组件按真实组件或说明性状态进入展板。">
             <CoverageList items={soccerComponentCoverage} compact />
           </StateCard>
-          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / v4.5 / 合规降级的状态族。">
+          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / 暂缓能力 / 合规降级的状态族。">
             <CoverageList items={soccerStateCoverage} />
           </StateCard>
         </div>
@@ -363,15 +337,6 @@ export default function SoccerDesignBoardPage() {
           </StateCard>
           <StateCard title="冠军与晋级详情页" description="赛事级详情页：赛事头部、市场分组、官方结算来源和不可串关提示。">
             <FuturesDetailPreview />
-          </StateCard>
-          <StateCard title="预测大赛详情页" description="v4.5 详情页完整区域：头部、增长归因、对阵树、我的预测、榜单摘要。">
-            <PredictionDetailPreview />
-          </StateCard>
-          <StateCard title="完整榜单页" description="搜索、按得分 / tiebreaker 排序、分页和本人位置。">
-            <LeaderboardPagePreview />
-          </StateCard>
-          <StateCard title="分享只读页" description="分享入口、冠军预测、冻结快照和不覆盖归属说明。">
-            <SharePagePreview />
           </StateCard>
           <StateCard title="我的注单页布局" description="状态筛选、日期筛选、导出、列表、加载更多和空态。">
             <MyBetsPagePreview />
@@ -569,336 +534,24 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection
-        id="pool-entry-states"
-        title="12. v4.5 预测大赛入口"
-        description="付费入场的淘汰赛对阵树预测大赛（Bracket Pool）。本轮补充 Perp DEX 现有推广码 / 邀请码归因、分享不覆盖归属、赛后下一届承接；不覆盖 KYC、身份认证、地域限制和用户准入筛选状态。"
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <BetSlipPreview
-            title="① 报名中｜空表 + 教学卡片"
-            lines={[
-              '首次进入弹一次教学卡片',
-              '3 步说明：入场 / 填表 / 派奖',
-              '附数字示例：得 12 分 → ≈ 21.6 USDT',
-            ]}
-            footer="知道了，去填表"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="② 报名中｜部分填写"
-            lines={[
-              'R16 已填 3/8',
-              '上游未填的 QF / SF / F slot 禁用',
-              '禁用 slot 提示：先填上游 slot',
-            ]}
-            footer="完成度 3 / 15"
-          />
-          <BetSlipPreview
-            title="③ 报名中｜已填满待提交"
-            lines={[
-              '15 / 15 slot + tiebreaker = 3',
-              '右栏：投影派奖 ≈ 21.6 USDT',
-              '本人占总分预估 0.32%',
-            ]}
-            footer="提交预测（10 USDT）"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="④ 二次确认弹窗"
-            lines={[
-              '入场费 10 USDT｜净池 45,000 USDT｜保底池 50,000 USDT',
-              '最低 1,000 人成团；未达最低人数全额退款',
-              '资金锁定提示：约 8 周',
-              '"我已了解上述规则" 勾选',
-            ]}
-            footer="确认提交"
-            tone="warning"
-          />
-          <BetSlipPreview
-            title="⑤ 已提交｜可改可撤回"
-            lines={[
-              '状态徽标：已提交',
-              '资金锁定提示常驻',
-              '操作：保存修改 / 锁前撤回 / 分享',
-            ]}
-            footer="锁定倒计时 2 天 5 小时"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="⑥ 分享导出弹窗"
-            lines={[
-              '预览卡片：冠军预测 + 完成度 + 提交时间',
-              '公开链接不显示资金、得分、投影派奖',
-              '三个动作：复制链接 / 导出预览 / 复制文案',
-              '链接形如 /soccer/predictions/share/:shareId',
-            ]}
-            footer="只读视图，不显示资金"
-          />
-          <BetSlipPreview
-            title="⑦ 已撤回｜已退款"
-            lines={[
-              '状态徽标：已退款 · 用户锁前撤回',
-              '入场费 10 USDT 已退回钱包',
-              '可继续填新表（同赛事不可重复入场）',
-            ]}
-            footer="查看赛事"
-          />
-          <BetSlipPreview
-            title="⑧ 已锁定｜不可修改"
-            lines={[
-              '状态徽标：已锁定',
-              '锁定时间到达，所有操作禁用',
-              '等待第一场开赛',
-            ]}
-            footer="查看预测"
-          />
-          <BetSlipPreview
-            title="⑨ 进行中｜实时分数"
-            lines={[
-              'R16 已结算，QF 部分结算',
-              '本人当前 16 分｜占总分 0.04%',
-              '投影派奖 ≈ 18.90 USDT｜每场结算后刷新',
-            ]}
-            footer="进行中｜每场结算后刷新"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="⑩ 已结算｜含赛后回顾"
-            lines={[
-              '决赛官方结果出',
-              '实得派奖 19.66 USDT 已到账',
-              '回顾：R16 6/8 · QF 3/4 · SF 2/2 · F 1/1',
-            ]}
-            footer="查看回顾"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="⑪ 赛事取消｜已退款"
-            lines={[
-              '运营触发取消',
-              '所有 entry 全额退款',
-              'refundReason = tournament_cancelled',
-            ]}
-            footer="赛事取消，已全额退款"
-            tone="warning"
-          />
-          <BetSlipPreview
-            title="⑫ aggregateScore = 0 兜底"
-            lines={[
-              '决赛后全员总分为 0（罕见）',
-              '所有 entry 全额退款，抽水降为 0',
-              'refundReason = aggregate_zero',
-            ]}
-            footer="本届无人命中，已全额退款"
-            tone="warning"
-          />
-          <BetSlipPreview
-            title="⑬ 保存修改｜不重复扣费"
-            lines={[
-              '已提交用户锁前修改 bracket 或 tiebreaker',
-              '按钮文案：保存修改，而不是再次提交',
-              '提示：预测已保存，入场费不重复扣除',
-            ]}
-            footer="保存成功 toast"
-            tone="success"
-          />
-          <BetSlipPreview
-            title="⑭ 未达最低人数｜全额退款"
-            lines={[
-              '锁定时有效 entry 数低于 minEntrants',
-              '本届不进入 locked / running',
-              'refundReason = minimum_not_met',
-            ]}
-            footer="未达最低参赛人数，已全额退款"
-            tone="warning"
-          />
-          <BetSlipPreview
-            title="⑮ 分布延迟与冻结"
-            lines={[
-              '用户预测分布为约 15 分钟延迟快照',
-              '锁定前 2 小时冻结 crowds 占比',
-              '锁后分享和回顾使用冻结快照',
-            ]}
-            footer="减少压秒晚交优势"
-          />
-          <BetSlipPreview
-            title="⑯ Perp DEX 站内入口"
-            lines={[
-              '定位：TurboFlow 预测市场新板块',
-              '当前约 500 DAU，先做站内轻量验证',
-              '不做独立大型 campaign / 任务中心',
-            ]}
-            footer="从 Perp 用户自然进入预测大赛"
-          />
-          <BetSlipPreview
-            title="⑰ 代理推广码归因"
-            lines={[
-              'sourceType = promo_code',
-              '展示脱敏推广码 AGT-•••-88',
-              '返佣按平台收入口径，不改变奖金池净池',
-            ]}
-            footer="沿用既有代理 / 伞下 / 无限级返佣体系"
-          />
-          <BetSlipPreview
-            title="⑱ 普通邀请码归因"
-            lines={[
-              'sourceType = invite_code',
-              '普通用户一级邀请，比例不可调整',
-              '预测大赛不新增第二套邀请码体系',
-            ]}
-            footer="沿用平台普通邀请码"
-          />
-          <BetSlipPreview
-            title="⑲ 分享页不覆盖归属"
-            lines={[
-              '访问 shareId 只记录分享来源',
-              '用户已有推广 / 邀请归属保持不变',
-              'entry 记录 shareSourceEntryId 用于产品分析',
-            ]}
-            footer="分享不是返佣链接"
-          />
-          <BetSlipPreview
-            title="⑳ 赛后下一届承接"
-            lines={[
-              '已结算回顾后展示“查看下届”',
-              '世界杯预测大赛作为即将开放承接',
-              '不做自动续投，只做轻量跳转 / 预约心智',
-            ]}
-            footer="从一次性活动过渡到预测市场板块"
-            tone="success"
-          />
-        </div>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <SmallState
-            title="信息架构"
-            text="足球首页一级 tab 第三项「预测大赛」，每个 tab 顶部加差异化文案带，避免与冠军与晋级混淆。"
-          />
-          <SmallState
-            title="资金锁定提示"
-            text="三处常驻：赛事头部 + 二次确认弹窗 + 我的预测大赛卡片。锁前可全额撤回，锁后无法取消。"
-          />
-          <SmallState
-            title="教学卡片"
-            text="首次进入弹一次，后续可在头部 「如何派奖」按钮重新打开。3 步 + 数字示例。"
-          />
-          <SmallState
-            title="用户预测分布（wisdom of crowds）"
-            text="每个 slot 显示当前候选球队的占比条；报名期为约 15 分钟延迟快照，锁定前 2 小时冻结，锁后永久使用冻结快照。"
-          />
-          <SmallState
-            title="榜单形态"
-            text="详情页底部前 100 + 本人置顶；完整榜单页支持搜索、排序和 300+ 名模拟数据。同分时按 tiebreaker 距离排序，派奖仍只看得分占比。"
-          />
-          <SmallState
-            title="不可串关 / 不可组合"
-            text="v4.5 预测大赛与 v4.4 个体盘 独立结算、互不冲销、可同时参与，但不可串关 / 不可组合下注。"
-          />
-          <SmallState
-            title="运营配置必须露出"
-            text="openAt、lockAt、minEntrants、guaranteedPool、fundLockHint、lateStrategyLabel 都要在首页卡片、详情页或二次确认中有明确用户可见文案。"
-          />
-          <SmallState
-            title="推广 / 邀请归因"
-            text="预测大赛不新造 referral 体系。推广码沿用代理和伞下规则；邀请码沿用普通用户一级返佣。UI 只展示归因提示，不展示比例配置。"
-          />
-          <SmallState
-            title="返佣和奖池分离"
-            text="返佣按平台预测市场收入口径计算，不从净池二次扣除，也不改变按命中率分奖公式。"
-          />
-          <SmallState
-            title="分享不覆盖归属"
-            text="分享页 CTA 可以带来回流，但只记录 shareSourceEntryId；访问者已有推广码或邀请码归属时保持原归属。"
-          />
-          <SmallState
-            title="下一届承接"
-            text="赛后回顾和我的预测大赛卡片要有下一届入口。v1 只展示世界杯占位或即将开放状态，不做自动续投。"
-          />
+      <BoardSection id="deferred-prediction-pool" title="12. 已隐藏能力：整届赛事预测大赛" description="类似 TI 勇士战令的整届小组赛、淘汰赛、冠亚季殿军预测，当前无法从外部稳定获得报价，因此不进入现阶段 mock、用户入口或设计交付。">
+        <div className="grid gap-4 md:grid-cols-3">
+          <SmallState title="隐藏范围" text="足球首页不展示预测大赛 tab；不注册预测详情、榜单、分享路由；我的注单不展示预测大赛资产 tab。" />
+          <SmallState title="保留范围" text="历史代码和 mock 数据可作为后续研究素材保留，但不作为当前可见产品能力，也不要求设计师继续深化。" />
+          <SmallState title="后续条件" text="只有当外部报价、结算源和风险模型明确后，再重新评估是否恢复整届赛事预测形态。" />
         </div>
       </BoardSection>
 
-      <BoardSection id="pool-detail-states" title="13. v4.5 预测大赛详情" description="用 mock 数据呈现对阵树、用户预测分布、tiebreaker、榜单摘要和进行中/结算态，而不是只用文字说明。">
-        <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-          <StateCard title="对阵树与冻结快照" description="R16 到决赛的 slot、当前选择、延迟/冻结分布和下游依赖。">
-            <BracketTreePreview tournament={bracketTournaments[0]} entry={sampleEntries.find((entry) => entry.status === 'submitted') ?? sampleEntries[1]} />
-          </StateCard>
-          <StateCard title="我的预测右栏" description="完成度、tiebreaker、投影派奖、推广/邀请归因、锁前操作。">
-            <PredictionSidePanelPreview entry={sampleEntries[1]} tournament={bracketTournaments[0]} />
-          </StateCard>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <StateCard title="进行中榜单摘要" description="前 100 + 本人位置，榜单只展示名次，派奖仍按得分占比。">
-            <LeaderboardPagePreview compact />
-          </StateCard>
-          <StateCard title="即将开放赛事" description="世界杯预测大赛占位，只承接预约心智，不开放入场。">
-            <PoolTournamentCardPreview tournament={bracketTournaments[1]} />
-          </StateCard>
-        </div>
-      </BoardSection>
-
-      <BoardSection id="pool-dialog-states" title="14. v4.5 预测大赛弹窗" description="弹窗类组件不直接以 fixed modal 打开展板；这里用等价框架展示真实字段和关键状态，避免遮挡整个 Design Board。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          <PredictionConfirmPreview />
-          <PredictionSharePreview />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="pool-asset-states" title="15. v4.5 预测大赛资产" description="复用真实 PredictionEntryCard 和 PredictionReviewView，覆盖 draft/submitted/locked/settled/refunded 状态。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          {sampleEntries.map((entry) => (
-            <PredictionEntryCard
-              key={entry.id}
-              entry={entry}
-              tournament={bracketTournaments[0]}
-              onWithdraw={noop}
-              onReplay={noop}
-            />
-          ))}
-        </div>
-        {sampleEntries.find((entry) => entry.review)?.review && (
-          <StateCard title="独立赛后回顾组件" description="逐轮命中、最终派奖、每个 slot 对错。">
-            <PredictionReviewView
-              review={sampleEntries.find((entry) => entry.review)!.review!}
-              totalScore={sampleEntries.find((entry) => entry.review)!.totalScore ?? 0}
-              finalPayout={sampleEntries.find((entry) => entry.review)!.finalPayout}
-              scoreShare={sampleEntries.find((entry) => entry.review)!.scoreShare}
-            />
-          </StateCard>
-        )}
-      </BoardSection>
-
-      <BoardSection id="pool-share-states" title="16. 完整榜单与分享页" description="展示完整榜单页、分享只读页、分享链接失效态和归属不覆盖说明。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          <StateCard title="完整榜单页" description="搜索、排序、分页、本人高亮和 tiebreaker 排序口径。">
-            <LeaderboardPagePreview />
-          </StateCard>
-          <StateCard title="分享只读页" description="只展示 bracket 和冻结快照，不展示资金、得分或投影派奖。">
-            <SharePagePreview />
-          </StateCard>
-          <StateCard title="分享链接失效" description="无效 shareId 或已失效链接的返回路径。">
-            <ShareExpiredPreview />
-          </StateCard>
-          <StateCard title="分享不覆盖归属" description="访问者已有推广码/邀请码归属时，分享只记录回流来源。">
-            <AttributionPreview />
-          </StateCard>
-        </div>
-      </BoardSection>
-
-      <BoardSection id="edge-states" title="17. 异常与边界" description="集中展示所有用户可见异常：赛事取消、全员 0 分兜底、最低人数未达、空数据、骨架和无效入口。">
+      <BoardSection id="edge-states" title="13. 异常与边界" description="集中展示当前用户可见异常：比赛取消、盘口作废、无数据、骨架和无效入口。预测大赛相关异常已随功能隐藏。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <BetSlipPreview title="赛事取消退款" lines={['运营触发取消', '所有 entry 全额退款', 'refundReason = tournament_cancelled']} footer="已全额退款" tone="warning" />
-          <BetSlipPreview title="全员 0 分兜底" lines={['aggregateScore = 0', '抽水降为 0', '所有 entry 全额退款']} footer="本届无人命中" tone="warning" />
-          <BetSlipPreview title="最低人数未达" lines={['有效 entry < minEntrants', '本届不进入 locked', '展示 minimum_not_met 退款']} footer="未成团退款" tone="warning" />
+          <BetSlipPreview title="比赛取消" lines={['比赛状态：取消', '相关盘口不再接受选择', '已下注按作废/退款规则处理']} footer="相关盘口作废" tone="warning" />
+          <BetSlipPreview title="盘口作废" lines={['盘口状态：void', '注单保留记录', '本金退回或按走盘处理']} footer="退款 / 走盘" tone="warning" />
           <NotFoundPreview />
-          <SmallState title="预测大赛空列表" text="无正在报名 / 进行中 / 即将开放赛事时，分段展示“暂无”。" />
-          <SmallState title="榜单搜索空态" text="完整榜单页未匹配用户时展示空结果，不影响返回详情页。" />
-          <SmallState title="对阵树未确定" text="即将开放赛事 slots 为空时，展示“对阵树尚未确定”。" />
           <SmallState title="加载骨架" text="列表和详情仍使用 SoccerListSkeleton / SoccerMatchSkeleton。" />
         </div>
       </BoardSection>
 
-      <BoardSection id="compliance-degrade" title="18. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
+      <BoardSection id="compliance-degrade" title="14. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
         <ComplianceDegradePreview />
       </BoardSection>
     </div>
@@ -944,209 +597,6 @@ function FuturesDetailPreview() {
   )
 }
 
-function PredictionDetailPreview() {
-  return (
-    <div className="space-y-4">
-      <PoolTournamentCardPreview tournament={bracketTournaments[0]} />
-      <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-        <BracketTreePreview tournament={bracketTournaments[0]} entry={sampleEntries[1]} compact />
-        <PredictionSidePanelPreview entry={sampleEntries[1]} tournament={bracketTournaments[0]} />
-      </div>
-    </div>
-  )
-}
-
-function PoolTournamentCardPreview({ tournament }: { tournament: BracketTournament }) {
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">预测市场 · {tournament.region}</p>
-          <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">{tournament.shortName}</h3>
-          <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">{tournament.headline}</p>
-        </div>
-        <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] text-[#2DD4BF]">{describeStatus(tournament.status)}</span>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <MiniStat label="入场费" value={`${tournament.entryFee} ${tournament.currency}`} />
-        <MiniStat label={tournament.status === 'upcoming' ? '开放倒计时' : '净奖池'} value={tournament.status === 'upcoming' ? formatLockCountdown(tournament.openAt) : `${tournament.poolSnapshot.netPool.toLocaleString()} USDT`} highlight />
-        <MiniStat label="最低成团" value={`${tournament.minEntrants.toLocaleString()} 人`} />
-      </div>
-      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-4">
-        {tournament.affiliatePolicy.label} / {tournament.invitePolicy.label}；分享不覆盖既有归属。
-      </p>
-    </div>
-  )
-}
-
-function BracketTreePreview({ tournament, entry, compact }: { tournament: BracketTournament; entry: UserBracketEntry; compact?: boolean }) {
-  const rounds = compact ? (['R16', 'QF', 'SF'] as const) : (['R16', 'QF', 'SF', 'F'] as const)
-  return (
-    <div className="overflow-x-auto">
-      <div className="flex min-w-fit gap-3">
-        {rounds.map((round) => {
-          const slots = tournament.slots.filter((slot) => slot.round === round).slice(0, compact ? 3 : undefined)
-          return (
-            <div key={round} className="w-52 shrink-0 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">{round}</span>
-                <span className="text-[10px] text-[#2DD4BF]">{tournament.rounds.find((item) => item.id === round)?.weight} pt</span>
-              </div>
-              {slots.map((slot) => {
-                const picked = entry.picks[slot.id]
-                const distribution = tournament.distribution.find((snap) => snap.slotId === slot.id)
-                const candidates = slot.candidates ?? slot.childSlotIds?.map((id) => entry.picks[id]).filter(Boolean)
-                return (
-                  <div key={slot.id} className="rounded-lg border border-[var(--border)] bg-[var(--bg-control)]/40 p-2">
-                    <p className="text-[10px] font-mono text-[var(--text-secondary)]">{slot.id}</p>
-                    {distribution && (
-                      <p className="mb-1 text-[9px] text-[var(--text-secondary)]">{distribution.frozen ? '已冻结' : '延迟快照'} · {distribution.totalPicks.toLocaleString()} picks</p>
-                    )}
-                    <div className="space-y-1">
-                      {(candidates ?? ['待上游胜者']).slice(0, 2).map((teamId) => {
-                        const share = distribution?.shares.find((item) => item.teamId === teamId)?.pickShare
-                        return (
-                          <div key={teamId} className={`rounded-md px-2 py-1.5 text-xs ${picked === teamId ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-primary)]'}`}>
-                            <span className="flex items-center justify-between gap-2">
-                              <span className="truncate">{teamId === '待上游胜者' ? teamId : teamLabel(teamId)}</span>
-                              {share !== undefined && <span className="text-[9px] text-[var(--text-secondary)]">{(share * 100).toFixed(0)}%</span>}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function PredictionSidePanelPreview({ entry, tournament }: { entry: UserBracketEntry; tournament: BracketTournament }) {
-  const filled = Object.keys(entry.picks).length
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)]">我的预测</h3>
-      <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{describeAttribution(entry.attribution)}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <MiniStat label="完成度" value={`${filled} / ${tournament.slots.length}`} />
-        <MiniStat label="tiebreaker" value={String(entry.tiebreakerGuess ?? '—')} />
-        <MiniStat label="投影派奖" value={entry.projectedPayout ? `≈ ${entry.projectedPayout}` : '报名期示例'} highlight />
-        <MiniStat label="锁定" value={formatLockCountdown(tournament.lockAt)} />
-      </div>
-      <p className="mt-3 rounded-lg border border-[#FFB347]/30 bg-[#FFB347]/5 px-3 py-2 text-[10px] text-[var(--text-secondary)] leading-4">{tournament.fundLockHint}</p>
-      <div className="mt-3 flex gap-2">
-        <span className="rounded-lg bg-[#2DD4BF]/10 px-3 py-1.5 text-xs text-[#2DD4BF]">保存修改</span>
-        <span className="rounded-lg bg-[var(--bg-control)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">分享</span>
-      </div>
-    </div>
-  )
-}
-
-function LeaderboardPagePreview({ compact }: { compact?: boolean }) {
-  const rows = [sampleSelfRunningRow, ...sampleLeaderboard.slice(0, compact ? 6 : 12)]
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden">
-      <div className="border-b border-[var(--border)] bg-[var(--bg-control)]/40 p-3">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">全员得分榜｜欧冠 2026 淘汰赛</h3>
-        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">按命中率分奖，名次仅供展示；同分时按 tiebreaker 距离排序。</p>
-      </div>
-      <div className="divide-y divide-[var(--border)]">
-        {rows.map((row) => (
-          <div key={`${row.rankDisplay}-${row.userName}`} className={`flex items-center gap-2 px-3 py-2 text-xs ${row.isSelf ? 'bg-[#2DD4BF]/10' : ''}`}>
-            <span className="w-12 font-mono text-[10px] text-[var(--text-secondary)]">#{row.rankDisplay}</span>
-            <span className={`flex-1 truncate ${row.isSelf ? 'text-[#2DD4BF] font-semibold' : 'text-[var(--text-primary)]'}`}>{row.userName}{row.isSelf ? '（你）' : ''}</span>
-            <span className="w-14 text-right font-mono">{row.totalScore} 分</span>
-            <span className="w-20 text-right font-mono text-[#2DD4BF]">{row.projectedPayout.toFixed(2)}</span>
-          </div>
-        ))}
-      </div>
-      {!compact && <p className="p-3 text-center text-xs text-[#2DD4BF]">加载更多（剩余 348 条）</p>}
-    </div>
-  )
-}
-
-function SharePagePreview() {
-  const entry = sampleEntries.find((item) => item.shareId === 'share-self-settled') ?? sampleEntries[4]
-  return (
-    <div className="space-y-3">
-      <div className="rounded-2xl border border-[#2DD4BF]/30 bg-[var(--bg-card)] p-4">
-        <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">预测大赛｜分享视图</p>
-        <h3 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{entry.userName} 的欧冠 2026 预测</h3>
-        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">分享页只记录回流来源，不覆盖访问者已有推广 / 邀请归属。</p>
-        <p className="mt-2 rounded-lg bg-[#2DD4BF]/10 px-3 py-2 text-xs text-[#2DD4BF]">CTA：加入这届预测大赛</p>
-      </div>
-      <BracketTreePreview tournament={bracketTournaments[0]} entry={entry} compact />
-    </div>
-  )
-}
-
-function ShareExpiredPreview() {
-  return (
-    <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
-      <p className="text-sm text-[var(--text-secondary)]">分享链接已失效或不存在。</p>
-      <button className="mt-4 rounded-lg bg-[var(--bg-control)] px-4 py-2 text-xs text-[#2DD4BF]">返回足球首页</button>
-    </div>
-  )
-}
-
-function AttributionPreview() {
-  const entries = sampleEntries.filter((entry) => entry.attribution).slice(0, 4)
-  return (
-    <div className="space-y-2">
-      {entries.map((entry) => (
-        <div key={entry.id} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">{entry.userName} · {entry.status}</p>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{describeAttribution(entry.attribution)}</p>
-          <p className="text-[10px] text-[var(--text-secondary)]">{entry.attribution?.rebateBasisLabel}</p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function PredictionConfirmPreview() {
-  const tournament = bracketTournaments[0]
-  return (
-    <StateCard title="预测大赛二次确认" description="等价展示 PredictionConfirmDialog 的字段；真实 Modal 不在展板中 fixed 打开。">
-      <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-sm font-semibold text-[var(--text-primary)]">{tournament.name}</p>
-        <div className="grid grid-cols-2 gap-2">
-          <MiniStat label="入场费" value={`${tournament.entryFee} ${tournament.currency}`} highlight />
-          <MiniStat label="当前奖金池" value={`${tournament.poolSnapshot.netPool.toLocaleString()} USDT`} />
-          <MiniStat label="保底池" value={`${tournament.guaranteedPool.toLocaleString()} USDT`} />
-          <MiniStat label="最低成团" value={`${tournament.minEntrants.toLocaleString()} 人`} />
-        </div>
-        <p className="rounded-lg border border-[#FFB347]/30 bg-[#FFB347]/5 px-3 py-2 text-xs text-[var(--text-secondary)]">{tournament.fundLockHint}</p>
-        <p className="text-[10px] text-[var(--text-secondary)]">推广 / 邀请返佣按平台收入口径计算，不改变净池和派奖公式。</p>
-      </div>
-    </StateCard>
-  )
-}
-
-function PredictionSharePreview() {
-  const entry = sampleEntries[1]
-  return (
-    <StateCard title="预测大赛分享弹窗" description="复制链接、导出预览、复制文案；公开链接不显示资金、得分或投影派奖。">
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-        <p className="text-[10px] text-[#2DD4BF] uppercase tracking-wider font-semibold">欧冠 2026 淘汰赛</p>
-        <h3 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">我预测冠军：{teamLabel(entry.picks['F-1'])}</h3>
-        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">决赛总进球数（含加时）：{entry.tiebreakerGuess}</p>
-        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">来源：{describeAttribution(entry.attribution)}</p>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">复制链接</span>
-          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">导出预览</span>
-          <span className="rounded-lg bg-[var(--bg-control)] px-2 py-1.5">复制文案</span>
-        </div>
-      </div>
-    </StateCard>
-  )
-}
-
 function ComplianceDegradePreview() {
   const hidden = ['赔率', '投注单', '入场费', '奖金池', '派奖', '抽水', 'Cash Out', '推广 / 邀请返佣']
   const visible = ['赛程', '球队', '比分', '赛事资讯', '免费预测', '非金钱排行榜', '赛后复盘']
@@ -1162,18 +612,9 @@ function ComplianceDegradePreview() {
           {hidden.map((item) => <span key={item} className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] text-red-400">{item}</span>)}
         </div>
       </StateCard>
-      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示完整 v4.3/v4.4/v4.5 功能。">
-        <SmallState title="完整模式" text="保留赔率、下注、入场费、奖金池、派奖、推广归因等能力；实际上线需按当地牌照和法务意见执行。" />
+      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示当前 v4.3/v4.4 功能。">
+        <SmallState title="完整模式" text="保留赔率、下注、赛事级个体盘、cash out 等能力；整届赛事预测大赛仍处于隐藏暂缓状态。" />
       </StateCard>
-    </div>
-  )
-}
-
-function MiniStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="rounded-lg bg-[var(--bg-control)] px-2.5 py-2">
-      <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
-      <p className={`mt-1 text-xs font-mono ${highlight ? 'text-[#2DD4BF] font-semibold' : 'text-[var(--text-primary)]'}`}>{value}</p>
     </div>
   )
 }

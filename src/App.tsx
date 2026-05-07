@@ -13,9 +13,6 @@ import MyCopyPage from './pages/MyCopyPage'
 import SoccerPage from './pages/SoccerPage'
 import SoccerMatchPage from './pages/SoccerMatchPage'
 import SoccerFuturesPage from './pages/SoccerFuturesPage'
-import SoccerPredictionPage from './pages/SoccerPredictionPage'
-import SoccerPredictionLeaderboardPage from './pages/SoccerPredictionLeaderboardPage'
-import SoccerPredictionShareView from './pages/SoccerPredictionShareView'
 import SoccerMyBetsPage from './pages/SoccerMyBetsPage'
 import SoccerDesignBoardPage from './pages/SoccerDesignBoardPage'
 import ClobPage from './pages/ClobPage'
@@ -34,9 +31,6 @@ export default function App() {
           <Route path="/soccer" element={<SoccerPage />} />
           <Route path="/soccer/match/:matchId" element={<SoccerMatchPage />} />
           <Route path="/soccer/futures/:competitionId" element={<SoccerFuturesPage />} />
-          <Route path="/soccer/predictions/:tournamentId" element={<SoccerPredictionPage />} />
-          <Route path="/soccer/predictions/:tournamentId/leaderboard" element={<SoccerPredictionLeaderboardPage />} />
-          <Route path="/soccer/predictions/share/:shareId" element={<SoccerPredictionShareView />} />
           <Route path="/soccer/mybets" element={<SoccerMyBetsPage />} />
           <Route path="/soccer/design-board" element={<SoccerDesignBoardPage />} />
           <Route path="/clob" element={<ClobPage />} />
