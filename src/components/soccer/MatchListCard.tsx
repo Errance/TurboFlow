@@ -11,8 +11,8 @@ export default function MatchListCard({ match }: Props) {
   const markets = homeTab?.markets ?? []
 
   const oneXTwo = markets.find((m) => m.type === 'buttonGroup' && m.title === '胜平负')
-  const totals = markets.find((m) => m.type === 'oddsTable' && m.title === '合计')
-  const asian = markets.find((m) => m.type === 'oddsTable' && m.title === '亚洲让分盘')
+  const totals = markets.find((m) => m.type === 'oddsTable' && m.title === '大小球')
+  const asian = markets.find((m) => m.type === 'oddsTable' && m.title === '让球')
   const totalsRow = totals?.type === 'oddsTable' ? totals.rows.find((r) => r.line.includes('2.5') || r.line === '2.5') : undefined
 
   return (
@@ -63,11 +63,11 @@ export default function MatchListCard({ match }: Props) {
         {totalsRow && (
           <>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">高于 2.5</span>
+              <span className="text-[9px] text-[var(--text-secondary)]">大 2.5</span>
               <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[0].toFixed(2)}</span>
             </div>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">低于 2.5</span>
+              <span className="text-[9px] text-[var(--text-secondary)]">小 2.5</span>
               <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[1].toFixed(2)}</span>
             </div>
           </>

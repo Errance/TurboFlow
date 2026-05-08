@@ -10,51 +10,45 @@ interface Props {
 }
 
 export default function OddsTableMarket({ data, matchId, onSelect, selectedKey }: Props) {
+  const columnCount = Math.max(1, data.columns.length)
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr>
-            <th className="text-left text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider pb-2 pr-2 w-24">
-              线值
-            </th>
-            {data.columns.map((col) => (
-              <th key={col} className="text-center text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider pb-2 px-1">
-                {col}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.rows.map((row) => (
-            <tr key={row.line}>
-              <td className="py-1 pr-2 text-xs font-mono text-[var(--text-secondary)] whitespace-nowrap">
-                {row.line}
-              </td>
-              {row.odds.map((odd, i) => {
-                const selection = `${data.columns[i]} ${row.line}`
-                const key = `${data.title}|${selection}`
-                const isSelected = selectedKey === key
-                const selKey = matchId ? makeSelectionKey(matchId, data.title, selection) : undefined
-                return (
-                  <td key={i} className="py-1 px-1">
-                    <button
-                      onClick={() => onSelect(data.title, selection, odd)}
-                      className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono font-medium tabular-nums transition-all text-center ${
-                        isSelected
-                          ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/30'
-                          : 'bg-[var(--bg-control)] border border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]/30'
-                      }`}
-                    >
-                      <OddsDisplay selectionKey={selKey} fallbackOdds={odd} />
-                    </button>
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-2">
+      {data.rows.map((row) => (
+        <div
+          key={row.line}
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}
+        >
+          {row.odds.map((odd, i) => {
+            const label = data.columns[i] ?? ''
+            const selection = `${label} ${row.line}`.trim()
+            const key = `${data.title}|${selection}`
+            const isSelected = selectedKey === key
+            const selKey = matchId ? makeSelectionKey(matchId, data.title, selection) : undefined
+            return (
+              <button
+                key={`${row.line}-${label}`}
+                onClick={() => onSelect(data.title, selection, odd)}
+                className={`flex min-h-[52px] flex-col items-center justify-center rounded-lg border px-2 py-2 text-center transition-all ${
+                  isSelected
+                    ? 'border-[#2DD4BF]/30 bg-[#2DD4BF]/15'
+                    : 'border-[var(--border)] bg-[var(--bg-control)] hover:border-[var(--text-secondary)]/30'
+                }`}
+              >
+                <span className={`text-xs font-medium leading-tight ${isSelected ? 'text-[#2DD4BF]' : 'text-[var(--text-primary)]'}`}>
+                  {selection}
+                </span>
+                <OddsDisplay
+                  selectionKey={selKey}
+                  fallbackOdds={odd}
+                  className={`mt-0.5 text-sm font-semibold font-mono tabular-nums ${isSelected ? 'text-[#2DD4BF]' : 'text-red-500'}`}
+                />
+              </button>
+            )
+          })}
+        </div>
+      ))}
     </div>
   )
 }

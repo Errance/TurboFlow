@@ -42,8 +42,9 @@ function isGoalMarket(title: string): boolean {
     title.includes('不丢球') ||
     title.includes('Multiscores') ||
     title.includes('奇/偶') ||
-    title.startsWith('两个半场高于') ||
-    title.startsWith('两个半场低于') ||
+    title.startsWith('两个半场大') ||
+    title.startsWith('两个半场小') ||
+    title.includes('大小球') ||
     title.includes('合计') ||
     title.includes('总计') ||
     title.includes('总数')
@@ -291,7 +292,7 @@ export const matches: SoccerMatch[] = [
 const arsCheLive = matches.find(m => m.id === 'arsenal-chelsea')
 if (arsCheLive) {
   markMarketStatus(arsCheLive, '两队都得分', 'suspended')
-  markMarketStatus(arsCheLive, '正确进球', 'suspended')
+  markMarketStatus(arsCheLive, '波胆', 'suspended')
 }
 const flaCorLive = matches.find(m => m.id === 'flamengo-corinthians')
 if (flaCorLive) {
@@ -372,7 +373,7 @@ export const myBets: MyBetItem[] = [
   {
     id: 'bet-4',
     matchLabel: '马德里竞技 vs 皇家社会',
-    marketTitle: '亚洲让分盘',
+    marketTitle: '让球',
     selection: '马德里竞技 -0.5',
     odds: 2.23,
     amount: 40,

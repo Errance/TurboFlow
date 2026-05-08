@@ -10,11 +10,11 @@
 
 export type MarketFamily =
   | 'outright' // 胜平负 (1x2)
-  | 'handicap_asian' // 亚洲让分盘（半球/四分之一球）
-  | 'handicap_eu' // 欧洲让球 让分0:1 / 0:2 / 1:0 / 2:0 等
+  | 'handicap_asian' // 让球 / 亚洲让球（半球/四分之一球）
+  | 'handicap_eu' // 欧洲让球 让球 0:1 / 0:2 / 1:0 / 2:0 等
   | 'total_bucket' // 总进球数离散档位 0/1/2/3/4/5+
-  | 'overunder' // 大小球（合计） 2.5 / 3.0 等
-  | 'score_exact' // 正确比分矩阵
+  | 'overunder' // 大小球 2.5 / 3.0 等
+  | 'score_exact' // 波胆 / 正确比分矩阵
   | 'future_winner' // 冠军 / 赛事优胜者
   | 'qualification' // 晋级 / 出线 / 获得资格
   | 'stage_result' // 系列赛 / 淘汰赛阶段结果
@@ -26,20 +26,23 @@ export type MarketFamily =
  * 由盘口 title 推断 family。
  *
  * 规则：
- * - 精确匹配优先，其次按前缀匹配（仅 handicap_eu 使用前缀"让分"以覆盖 0:1/0:2 等变体）
+ * - 精确匹配优先，其次按前缀匹配（仅 handicap_eu 使用前缀"让球"以覆盖 0:1/0:2 等变体）
  * - 未识别的 title 返回 'unknown'，不能静默当作趣味盘放行
  */
 export function getMarketFamily(title: string): MarketFamily {
+  const normalizedTitle = title.replace(/\s+/g, ' ')
   if (title === '胜平负') return 'outright'
   if (title === '开球权') return 'novelty'
-  if (title === '亚洲让分盘') return 'handicap_asian'
+  if (/让球\s*\d+:\d+/.test(normalizedTitle) || /让分\s*\d+:\d+/.test(normalizedTitle)) return 'handicap_eu'
+  if (title.includes('让球') || title === '亚洲让球' || title === '亚洲让分盘') return 'handicap_asian'
   if (title === '总进球数') return 'total_bucket'
-  if (title === '合计') return 'overunder'
-  if (title === '正确进球') return 'score_exact'
+  if (title.includes('大小球') || title === '合计') return 'overunder'
+  if (title.includes('波胆') || title === '正确进球' || title.includes('正确比分')) return 'score_exact'
   if (title.includes('冠军')) return 'future_winner'
   if (title.includes('晋级') || title.includes('资格')) return 'qualification'
   if (title.includes('系列赛') || title.includes('两回合')) return 'stage_result'
   if (title.includes('降级') || title.includes('升级') || title.includes('前四') || title.includes('前六')) return 'season_position'
+  if (title.startsWith('让球')) return 'handicap_eu'
   if (title.startsWith('让分')) return 'handicap_eu'
   return 'unknown'
 }
@@ -50,27 +53,27 @@ export function getMarketFamily(title: string): MarketFamily {
  * 9 对禁组合（v4.1 LEAN 盘口范围内）：
  * - outright × handicap_asian：1x2 与亚盘是同维度的让球版本
  * - outright × handicap_eu：1x2 与欧洲让球高度相关
- * - outright × score_exact：正确比分完全包含 1x2 结果
+ * - outright × score_exact：波胆完全包含 1x2 结果
  * - handicap_asian × handicap_eu：亚盘与欧盘是同一让球维度的两种表达
- * - handicap_asian × score_exact：正确比分完全决定让球结果
+ * - handicap_asian × score_exact：波胆完全决定让球结果
  * - handicap_eu × score_exact：同上
  * - total_bucket × overunder：大小球由总进球数完全决定
- * - total_bucket × score_exact：正确比分决定总进球数
- * - overunder × score_exact：正确比分决定大小球结果
+ * - total_bucket × score_exact：波胆决定总进球数
+ * - overunder × score_exact：波胆决定大小球结果
  *
  * novelty（开球权）与任何 family 都视为 INDEPENDENT，放行。
  * unknown 表示未分类盘口，默认不可与同场其他非 novelty 盘口组合。
  */
 const CONFLICT_REASONS: ReadonlyMap<string, string> = new Map([
-  ['handicap_asian|outright', '胜平负与亚洲让分盘为同维度的让球变体，不可同场组合'],
+  ['handicap_asian|outright', '胜平负与让球为同维度的赛果变体，不可同场组合'],
   ['handicap_eu|outright', '胜平负与欧洲让球高度相关，不可同场组合'],
-  ['outright|score_exact', '正确比分已完全包含胜平负结果，不可同场组合'],
+  ['outright|score_exact', '波胆已完全包含胜平负结果，不可同场组合'],
   ['handicap_asian|handicap_eu', '亚盘与欧盘是同一让球维度的两种表达，不可同场组合'],
-  ['handicap_asian|score_exact', '正确比分完全决定让球结果，不可同场组合'],
-  ['handicap_eu|score_exact', '正确比分完全决定让球结果，不可同场组合'],
+  ['handicap_asian|score_exact', '波胆完全决定让球结果，不可同场组合'],
+  ['handicap_eu|score_exact', '波胆完全决定让球结果，不可同场组合'],
   ['overunder|total_bucket', '大小球由总进球数完全决定，不可同场组合'],
-  ['score_exact|total_bucket', '正确比分完全决定总进球数，不可同场组合'],
-  ['overunder|score_exact', '正确比分完全决定大小球结果，不可同场组合'],
+  ['score_exact|total_bucket', '波胆完全决定总进球数，不可同场组合'],
+  ['overunder|score_exact', '波胆完全决定大小球结果，不可同场组合'],
 ])
 
 function keyOf(a: MarketFamily, b: MarketFamily): string {

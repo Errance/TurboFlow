@@ -108,9 +108,9 @@ function convertButtonGroup(m: BGM): ClobMarket | null {
 }
 
 const DELETED_MARKETS = new Set([
-  '平局返还', '双胜彩',
-  '上半场 - 平局返还', '上半场 - 双胜彩',
-  '下半场 - 平局返还', '下半场 - 双胜彩',
+  '平局返还', '双胜彩', '双重机会',
+  '上半场 - 平局返还', '上半场 - 双胜彩', '上半场 - 双重机会',
+  '下半场 - 平局返还', '下半场 - 双胜彩', '下半场 - 双重机会',
   '多进球', '进球范围',
 ])
 
@@ -327,7 +327,7 @@ export function extractMoneyline(tabs: ClobTab[]): { home: number; draw: number;
 export function extractTotalLine(tabs: ClobTab[]): { line: number; overPrice: number; underPrice: number } {
   for (const tab of tabs) {
     for (const m of tab.markets) {
-      if (m.type === 'binary' && m.question.includes('合计') && m.question.includes('2.5')) {
+      if (m.type === 'binary' && (m.question.includes('大小球') || m.question.includes('合计')) && m.question.includes('2.5')) {
         return { line: 2.5, overPrice: m.yesPrice, underPrice: m.noPrice }
       }
     }
@@ -338,7 +338,7 @@ export function extractTotalLine(tabs: ClobTab[]): { line: number; overPrice: nu
 export function extractAsianLine(tabs: ClobTab[]): { line: string; homePrice: number; awayPrice: number } {
   for (const tab of tabs) {
     for (const m of tab.markets) {
-      if (m.type === 'binary' && m.groupTitle === '亚洲让分盘' && m.question.includes('-0.5')) {
+      if (m.type === 'binary' && (m.groupTitle === '让球' || m.groupTitle === '亚洲让分盘') && m.question.includes('-0.5')) {
         return { line: '-0.5 / 0.5', homePrice: m.yesPrice, awayPrice: m.noPrice }
       }
     }

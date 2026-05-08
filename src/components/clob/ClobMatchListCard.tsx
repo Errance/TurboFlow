@@ -68,8 +68,8 @@ export default function ClobMatchListCard({ match }: Props) {
 
       {/* Total */}
       <div className="hidden md:flex items-center gap-1 shrink-0">
-        <PriceCell label={`高于 ${match.totalLine.line}`} price={match.totalLine.overPrice} />
-        <PriceCell label={`低于 ${match.totalLine.line}`} price={match.totalLine.underPrice} />
+        <PriceCell label={`大 ${match.totalLine.line}`} price={match.totalLine.overPrice} />
+        <PriceCell label={`小 ${match.totalLine.line}`} price={match.totalLine.underPrice} />
       </div>
 
       {/* Asian */}

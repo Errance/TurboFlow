@@ -14,14 +14,11 @@ const noop = () => {}
 const LEAN_MARKET_ORDER = [
   '胜平负',
   '开球权',
-  '亚洲让分盘',
-  '让分0:1',
-  '让分0:2',
-  '让分1:0',
-  '让分2:0',
+  '让球',
+  '让球 0:1',
   '总进球数',
-  '合计',
-  '正确进球',
+  '大小球',
+  '波胆',
 ]
 
 const boardSections = [
@@ -57,9 +54,9 @@ const soccerComponentCoverage = [
   ['MatchListCard', '首页比赛卡'],
   ['MarketRenderer', '盘口分发器'],
   ['ButtonGroupMarket', '胜平负 / 开球权'],
-  ['RangeButtonsMarket', '让分 / 大小球区间'],
-  ['OddsTableMarket', '亚盘表格'],
-  ['ScoreGridMarket', '正确比分网格'],
+  ['RangeButtonsMarket', '进球区间 / 离散选项'],
+  ['OddsTableMarket', '让球 / 大小球线值卡片'],
+  ['ScoreGridMarket', '波胆网格'],
   ['ComboGridMarket', '组合盘口网格'],
   ['PlayerListMarket', '球员列表盘口'],
   ['OddsDisplay', '赔率格式'],
@@ -145,7 +142,7 @@ function selectedKeyFor(market: Market): string | undefined {
 }
 
 function settlementMarket(result: SettlementResult): Market {
-  return marketWith('正确进球', {
+  return marketWith('波胆', {
     status: 'settled',
     settlementResult: result,
     winningSelection: result === 'win' ? '1:0' : undefined,
@@ -177,21 +174,21 @@ const leanMarketScenarios = LEAN_MARKET_ORDER.map((title) => ({
 const marketStateScenarios: Array<{ label: string; note: string; market?: Market; selectedKey?: string; conflict?: boolean }> = [
   { label: '开放', note: '用户可以选择并加入投注单。', market: marketByTitle('胜平负') },
   { label: '选中', note: '同一盘口当前选项高亮。', market: marketByTitle('胜平负'), selectedKey: selectedKeyFor(marketByTitle('胜平负')) },
-  { label: '暂停', note: '盘口保留展示，但不可选择。', market: marketWith('合计', { status: 'suspended' }) },
+  { label: '暂停', note: '盘口保留展示，但不可选择。', market: marketWith('大小球', { status: 'suspended' }) },
   { label: '即将开放', note: '盘口存在，但尚未开放投注。', market: marketWith('总进球数', { status: 'upcoming' }) },
-  { label: '作废', note: '盘口作废，已下注按退款规则处理。', market: marketWith('合计', { status: 'void' }) },
+  { label: '作废', note: '盘口作废，已下注按退款规则处理。', market: marketWith('大小球', { status: 'void' }) },
   { label: '取消', note: '盘口取消，不再接受投注。', market: marketWith('胜平负', { status: 'cancelled' }) },
   { label: '已结算赢', note: '展示命中结果。', market: settlementMarket('win') },
   { label: '已结算输', note: '展示未命中。', market: settlementMarket('loss') },
   { label: '退款', note: '走盘或盘口作废按退款展示。', market: settlementMarket('push') },
-  { label: '串关互斥', note: '仅在串关模式下解释与已选盘口不可组合。', market: marketByTitle('正确进球'), conflict: true },
+  { label: '串关互斥', note: '仅在串关模式下解释与已选盘口不可组合。', market: marketByTitle('波胆'), conflict: true },
   { label: '隐藏', note: '后台隐藏的盘口不出现在用户列表中。' },
 ]
 
 const conflictExamples = [
-  ['胜平负 × 正确比分', '正确比分会直接推出胜平负结果。'],
-  ['总进球数 × 合计', '总进球档位会决定大小球结果。'],
-  ['亚洲让分盘 × 正确比分', '正确比分会决定让球结果。'],
+  ['胜平负 × 波胆', '波胆会直接推出胜平负结果。'],
+  ['总进球数 × 大小球', '总进球档位会决定大小球结果。'],
+  ['让球 × 波胆', '波胆会决定让球结果。'],
 ]
 
 const rejectReasons = [
@@ -235,11 +232,11 @@ function makeBet(id: string, status: MyBetItem['status'], patch: Partial<MyBetIt
 const sampleBets: MyBetItem[] = [
   makeBet('bet-pending', 'pending', { betCode: 'TF-PENDING', potentialReturn: 91.5 }),
   makeBet('bet-placed', 'placed', { betCode: 'TF-PLACED' }),
-  makeBet('bet-live', 'live', { betCode: 'TF-LIVE01', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '合计', selection: '高于 2.5', odds: 2.05, potentialReturn: 205 }),
-  makeBet('bet-win', 'settled', { betCode: 'TF-WIN001', result: 'win', settlementResult: 'win', payout: 168, marketTitle: '正确进球', selection: '0:1', odds: 8.4 }),
+  makeBet('bet-live', 'live', { betCode: 'TF-LIVE01', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '大小球', selection: '大 2.5', odds: 2.05, potentialReturn: 205 }),
+  makeBet('bet-win', 'settled', { betCode: 'TF-WIN001', result: 'win', settlementResult: 'win', payout: 168, marketTitle: '波胆', selection: '0:1', odds: 8.4 }),
   makeBet('bet-loss', 'settled', { betCode: 'TF-LOSS01', result: 'loss', settlementResult: 'loss', payout: 0 }),
-  makeBet('bet-push', 'settled', { betCode: 'TF-PUSH01', result: 'push', settlementResult: 'push', payout: 50, marketTitle: '亚洲让分盘', selection: '0 / 0' }),
-  makeBet('bet-void', 'settled', { betCode: 'TF-VOID01', result: 'push', settlementResult: 'void', payout: 50, marketTitle: '合计', selection: '高于 2.5' }),
+  makeBet('bet-push', 'settled', { betCode: 'TF-PUSH01', result: 'push', settlementResult: 'push', payout: 50, marketTitle: '让球', selection: '0 / 0' }),
+  makeBet('bet-void', 'settled', { betCode: 'TF-VOID01', result: 'push', settlementResult: 'void', payout: 50, marketTitle: '大小球', selection: '大 2.5' }),
   makeBet('bet-halfwin', 'settled', { betCode: 'TF-HALFWN', result: 'win', settlementResult: 'half_win', payout: 70 }),
   makeBet('bet-halfloss', 'settled', { betCode: 'TF-HALFLS', result: 'loss', settlementResult: 'half_loss', payout: 25 }),
   makeBet('bet-cashout', 'cashed_out', { betCode: 'TF-CASH01', payout: 286.5, odds: 5.62, marketTitle: '串关', selection: '3 项' }),
@@ -254,8 +251,8 @@ const parlayBet: MyBetItem = makeBet('bet-parlay', 'placed', {
   potentialReturn: 562,
   legs: [
     { id: 'l1', matchId: 'm1', matchLabel: 'RJ博塔弗戈 vs 米拉索尔', marketTitle: '胜平负', selection: 'RJ博塔弗戈', oddsAtPlacement: 1.83 },
-    { id: 'l2', matchId: 'm2', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '合计', selection: '高于 2.5', oddsAtPlacement: 2.05 },
-    { id: 'l3', matchId: 'm3', matchLabel: '阿森纳 vs 切尔西', marketTitle: '亚洲让分盘', selection: '-0.5', oddsAtPlacement: 1.50 },
+    { id: 'l2', matchId: 'm2', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '大小球', selection: '大 2.5', oddsAtPlacement: 2.05 },
+    { id: 'l3', matchId: 'm3', matchLabel: '阿森纳 vs 切尔西', marketTitle: '让球', selection: '-0.5', oddsAtPlacement: 1.50 },
   ],
 })
 
@@ -283,7 +280,7 @@ export default function SoccerDesignBoardPage() {
           <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
           <Metric label="足球组件" value={String(soccerComponentCoverage.length)} />
           <Metric label="比赛状态" value="7" />
-          <Metric label="本期盘口" value="10" />
+          <Metric label="本期盘口" value="7" />
           <Metric label="赛事级市场" value="6" />
           <Metric label="投注单状态" value="20+" />
           <Metric label="隐藏能力" value="1" />
@@ -427,7 +424,7 @@ export default function SoccerDesignBoardPage() {
                   onSelect={noop}
                   selectedKey={item.selectedKey}
                   conflictWith={item.conflict ? '胜平负' : undefined}
-                  conflictReason={item.conflict ? '正确比分会直接推出胜平负结果，不能放进同一张串关。' : undefined}
+                  conflictReason={item.conflict ? '波胆会直接推出胜平负结果，不能放进同一张串关。' : undefined}
                   onReplaceConflict={item.conflict ? noop : undefined}
                 />
               ) : (
@@ -448,16 +445,16 @@ export default function SoccerDesignBoardPage() {
       <BoardSection id="goal-toggle" title="6. 开赛封盘和市场关闭" description="单场比赛开始后封盘；冠军、晋级和系列赛类盘口按市场关闭时间、阶段开始、数学确定或官方暂停关闭。">
         <div className="grid gap-4 lg:grid-cols-4">
           <StateCard title="赛前可投注" description="比赛未开始，开放盘口可以选择。">
-            <MarketRenderer market={marketByTitle('合计')} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} />
+            <MarketRenderer market={marketByTitle('大小球')} displayTitle="大小球" matchId={liveSourceMatch.id} onSelect={noop} />
           </StateCard>
           <StateCard title="开赛后封盘" description="比赛进行中，盘口保留展示但不可选择。">
-            <MarketRenderer market={marketByTitle('合计')} displayTitle="合计" matchId={liveSourceMatch.id} onSelect={noop} bettingClosed />
+            <MarketRenderer market={marketByTitle('大小球')} displayTitle="大小球" matchId={liveSourceMatch.id} onSelect={noop} bettingClosed />
           </StateCard>
           <StateCard title="赔率锁定" description="开赛后赔率停止变化，只保留开赛前最后一次报价。">
-            <BetSlipPreview title="盘口已封盘" lines={['弗拉门戈 vs 科林蒂安', '合计 · 高于 2.5 @2.05', '比赛已开始，赔率已锁定']} footer="不可提交" tone="warning" />
+            <BetSlipPreview title="盘口已封盘" lines={['弗拉门戈 vs 科林蒂安', '大小球 · 大 2.5 @2.05', '比赛已开始，赔率已锁定']} footer="不可提交" tone="warning" />
           </StateCard>
           <StateCard title="投注单已有该场比赛" description="开赛后，投注单中的相关项不可提交，需要移除。">
-            <BetSlipPreview title="含不可用项" lines={['弗拉门戈 vs 科林蒂安', '合计 · 高于 2.5 @2.05', '比赛已开始，盘口已封盘']} footer="移除不可用项后再提交" tone="warning" />
+            <BetSlipPreview title="含不可用项" lines={['弗拉门戈 vs 科林蒂安', '大小球 · 大 2.5 @2.05', '比赛已开始，盘口已封盘']} footer="移除不可用项后再提交" tone="warning" />
           </StateCard>
         </div>
       </BoardSection>
@@ -468,8 +465,8 @@ export default function SoccerDesignBoardPage() {
           <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '每项分别输入或套用金额', '提交后生成多张单腿注单']} footer="二次确认" />
           <BetSlipPreview title="串关" lines={['3 项 · 跨 3 场', '总赔率 7.42', '全部选项命中方可获胜']} footer="确认串关" />
           <BetSlipPreview title="同盘口替换" lines={['已选择：主胜 @1.83', '再选平局时替换原选项', '投注单只保留一个同盘口选项']} footer="替换后重新核对" />
-          <BetSlipPreview title="多笔单注同场多盘口" lines={['胜平负 + 正确进球', '作为独立单注提交', '不展示串关冲突遮罩']} footer="可继续提交" tone="success" />
-          <BetSlipPreview title="串关同场冲突" lines={['胜平负 × 正确进球', '正确比分会推出胜平负', '不能放入同一张串关']} footer="移除冲突项或改为多笔单注" tone="warning" />
+          <BetSlipPreview title="多笔单注同场多盘口" lines={['胜平负 + 波胆', '作为独立单注提交', '不展示串关冲突遮罩']} footer="可继续提交" tone="success" />
+          <BetSlipPreview title="串关同场冲突" lines={['胜平负 × 波胆', '波胆会推出胜平负', '不能放入同一张串关']} footer="移除冲突项或改为多笔单注" tone="warning" />
           <BetSlipPreview title="折叠投注单" lines={['投注单已收起', '3 项 · 总赔率 7.42']} footer="点击展开" />
           <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '最新报价 @1.83']} footer="可提交" tone="success" />
           <BetSlipPreview title="报价过期" lines={['报价已过期', '请接受最新报价']} footer="接受最新报价" tone="warning" />
@@ -758,7 +755,7 @@ function ConfirmPreview() {
       <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
         <div className="flex items-center justify-between text-xs"><span className="text-[var(--text-secondary)]">投注方式</span><span className="text-[var(--text-primary)]">串关 · 3 项</span></div>
         <div className="my-3 space-y-2">
-          {['胜平负 · RJ博塔弗戈', '合计 · 高于 2.5', '亚洲让分盘 · -0.5'].map((item) => <div key={item} className="rounded bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>)}
+          {['胜平负 · RJ博塔弗戈', '大小球 · 大 2.5', '让球 · -0.5'].map((item) => <div key={item} className="rounded bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>)}
         </div>
         <div className="space-y-1 text-xs">
           <div className="flex justify-between"><span className="text-[var(--text-secondary)]">总赔率</span><span>7.42</span></div>

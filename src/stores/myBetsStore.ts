@@ -130,7 +130,7 @@ function migrateSeed(): MyBetItem[] {
         id: 'seed-live-push-l2',
         matchId: 'seed',
         matchLabel: '瓦斯科达伽马 vs 米内罗竞技',
-        marketTitle: '亚洲让分盘',
+        marketTitle: '让球',
         selection: '瓦斯科达伽马 -0.5',
         oddsAtPlacement: 1.9,
         oddsAfterRecalc: 1.0,
