@@ -211,7 +211,7 @@ export default function SoccerPage() {
                 <span className="flex-1">比赛</span>
                 <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
                 <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
-                <span className="hidden lg:block w-[138px] shrink-0 text-center">亚盘</span>
+                <span className="hidden lg:block w-[138px] shrink-0 text-center">让球</span>
                 <span className="w-16 shrink-0 text-right">盘口</span>
               </div>
               <div className="border border-[var(--border)] rounded-lg overflow-hidden">

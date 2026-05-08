@@ -84,6 +84,30 @@ const soccerStateCoverage = [
   ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
 ]
 
+const futureMarketCoverage = futuresCompetitions.flatMap((competition) =>
+  competition.markets.map((item) => ({
+    id: item.id,
+    title: `${competition.shortName} · ${item.group} · ${item.market.title}`,
+    text: `状态：${item.status}｜${item.description}`,
+  })),
+)
+
+const hiddenPredictionRoutes = [
+  ['/soccer/predictions/:tournamentId', '整届赛事预测详情页，当前不注册路由'],
+  ['/soccer/predictions/:tournamentId/leaderboard', '预测大赛完整榜单页，当前不注册路由'],
+  ['/soccer/predictions/share/:shareId', '预测大赛分享页，当前不注册路由'],
+]
+
+const hiddenPredictionComponents = [
+  ['SoccerPredictionPage', '整届赛事预测主页面'],
+  ['SoccerPredictionLeaderboardPage', '预测大赛完整榜单页'],
+  ['SoccerPredictionShareView', '预测大赛分享页'],
+  ['PredictionEntryCard', '我的预测大赛条目卡'],
+  ['PredictionConfirmDialog', '预测大赛提交确认弹窗'],
+  ['PredictionShareDialog', '预测大赛分享导出弹窗'],
+  ['PredictionReviewView', '预测大赛赛后复盘视图'],
+]
+
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
@@ -310,7 +334,7 @@ export default function SoccerDesignBoardPage() {
           <StateCard title="足球路由页面" description="App.tsx 中所有 /soccer 相关路由都必须能在展板找到对应预览或状态说明。">
             <CoverageList items={soccerRouteCoverage} />
           </StateCard>
-          <StateCard title="足球组件清单" description="28 个 soccer 组件按真实组件或说明性状态进入展板。">
+          <StateCard title="足球组件清单" description={`${soccerComponentCoverage.length} 个当前可见核心 soccer 组件按真实组件或说明性状态进入展板；已隐藏的 v4.5 资产在“已隐藏能力”单独列明。`}>
             <CoverageList items={soccerComponentCoverage} compact />
           </StateCard>
           <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / 暂缓能力 / 合规降级的状态族。">
@@ -380,7 +404,7 @@ export default function SoccerDesignBoardPage() {
         <StateCard title="盘口命名交付口径" description="设计稿、文案和 mock 必须统一使用这些用户可见名称，旧翻译只作为内部兼容。">
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
             {[
-              ['让球', '亚盘 / Asian Handicap，按钮内展示球队与线值。'],
+              ['让球', '亚洲让球 / Asian Handicap，按钮内展示球队与线值。'],
               ['让球 0:1', '欧洲让球胜平负，先加虚拟比分再判断胜平负。'],
               ['大小球', 'Over / Under，例如大 2.5、 小 2.5。'],
               ['总进球数', '准确总进球档位，例如 0、1、2、3、4、5+。'],
@@ -426,6 +450,13 @@ export default function SoccerDesignBoardPage() {
             </StateCard>
           ))}
         </div>
+        <StateCard title="赛事级 6 个市场全量覆盖" description="逐项核对当前 futuresData 中全部赛事级市场，确保冠军、晋级、赛季结果、系列赛和 upcoming 状态没有遗漏。">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {futureMarketCoverage.map((item) => (
+              <SmallState key={item.id} title={item.title} text={item.text} />
+            ))}
+          </div>
+        </StateCard>
         <div className="grid gap-4 md:grid-cols-3">
           <BetSlipPreview title="长期盘多笔单注" lines={['欧冠冠军 · 皇家马德里 @4.20', '晋级决赛 · 曼城 是 @2.55', '每项独立生成注单']} footer="二次确认" />
           <BetSlipPreview title="系列赛预测" lines={['皇家马德里 vs 巴塞罗那 · 两回合系列赛', '选择：皇家马德里晋级 @1.92', '包含加时和点球晋级结果']} footer="按 UEFA 官方结果结算" />
@@ -558,6 +589,14 @@ export default function SoccerDesignBoardPage() {
           <SmallState title="保留范围" text="历史代码和 mock 数据可作为后续研究素材保留，但不作为当前可见产品能力，也不要求设计师继续深化。" />
           <SmallState title="后续条件" text="只有当外部报价、结算源和风险模型明确后，再重新评估是否恢复整届赛事预测形态。" />
         </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <StateCard title="隐藏路由清单" description="这些路由相关代码可以保留为历史资产，但当前 App.tsx 不注册，设计交付也不继续展开。">
+            <CoverageList items={hiddenPredictionRoutes} />
+          </StateCard>
+          <StateCard title="隐藏组件清单" description="这些组件属于 v4.5 整届赛事预测大赛，不进入当前可见 mock 和设计覆盖口径。">
+            <CoverageList items={hiddenPredictionComponents} />
+          </StateCard>
+        </div>
       </BoardSection>
 
       <BoardSection id="edge-states" title="13. 异常与边界" description="集中展示当前用户可见异常：比赛取消、盘口作废、无数据、骨架和无效入口。预测大赛相关异常已随功能隐藏。">
@@ -645,7 +684,7 @@ function ListTablePreview() {
         <span className="flex-1">比赛</span>
         <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
         <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
-        <span className="hidden lg:block w-[138px] shrink-0 text-center">亚盘</span>
+        <span className="hidden lg:block w-[138px] shrink-0 text-center">让球</span>
         <span className="w-16 shrink-0 text-right">盘口</span>
       </div>
       {listMatches.map((match) => (
