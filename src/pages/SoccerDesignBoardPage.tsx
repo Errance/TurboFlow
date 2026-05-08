@@ -35,7 +35,6 @@ const boardSections = [
   ['mybets-states', '我的注单'],
   ['rule-states', '报价和提交反馈'],
   ['component-matrix', '组件覆盖'],
-  ['deferred-prediction-pool', '已隐藏能力'],
   ['edge-states', '异常与边界'],
   ['compliance-degrade', '合规降级'],
 ]
@@ -57,8 +56,6 @@ const soccerComponentCoverage = [
   ['RangeButtonsMarket', '进球区间 / 离散选项'],
   ['OddsTableMarket', '让球 / 大小球线值卡片'],
   ['ScoreGridMarket', '波胆分组卡片'],
-  ['ComboGridMarket', '组合盘口网格'],
-  ['PlayerListMarket', '球员列表盘口'],
   ['OddsDisplay', '赔率格式'],
   ['MarketCard', '盘口折叠容器'],
   ['SoccerBetSlip', '右栏投注单'],
@@ -80,7 +77,6 @@ const soccerStateCoverage = [
   ['盘口状态', '开放 / 选中 / 暂停 / 即将开放 / 作废 / 取消 / 结算 / 串关互斥 / 隐藏'],
   ['投注单', '空单 / 多笔单注 / 串关 / 报价变化 / 余额不足 / 提交失败 / 二次确认'],
   ['v4.4 赛事级', '冠军 / 晋级 / 赛季名次 / 两回合系列赛 / 官方待确认 / 不可串关'],
-  ['暂缓能力', 'Battle Pass 式整届赛事预测大赛已隐藏，暂不进入当前设计范围'],
   ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
 ]
 
@@ -91,22 +87,6 @@ const futureMarketCoverage = futuresCompetitions.flatMap((competition) =>
     text: `状态：${item.status}｜${item.description}`,
   })),
 )
-
-const hiddenPredictionRoutes = [
-  ['/soccer/predictions/:tournamentId', '整届赛事预测详情页，当前不注册路由'],
-  ['/soccer/predictions/:tournamentId/leaderboard', '预测大赛完整榜单页，当前不注册路由'],
-  ['/soccer/predictions/share/:shareId', '预测大赛分享页，当前不注册路由'],
-]
-
-const hiddenPredictionComponents = [
-  ['SoccerPredictionPage', '整届赛事预测主页面'],
-  ['SoccerPredictionLeaderboardPage', '预测大赛完整榜单页'],
-  ['SoccerPredictionShareView', '预测大赛分享页'],
-  ['PredictionEntryCard', '我的预测大赛条目卡'],
-  ['PredictionConfirmDialog', '预测大赛提交确认弹窗'],
-  ['PredictionShareDialog', '预测大赛分享导出弹窗'],
-  ['PredictionReviewView', '预测大赛赛后复盘视图'],
-]
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -298,16 +278,15 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。整届赛事预测大赛已因无法稳定获得外部报价而从当前 mock 和设计范围隐藏。
+          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。
         </p>
-        <div className="mt-4 grid gap-2 md:grid-cols-7">
+        <div className="mt-4 grid gap-2 md:grid-cols-6">
           <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
           <Metric label="足球组件" value={String(soccerComponentCoverage.length)} />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="7" />
           <Metric label="赛事级市场" value="6" />
           <Metric label="投注单状态" value="20+" />
-          <Metric label="隐藏能力" value="1" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
@@ -334,10 +313,10 @@ export default function SoccerDesignBoardPage() {
           <StateCard title="足球路由页面" description="App.tsx 中所有 /soccer 相关路由都必须能在展板找到对应预览或状态说明。">
             <CoverageList items={soccerRouteCoverage} />
           </StateCard>
-          <StateCard title="足球组件清单" description={`${soccerComponentCoverage.length} 个当前可见核心 soccer 组件按真实组件或说明性状态进入展板；已隐藏的 v4.5 资产在“已隐藏能力”单独列明。`}>
+          <StateCard title="足球组件清单" description={`${soccerComponentCoverage.length} 个当前可见核心 soccer 组件按真实组件或说明性状态进入展板。`}>
             <CoverageList items={soccerComponentCoverage} compact />
           </StateCard>
-          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / 暂缓能力 / 合规降级的状态族。">
+          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / 合规降级的状态族。">
             <CoverageList items={soccerStateCoverage} />
           </StateCard>
         </div>
@@ -583,23 +562,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="deferred-prediction-pool" title="12. 已隐藏能力：整届赛事预测大赛" description="类似 TI 勇士战令的整届小组赛、淘汰赛、冠亚季殿军预测，当前无法从外部稳定获得报价，因此不进入现阶段 mock、用户入口或设计交付。">
-        <div className="grid gap-4 md:grid-cols-3">
-          <SmallState title="隐藏范围" text="足球首页不展示预测大赛 tab；不注册预测详情、榜单、分享路由；我的注单不展示预测大赛资产 tab。" />
-          <SmallState title="保留范围" text="历史代码和 mock 数据可作为后续研究素材保留，但不作为当前可见产品能力，也不要求设计师继续深化。" />
-          <SmallState title="后续条件" text="只有当外部报价、结算源和风险模型明确后，再重新评估是否恢复整届赛事预测形态。" />
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <StateCard title="隐藏路由清单" description="这些路由相关代码可以保留为历史资产，但当前 App.tsx 不注册，设计交付也不继续展开。">
-            <CoverageList items={hiddenPredictionRoutes} />
-          </StateCard>
-          <StateCard title="隐藏组件清单" description="这些组件属于 v4.5 整届赛事预测大赛，不进入当前可见 mock 和设计覆盖口径。">
-            <CoverageList items={hiddenPredictionComponents} />
-          </StateCard>
-        </div>
-      </BoardSection>
-
-      <BoardSection id="edge-states" title="13. 异常与边界" description="集中展示当前用户可见异常：比赛取消、盘口作废、无数据、骨架和无效入口。预测大赛相关异常已随功能隐藏。">
+      <BoardSection id="edge-states" title="12. 异常与边界" description="集中展示当前用户可见异常：比赛取消、盘口作废、无数据、骨架和无效入口。">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <BetSlipPreview title="比赛取消" lines={['比赛状态：取消', '相关盘口不再接受选择', '已下注按作废/退款规则处理']} footer="相关盘口作废" tone="warning" />
           <BetSlipPreview title="盘口作废" lines={['盘口状态：void', '注单保留记录', '本金退回或按走盘处理']} footer="退款 / 走盘" tone="warning" />
@@ -608,7 +571,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="compliance-degrade" title="14. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
+      <BoardSection id="compliance-degrade" title="13. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
         <ComplianceDegradePreview />
       </BoardSection>
     </div>
@@ -670,7 +633,7 @@ function ComplianceDegradePreview() {
         </div>
       </StateCard>
       <StateCard title="非大陆真钱版" description="在合法合规地区继续展示当前 v4.3/v4.4 功能。">
-        <SmallState title="完整模式" text="保留赔率、下注、赛事级个体盘、cash out 等能力；整届赛事预测大赛仍处于隐藏暂缓状态。" />
+        <SmallState title="完整模式" text="保留赔率、下注、赛事级个体盘、cash out 等当前可见能力。" />
       </StateCard>
     </div>
   )
@@ -746,7 +709,7 @@ function MyBetsPagePreview() {
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {['今天', '7 天', '全部'].map((item, index) => (
+        {['今天', '7 天', '30 天', '全部'].map((item, index) => (
           <span key={item} className={`rounded-md px-2.5 py-1 text-[10px] ${index === 1 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>{item}</span>
         ))}
       </div>
