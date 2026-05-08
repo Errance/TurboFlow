@@ -377,6 +377,22 @@ export default function SoccerDesignBoardPage() {
           <SmallState title="总进球数" text="猜整场准确总进球档位，例如 0、1、2、3、4、5+。" />
           <SmallState title="大小球" text="围绕线值选择大或小，例如大 2.5 / 小 2.5，不等同于总进球数。" />
         </div>
+        <StateCard title="盘口命名交付口径" description="设计稿、文案和 mock 必须统一使用这些用户可见名称，旧翻译只作为内部兼容。">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              ['让球', '亚盘 / Asian Handicap，按钮内展示球队与线值。'],
+              ['让球 0:1', '欧洲让球胜平负，先加虚拟比分再判断胜平负。'],
+              ['大小球', 'Over / Under，例如大 2.5、 小 2.5。'],
+              ['总进球数', '准确总进球档位，例如 0、1、2、3、4、5+。'],
+              ['波胆', 'Correct Score，分组展示具体比分和其他比分。'],
+              ['双重机会', 'Double Chance，扩展盘口中不再使用“双胜彩”。'],
+              ['胜平负', '1X2，判断全场主胜、平局、客胜。'],
+              ['开球权', '趣味盘，判断哪方先开球。'],
+            ].map(([title, text]) => (
+              <SmallState key={title} title={title} text={text} />
+            ))}
+          </div>
+        </StateCard>
         <div className="grid gap-4 xl:grid-cols-2">
           {leanMarketScenarios.map((item) => (
             <StateCard key={item.title} title={item.title} description="当前主流程盘口。">
