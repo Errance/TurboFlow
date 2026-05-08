@@ -14,7 +14,7 @@ export type MarketFamily =
   | 'handicap_eu' // 欧洲让球 让球 0:1 / 0:2 / 1:0 / 2:0 等
   | 'total_bucket' // 总进球数离散档位 0/1/2/3/4/5+
   | 'overunder' // 大小球 2.5 / 3.0 等
-  | 'score_exact' // 波胆 / 正确比分矩阵
+  | 'score_exact' // 波胆 / 正确比分
   | 'future_winner' // 冠军 / 赛事优胜者
   | 'qualification' // 晋级 / 出线 / 获得资格
   | 'stage_result' // 系列赛 / 淘汰赛阶段结果

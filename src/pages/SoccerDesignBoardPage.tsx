@@ -56,7 +56,7 @@ const soccerComponentCoverage = [
   ['ButtonGroupMarket', '胜平负 / 开球权'],
   ['RangeButtonsMarket', '进球区间 / 离散选项'],
   ['OddsTableMarket', '让球 / 大小球线值卡片'],
-  ['ScoreGridMarket', '波胆网格'],
+  ['ScoreGridMarket', '波胆分组卡片'],
   ['ComboGridMarket', '组合盘口网格'],
   ['PlayerListMarket', '球员列表盘口'],
   ['OddsDisplay', '赔率格式'],
@@ -371,7 +371,12 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="lean-markets" title="3. v4.4 单场本期盘口" description="单场比赛仍平铺当前 10 个盘口；冠军与晋级等赛事级盘口在下一节单独展示。">
+      <BoardSection id="lean-markets" title="3. v4.4 单场本期盘口" description="单场比赛仍平铺当前 7 个核心盘口；冠军与晋级等赛事级盘口在下一节单独展示。">
+        <div className="grid gap-3 md:grid-cols-3">
+          <SmallState title="波胆" text="猜具体比分，按主胜比分、平局比分、客胜比分和其他比分分组展示。" />
+          <SmallState title="总进球数" text="猜整场准确总进球档位，例如 0、1、2、3、4、5+。" />
+          <SmallState title="大小球" text="围绕线值选择大或小，例如大 2.5 / 小 2.5，不等同于总进球数。" />
+        </div>
         <div className="grid gap-4 xl:grid-cols-2">
           {leanMarketScenarios.map((item) => (
             <StateCard key={item.title} title={item.title} description="当前主流程盘口。">
