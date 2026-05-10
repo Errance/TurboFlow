@@ -21,9 +21,20 @@ export default function SoccerFuturesPage() {
     () => ['全部', ...Array.from(new Set(competition.markets.map((item) => item.group)))],
     [competition.markets],
   )
+  const stageGroups = groups.filter((group) => group !== '全部')
   const visibleMarkets = activeGroup === '全部'
     ? competition.markets
     : competition.markets.filter((item) => item.group === activeGroup)
+  const groupedMarkets = stageGroups
+    .map((group) => ({
+      group,
+      markets: visibleMarkets.filter((item) => item.group === group),
+    }))
+    .filter((item) => item.markets.length > 0)
+
+  useEffect(() => {
+    setActiveGroup('全部')
+  }, [competition.id])
 
   useEffect(() => {
     const pairs: Array<[string, number]> = []
@@ -80,19 +91,24 @@ export default function SoccerFuturesPage() {
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs text-[#2DD4BF] font-semibold">冠军与晋级</p>
+                <p className="text-xs text-[#2DD4BF] font-semibold">冠军与晋级 · {competition.seriesType}</p>
                 <h1 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{competition.name}</h1>
                 <p className="mt-2 text-sm text-[var(--text-secondary)]">{competition.headline}</p>
               </div>
               <div className="rounded-xl bg-[var(--bg-control)] px-4 py-3 text-right">
-                <p className="text-[10px] text-[var(--text-secondary)]">阶段</p>
+                <p className="text-[10px] text-[var(--text-secondary)]">系列状态</p>
                 <p className="text-sm font-semibold text-[var(--text-primary)]">{competition.phase}</p>
               </div>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <InfoPill label="市场粒度" value="赛事 / 赛季 / 淘汰赛" />
+              <InfoPill label="预测组织" value="系列赛内分组" />
               <InfoPill label="报价方式" value="平台欧洲盘报价" />
               <InfoPill label="投注方式" value="多笔单注，暂不串关" />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {competition.marketSummary.map((item) => (
+                <span key={item} className="rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] text-[#E85A7E]">{item}</span>
+              ))}
             </div>
           </section>
 
@@ -112,37 +128,45 @@ export default function SoccerFuturesPage() {
             ))}
           </div>
 
-          <div className="mt-4 space-y-4">
-            {visibleMarkets.map((item) => {
-              const selectedKey = [...selectedKeys].find((key) => key.startsWith(item.market.title + '|'))
-              return (
-                <section key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                  <div className="mb-3 flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] text-[#2DD4BF]">{item.group}</span>
-                        <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
+          <div className="mt-4 space-y-5">
+            {groupedMarkets.map(({ group, markets }) => (
+              <section key={group} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)]">{group}</h2>
+                  <span className="rounded-full bg-[var(--bg-card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{markets.length} 个预测</span>
+                </div>
+                {markets.map((item) => {
+                  const selectedKey = [...selectedKeys].find((key) => key.startsWith(item.market.title + '|'))
+                  return (
+                    <section key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                      <div className="mb-3 flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] text-[#2DD4BF]">{competition.shortName}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
+                          </div>
+                          <p className="mt-2 text-xs text-[var(--text-secondary)] leading-5">{item.description}</p>
+                        </div>
+                        <div className="text-right text-[10px] text-[var(--text-secondary)]">
+                          <p>关闭时间</p>
+                          <p className="mt-0.5 font-mono text-[var(--text-primary)]">{formatCloseTime(item.subject.closesAt)}</p>
+                        </div>
                       </div>
-                      <p className="mt-2 text-xs text-[var(--text-secondary)] leading-5">{item.description}</p>
-                    </div>
-                    <div className="text-right text-[10px] text-[var(--text-secondary)]">
-                      <p>关闭时间</p>
-                      <p className="mt-0.5 font-mono text-[var(--text-primary)]">{formatCloseTime(item.subject.closesAt)}</p>
-                    </div>
-                  </div>
-                  <MarketRenderer
-                    market={item.market}
-                    displayTitle={item.market.title}
-                    matchId={item.subject.subjectId}
-                    onSelect={handleSelect}
-                    selectedKey={selectedKey}
-                    conflictWith={betType === 'accumulator' ? '串关模式' : undefined}
-                    conflictReason={betType === 'accumulator' ? '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交。' : undefined}
-                  />
-                  <p className="mt-2 text-[10px] text-[var(--text-secondary)]">结算来源：{item.subject.resolutionSource}</p>
-                </section>
-              )
-            })}
+                      <MarketRenderer
+                        market={item.market}
+                        displayTitle={item.market.title}
+                        matchId={item.subject.subjectId}
+                        onSelect={handleSelect}
+                        selectedKey={selectedKey}
+                        conflictWith={betType === 'accumulator' ? '串关模式' : undefined}
+                        conflictReason={betType === 'accumulator' ? '冠军、晋级和系列赛类盘口暂不支持串关，可作为多笔单注提交。' : undefined}
+                      />
+                      <p className="mt-2 text-[10px] text-[var(--text-secondary)]">结算来源：{item.subject.resolutionSource}</p>
+                    </section>
+                  )
+                })}
+              </section>
+            ))}
           </div>
         </div>
 

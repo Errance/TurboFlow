@@ -40,9 +40,9 @@ const boardSections = [
 ]
 
 const soccerRouteCoverage = [
-  ['SoccerPage', '/soccer', '首页比赛 / 冠军与晋级两个 tab、左侧导航、比赛列表'],
+  ['SoccerPage', '/soccer', '首页单场预测 / 冠军与晋级两个 tab、左侧导航、比赛列表'],
   ['SoccerMatchPage', '/soccer/match/:matchId', '比赛详情、右栏信息、盘口列表、投注单'],
-  ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级赛事级详情'],
+  ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级系列赛详情'],
   ['SoccerMyBetsPage', '/soccer/mybets', '传统注单列表、筛选、cash out、导出'],
   ['SoccerDesignBoardPage', '/soccer/design-board', '设计状态总览'],
 ]
@@ -76,7 +76,7 @@ const soccerStateCoverage = [
   ['v4.3 单场', '赛前 / 进行中 / 已结束 / 中断 / 腰斩 / 延期 / 取消'],
   ['盘口状态', '开放 / 选中 / 暂停 / 即将开放 / 作废 / 取消 / 结算 / 串关互斥 / 隐藏'],
   ['投注单', '空单 / 多笔单注 / 串关 / 报价变化 / 余额不足 / 提交失败 / 二次确认'],
-  ['v4.4 赛事级', '冠军 / 晋级 / 赛季名次 / 两回合系列赛 / 官方待确认 / 不可串关'],
+  ['v4.7 冠军与晋级', '系列赛对象 / 小组赛 / 淘汰赛 / 冠军 / 晋级 / 赛季结果 / 两回合系列赛 / 不可串关'],
   ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
 ]
 
@@ -87,6 +87,10 @@ const futureMarketCoverage = futuresCompetitions.flatMap((competition) =>
     text: `状态：${item.status}｜${item.description}`,
   })),
 )
+
+function futureGroups(competition: (typeof futuresCompetitions)[number]): string[] {
+  return Array.from(new Set(competition.markets.map((item) => item.group)))
+}
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -278,23 +282,23 @@ export default function SoccerDesignBoardPage() {
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前覆盖 v4.4 范围内的单场盘口、冠军与晋级、系列赛预测、多笔单注、串关、报价确认和封盘能力。
+          当前覆盖 v4.7 范围内的单场预测、冠军与晋级系列赛结构、对象内预测、多笔单注、串关、报价确认和封盘能力。
         </p>
         <div className="mt-4 grid gap-2 md:grid-cols-6">
           <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
           <Metric label="足球组件" value={String(soccerComponentCoverage.length)} />
           <Metric label="比赛状态" value="7" />
           <Metric label="本期盘口" value="7" />
-          <Metric label="赛事级市场" value="6" />
+          <Metric label="赛事级市场" value={String(futureMarketCoverage.length)} />
           <Metric label="投注单状态" value="20+" />
         </div>
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">v4.4 盘口范围</p>
+          <p className="text-xs font-semibold text-[var(--text-primary)]">v4.7 盘口范围</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {LEAN_MARKET_ORDER.map((title) => (
               <span key={title} className="rounded-full bg-[#2DD4BF]/10 px-2.5 py-1 text-[10px] text-[#2DD4BF]">{title}</span>
             ))}
-            {['冠军', '晋级', '赛季名次', '两回合系列赛'].map((title) => (
+            {['小组赛', '淘汰赛', '冠军', '晋级', '赛季名次', '两回合系列赛'].map((title) => (
               <span key={title} className="rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] text-[#E85A7E]">{title}</span>
             ))}
           </div>
@@ -316,7 +320,7 @@ export default function SoccerDesignBoardPage() {
           <StateCard title="足球组件清单" description={`${soccerComponentCoverage.length} 个当前可见核心 soccer 组件按真实组件或说明性状态进入展板。`}>
             <CoverageList items={soccerComponentCoverage} compact />
           </StateCard>
-          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / 合规降级的状态族。">
+          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / v4.7 / 合规降级的状态族。">
             <CoverageList items={soccerStateCoverage} />
           </StateCard>
         </div>
@@ -335,7 +339,10 @@ export default function SoccerDesignBoardPage() {
           <StateCard title="比赛详情页布局" description="路径导航、比赛头部、所有盘口、盘口列表、右栏信息和投注单。">
             <MatchDetailPreview />
           </StateCard>
-          <StateCard title="冠军与晋级详情页" description="赛事级详情页：赛事头部、市场分组、官方结算来源和不可串关提示。">
+          <StateCard title="冠军与晋级首页" description="先展示不同系列赛或赛季对象，再进入对象内部查看预测。">
+            <FuturesSeriesPreview />
+          </StateCard>
+          <StateCard title="冠军与晋级详情页" description="系列赛详情页：头部、阶段分组、官方结算来源和不可串关提示。">
             <FuturesDetailPreview />
           </StateCard>
           <StateCard title="我的注单页布局" description="状态筛选、日期筛选、导出、列表、加载更多和空态。">
@@ -374,7 +381,7 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="lean-markets" title="3. v4.4 单场本期盘口" description="单场比赛仍平铺当前 7 个核心盘口；冠军与晋级等赛事级盘口在下一节单独展示。">
+      <BoardSection id="lean-markets" title="3. v4.7 单场预测本期盘口" description="单场预测仍平铺当前 7 个核心盘口；冠军与晋级在下一节按系列赛对象单独展示。">
         <div className="grid gap-3 md:grid-cols-3">
           <SmallState title="波胆" text="猜具体比分，按主胜比分、平局比分、客胜比分和其他比分分组展示。" />
           <SmallState title="总进球数" text="猜整场准确总进球档位，例如 0、1、2、3、4、5+。" />
@@ -405,17 +412,22 @@ export default function SoccerDesignBoardPage() {
         </div>
       </BoardSection>
 
-      <BoardSection id="future-markets" title="4. v4.4 冠军、晋级和系列赛预测" description="赛事级盘口与单场盘口并列展示，借鉴预测市场的问题组织方式，但仍使用平台报价和传统投注单。">
+      <BoardSection id="future-markets" title="4. v4.7 冠军与晋级系列赛结构" description="冠军与晋级先按系列赛或赛季对象组织，再在对象内部展示不同阶段和预测市场；仍使用平台报价和传统投注单。">
         <div className="grid gap-4 xl:grid-cols-2">
           {futuresCompetitions.map((competition) => (
             <StateCard key={competition.id} title={competition.shortName} description={competition.headline}>
               <div className="space-y-3">
                 <div className="grid gap-2 md:grid-cols-3">
-                  <SmallState title="市场粒度" text="赛事、赛季或淘汰赛阶段，不挂在某一场 match 上。" />
+                  <SmallState title="系列赛对象" text={`${competition.region} · ${competition.seriesType} · ${competition.phase}`} />
                   <SmallState title="投注方式" text="支持单注和多笔单注；第一版暂不支持串关。" />
                   <SmallState title="结算来源" text="按官方赛事结果、积分榜或晋级结果结算。" />
                 </div>
-                {competition.markets.slice(0, 2).map((item) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {futureGroups(competition).map((group) => (
+                    <span key={group} className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{group}</span>
+                  ))}
+                </div>
+                {competition.markets.map((item) => (
                   <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
@@ -429,7 +441,7 @@ export default function SoccerDesignBoardPage() {
             </StateCard>
           ))}
         </div>
-        <StateCard title="赛事级 6 个市场全量覆盖" description="逐项核对当前 futuresData 中全部赛事级市场，确保冠军、晋级、赛季结果、系列赛和 upcoming 状态没有遗漏。">
+        <StateCard title={`冠军与晋级 ${futureMarketCoverage.length} 个市场全量覆盖`} description="逐项核对当前 futuresData 中全部赛事级市场，确保系列赛对象、阶段分组、冠军、晋级、赛季结果、系列赛和 upcoming 状态没有遗漏。">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {futureMarketCoverage.map((item) => (
               <SmallState key={item.id} title={item.title} text={item.text} />
@@ -595,22 +607,61 @@ function CoverageList({ items, compact }: { items: string[][]; compact?: boolean
   )
 }
 
+function FuturesSeriesPreview() {
+  return (
+    <div className="grid gap-3">
+      <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
+        <span className="rounded-lg px-3 py-1.5 text-xs text-[var(--text-secondary)]">单场预测</span>
+        <span className="rounded-lg bg-[#2DD4BF]/15 px-3 py-1.5 text-xs font-semibold text-[#2DD4BF]">冠军与晋级</span>
+      </div>
+      {futuresCompetitions.map((competition) => (
+        <div key={competition.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold text-[#E85A7E]">{competition.region} · {competition.seriesType}</p>
+              <h3 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
+              <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{competition.headline}</p>
+            </div>
+            <span className="rounded-full bg-[var(--bg-card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{competition.markets.length} 个预测</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {competition.marketSummary.slice(0, 4).map((item) => (
+              <span key={item} className="rounded-full bg-[var(--bg-card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{item}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function FuturesDetailPreview() {
   const competition = futuresCompetitions[0]
+  const groups = futureGroups(competition)
   return (
     <div className="space-y-3">
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-[10px] text-[#E85A7E] uppercase tracking-wider font-semibold">{competition.region} · {competition.phase}</p>
+        <p className="text-[10px] text-[#E85A7E] uppercase tracking-wider font-semibold">{competition.region} · {competition.seriesType}</p>
         <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
         <p className="mt-1 text-xs text-[var(--text-secondary)]">{competition.headline}</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {['全部', ...groups].map((group, index) => (
+            <span key={group} className={`rounded-lg px-2.5 py-1 text-[10px] ${index === 0 ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-control)] text-[var(--text-secondary)]'}`}>{group}</span>
+          ))}
+        </div>
       </div>
-      {competition.markets.slice(0, 3).map((item) => (
-        <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
-            <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
-          </div>
-          <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
+      {groups.map((group) => (
+        <div key={group} className="space-y-2">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">{group}</p>
+          {competition.markets.filter((item) => item.group === group).slice(0, 2).map((item) => (
+            <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
+              </div>
+              <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -632,7 +683,7 @@ function ComplianceDegradePreview() {
           {hidden.map((item) => <span key={item} className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] text-red-400">{item}</span>)}
         </div>
       </StateCard>
-      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示当前 v4.3/v4.4 功能。">
+      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示当前 v4.3/v4.4/v4.7 功能。">
         <SmallState title="完整模式" text="保留赔率、下注、赛事级个体盘、cash out 等当前可见能力。" />
       </StateCard>
     </div>

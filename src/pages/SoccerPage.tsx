@@ -12,6 +12,17 @@ function parseView(value: string | null): SoccerView {
   return 'matches'
 }
 
+function uniqueGroups(markets: typeof futuresCompetitions[number]['markets']): string[] {
+  return Array.from(new Set(markets.map((item) => item.group)))
+}
+
+function formatCloseTime(iso?: string): string {
+  if (!iso) return '按市场规则'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '按市场规则'
+  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
 export default function SoccerPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -167,7 +178,7 @@ export default function SoccerPage() {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
               {[
-                { id: 'matches' as const, label: '比赛' },
+                { id: 'matches' as const, label: '单场预测' },
                 { id: 'futures' as const, label: '冠军与晋级' },
               ].map((item) => (
                 <button
@@ -188,12 +199,12 @@ export default function SoccerPage() {
           {/* Differentiated tagline per tab */}
           <div className="mb-4">
             {view === 'matches' && (
-              <p className="text-xs text-[var(--text-secondary)]">按比赛逐场下注。</p>
+              <p className="text-xs text-[var(--text-secondary)]">近期单场比赛结果和内容预测，按比赛逐场下注。</p>
             )}
             {view === 'futures' && (
               <p className="text-xs text-[var(--text-secondary)]">
                 <span className="text-[var(--text-primary)] font-medium">冠军与晋级｜</span>
-                对单个市场逐个押注，按赔率结算。
+                先选择系列赛或赛季，再进入查看该对象下的小组赛、淘汰赛、冠军等预测。
               </p>
             )}
           </div>
@@ -232,21 +243,42 @@ export default function SoccerPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-semibold text-[#2DD4BF]">{competition.region} · {competition.phase}</p>
+                      <p className="text-xs font-semibold text-[#2DD4BF]">{competition.region} · {competition.seriesType}</p>
                       <h3 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
                       <p className="mt-2 text-sm text-[var(--text-secondary)]">{competition.headline}</p>
                     </div>
                     <span className="rounded-full bg-[var(--bg-control)] px-2.5 py-1 text-[10px] text-[var(--text-secondary)]">
-                      {competition.markets.length} 个市场
+                      {competition.markets.length} 个预测
                     </span>
                   </div>
-                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    {competition.markets.slice(0, 3).map((item) => (
-                      <div key={item.id} className="rounded-xl bg-[var(--bg-control)] px-3 py-2">
-                        <p className="text-[10px] text-[var(--text-secondary)]">{item.group}</p>
-                        <p className="mt-1 truncate text-xs text-[var(--text-primary)]">{item.market.title}</p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {uniqueGroups(competition.markets).map((group) => (
+                      <span key={group} className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{group}</span>
+                    ))}
+                  </div>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {competition.marketSummary.slice(0, 4).map((item) => (
+                      <div key={item} className="rounded-xl bg-[var(--bg-control)] px-3 py-2 text-xs text-[var(--text-primary)]">
+                        {item}
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    {competition.markets.slice(0, 2).map((item) => (
+                      <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-[var(--text-primary)]">{item.market.title}</span>
+                          <span className="text-[10px] text-[var(--text-secondary)]">{item.group}</span>
+                        </div>
+                        <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">
+                          {item.market.options.slice(0, 2).map((option) => `${option.label} ${option.odds.toFixed(2)}`).join(' / ')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[10px] text-[var(--text-secondary)]">
+                    <span>关闭：{formatCloseTime(competition.markets[0]?.subject.closesAt)}</span>
+                    <span className="text-[#2DD4BF]">进入系列赛 &gt;</span>
                   </div>
                 </button>
               ))}

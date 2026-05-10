@@ -39,7 +39,7 @@ export function getMarketFamily(title: string): MarketFamily {
   if (title.includes('大小球') || title === '合计') return 'overunder'
   if (title.includes('波胆') || title === '正确进球' || title.includes('正确比分')) return 'score_exact'
   if (title.includes('冠军')) return 'future_winner'
-  if (title.includes('晋级') || title.includes('资格')) return 'qualification'
+  if (title.includes('晋级') || title.includes('出线') || title.includes('进入') || title.includes('资格')) return 'qualification'
   if (title.includes('系列赛') || title.includes('两回合')) return 'stage_result'
   if (title.includes('降级') || title.includes('升级') || title.includes('前四') || title.includes('前六')) return 'season_position'
   if (title.startsWith('让球')) return 'handicap_eu'

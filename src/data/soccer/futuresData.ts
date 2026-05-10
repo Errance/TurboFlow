@@ -1,6 +1,6 @@
 import type { BetSubject, ButtonGroupMarket, Market, MarketStatus } from './types'
 
-export type FutureMarketGroup = '冠军' | '晋级' | '赛季结果' | '系列赛'
+export type FutureMarketGroup = '小组赛' | '淘汰赛' | '冠军' | '晋级' | '赛季结果' | '系列赛'
 
 export interface SoccerFutureMarket {
   id: string
@@ -18,7 +18,18 @@ export interface SoccerFutureCompetition {
   region: string
   phase: string
   headline: string
+  seriesType: string
+  marketSummary: string[]
   markets: SoccerFutureMarket[]
+}
+
+const worldCupSubject: BetSubject = {
+  scope: 'competition',
+  subjectId: 'future-world-cup-2026',
+  subjectLabel: 'FIFA World Cup 2026',
+  closesAt: '2026-06-11T19:00:00.000Z',
+  resolutionTimeLabel: '对应阶段结束并经 FIFA 确认后',
+  resolutionSource: 'FIFA 官方赛事结果',
 }
 
 const uclSubject: BetSubject = {
@@ -54,12 +65,91 @@ function buttonMarket(title: string, options: Array<{ label: string; odds: numbe
 
 export const futuresCompetitions: SoccerFutureCompetition[] = [
   {
+    id: 'world-cup-2026',
+    name: 'FIFA World Cup 2026',
+    shortName: '世界杯 2026',
+    region: '国际',
+    phase: '小组赛至决赛',
+    headline: '小组出线、淘汰赛晋级和最终冠军预测',
+    seriesType: '杯赛系列赛',
+    marketSummary: ['小组第一', '小组出线', '进入 8 强', '进入决赛', '冠军'],
+    markets: [
+      {
+        id: 'wc-group-a-winner',
+        group: '小组赛',
+        subject: worldCupSubject,
+        market: buttonMarket('A组第一', [
+          { label: '墨西哥', odds: 2.05 },
+          { label: '捷克', odds: 3.80 },
+          { label: '南非', odds: 5.20 },
+          { label: '其他球队', odds: 8.00 },
+        ]),
+        description: '预测 A 组最终第一名，按小组赛全部比赛结束后的 FIFA 官方排名结算。',
+        status: 'open',
+      },
+      {
+        id: 'wc-group-a-qualify',
+        group: '小组赛',
+        subject: worldCupSubject,
+        market: buttonMarket('A组出线', [
+          { label: '墨西哥 是', odds: 1.32 },
+          { label: '墨西哥 否', odds: 3.40 },
+          { label: '捷克 是', odds: 2.10 },
+          { label: '捷克 否', odds: 1.72 },
+        ]),
+        description: '预测球队是否从 A 组晋级淘汰赛，按 FIFA 官方小组出线结果结算。',
+        status: 'open',
+      },
+      {
+        id: 'wc-quarterfinalist',
+        group: '淘汰赛',
+        subject: worldCupSubject,
+        market: buttonMarket('进入8强', [
+          { label: '法国 是', odds: 1.85 },
+          { label: '法国 否', odds: 1.95 },
+          { label: '巴西 是', odds: 1.72 },
+          { label: '巴西 否', odds: 2.10 },
+        ]),
+        description: '预测球队是否进入 8 强，包含常规时间、加时赛和点球大战后的晋级结果。',
+        status: 'open',
+      },
+      {
+        id: 'wc-finalist',
+        group: '淘汰赛',
+        subject: worldCupSubject,
+        market: buttonMarket('进入决赛', [
+          { label: '法国 是', odds: 3.20 },
+          { label: '法国 否', odds: 1.35 },
+          { label: '阿根廷 是', odds: 3.60 },
+          { label: '阿根廷 否', odds: 1.30 },
+        ]),
+        description: '预测球队是否晋级决赛，按半决赛结束后的官方晋级结果结算。',
+        status: 'open',
+      },
+      {
+        id: 'wc-winner',
+        group: '冠军',
+        subject: worldCupSubject,
+        market: buttonMarket('世界杯冠军', [
+          { label: '法国', odds: 5.80 },
+          { label: '巴西', odds: 6.20 },
+          { label: '阿根廷', odds: 7.40 },
+          { label: '西班牙', odds: 8.00 },
+        ]),
+        description: '预测 2026 FIFA World Cup 最终冠军，按 FIFA 官方冠军结果结算。',
+        status: 'open',
+      },
+    ],
+  },
+  {
     id: 'ucl-2026',
     name: 'UEFA Champions League 2026',
     shortName: '欧冠 2026',
     region: '欧洲',
     phase: '淘汰赛',
     headline: '冠军、晋级决赛和两回合系列赛预测',
+    seriesType: '俱乐部杯赛',
+    marketSummary: ['冠军', '晋级决赛', '两回合系列赛'],
     markets: [
       {
         id: 'ucl-winner',
@@ -109,6 +199,8 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
     region: '英格兰',
     phase: '赛季进行中',
     headline: '冠军、前四和降级预测',
+    seriesType: '联赛赛季',
+    marketSummary: ['冠军', '欧冠资格', '降级'],
     markets: [
       {
         id: 'pl-winner',
