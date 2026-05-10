@@ -45,6 +45,7 @@ const soccerRouteCoverage = [
   ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级系列赛详情'],
   ['SoccerMyBetsPage', '/soccer/mybets', '传统注单列表、筛选、cash out、导出'],
   ['SoccerDesignBoardPage', '/soccer/design-board', '设计状态总览'],
+  ['SoccerV47DeltaBoardPage', '/soccer/design-board/v4.7-delta', '仅展示 v4.7 本次 UI 变更'],
 ]
 
 const soccerComponentCoverage = [
@@ -304,6 +305,9 @@ export default function SoccerDesignBoardPage() {
           </div>
         </div>
         <nav className="mt-4 flex flex-wrap gap-2">
+          <a href={`${import.meta.env.BASE_URL}soccer/design-board/v4.7-delta`} className="rounded-lg border border-[#E85A7E]/40 bg-[#E85A7E]/10 px-3 py-1.5 text-xs text-[#E85A7E] hover:text-[#E85A7E]">
+            v4.7 变更页
+          </a>
           {boardSections.map(([id, label]) => (
             <a key={id} href={`#${id}`} className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF]">
               {label}

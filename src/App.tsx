@@ -15,6 +15,7 @@ import SoccerMatchPage from './pages/SoccerMatchPage'
 import SoccerFuturesPage from './pages/SoccerFuturesPage'
 import SoccerMyBetsPage from './pages/SoccerMyBetsPage'
 import SoccerDesignBoardPage from './pages/SoccerDesignBoardPage'
+import SoccerV47DeltaBoardPage from './pages/SoccerV47DeltaBoardPage'
 import ClobPage from './pages/ClobPage'
 import ClobMatchPage from './pages/ClobMatchPage'
 
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/soccer/futures/:competitionId" element={<SoccerFuturesPage />} />
           <Route path="/soccer/mybets" element={<SoccerMyBetsPage />} />
           <Route path="/soccer/design-board" element={<SoccerDesignBoardPage />} />
+          <Route path="/soccer/design-board/v4.7-delta" element={<SoccerV47DeltaBoardPage />} />
           <Route path="/clob" element={<ClobPage />} />
           <Route path="/clob/match/:matchId" element={<ClobMatchPage />} />
           <Route path="/copy" element={<CopyTradingPage />} />
