@@ -18,12 +18,15 @@ export default function TradingPanel({ selection }: Props) {
 
   useEffect(() => {
     if (selection) {
-      setSide(selection.side)
-      const p = selection.side === 'yes' ? selection.currentYesPrice : selection.currentNoPrice
-      setPrice(String(p))
-      setShares('')
-      setTotal('')
-      setSubmitted(false)
+      const id = window.setTimeout(() => {
+        setSide(selection.side)
+        const p = selection.side === 'yes' ? selection.currentYesPrice : selection.currentNoPrice
+        setPrice(String(p))
+        setShares('')
+        setTotal('')
+        setSubmitted(false)
+      }, 0)
+      return () => window.clearTimeout(id)
     }
   }, [selection])
 

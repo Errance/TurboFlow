@@ -40,16 +40,15 @@ export default function SoccerPredictionShareView() {
     ? bracketTournaments.find((t) => t.id === entry.tournamentId)
     : undefined
 
-  const slots = tournament?.slots ?? []
-  const distribution = tournament?.distribution ?? []
-
   const slotsByRound = useMemo(() => {
+    const slots = tournament?.slots ?? []
     const map: Record<BracketRoundId, BracketSlot[]> = { R16: [], QF: [], SF: [], F: [] }
     for (const s of slots) map[s.round].push(s)
     return map
-  }, [slots])
+  }, [tournament])
 
   const distributionMap = useMemo(() => {
+    const distribution = tournament?.distribution ?? []
     const map: Record<string, { shares: Record<string, number>; frozen: boolean; capturedAt: string }> = {}
     for (const snap of distribution) {
       const shares: Record<string, number> = {}
@@ -57,7 +56,7 @@ export default function SoccerPredictionShareView() {
       map[snap.slotId] = { shares, frozen: snap.frozen, capturedAt: snap.capturedAt }
     }
     return map
-  }, [distribution])
+  }, [tournament])
 
   if (!entry || !tournament) {
     return (

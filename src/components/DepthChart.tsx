@@ -46,7 +46,6 @@ function buildStepPath(
   side: 'bid' | 'ask',
   xScale: (p: number) => number,
   yScale: (q: number) => number,
-  _drawAreaHeight: number,
 ): { line: string; area: string } {
   if (points.length === 0) return { line: '', area: '' }
 
@@ -135,14 +134,8 @@ export default function DepthChart({ className }: { className?: string }) {
   const xScale = (price: number) => PADDING.left + ((price - minPrice) / priceRange) * drawW
   const yScale = (cum: number) => PADDING.top + drawH - (cum / (maxCum || 1)) * drawH
 
-  const bidPath = useMemo(
-    () => buildStepPath(cumBids, 'bid', xScale, yScale, drawH),
-    [cumBids, drawW, drawH, minPrice, maxPrice, maxCum],
-  )
-  const askPath = useMemo(
-    () => buildStepPath(cumAsks, 'ask', xScale, yScale, drawH),
-    [cumAsks, drawW, drawH, minPrice, maxPrice, maxCum],
-  )
+  const bidPath = buildStepPath(cumBids, 'bid', xScale, yScale)
+  const askPath = buildStepPath(cumAsks, 'ask', xScale, yScale)
 
   const yTicks = useMemo(() => {
     const count = 4

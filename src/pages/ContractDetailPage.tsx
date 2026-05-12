@@ -34,12 +34,41 @@ function useLegacyMarket(contractId: string): Market | null {
   }
 }
 
+function OrderTabBar({
+  current,
+  onChange,
+}: {
+  current: 'market' | 'limit'
+  onChange: (value: 'market' | 'limit') => void
+}) {
+  return (
+    <div className="flex gap-1 bg-[var(--bg-base)] rounded-lg p-0.5 mb-3">
+      <button
+        onClick={() => onChange('market')}
+        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
+          current === 'market' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+        }`}
+      >
+        市价
+      </button>
+      <button
+        onClick={() => onChange('limit')}
+        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
+          current === 'limit' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+        }`}
+      >
+        限价
+      </button>
+    </div>
+  )
+}
+
 export default function ContractDetailPage() {
   const { contractId } = useParams<{ contractId: string }>()
   const navigate = useNavigate()
 
   const result = contractId ? getContractById(contractId) : undefined
-  const legacyMarket = contractId ? useLegacyMarket(contractId) : null
+  const legacyMarket = useLegacyMarket(contractId ?? '')
 
   const allTrades = usePortfolioStore((s) => s.trades)
   const relevantTrades = useMemo(
@@ -67,7 +96,7 @@ export default function ContractDetailPage() {
     setPrefillPrice(price)
     setPrefillSide(side)
     setOrderTab('limit')
-  }, [])
+  }, [setOrderTab, setPrefillPrice, setPrefillSide])
 
   const handleLimitOrderPlaced = useCallback(() => {
     setPrefillPrice(undefined)
@@ -87,27 +116,6 @@ export default function ContractDetailPage() {
 
   const { event, contract } = result
   const showChart = isOpen || legacyMarket.status === 'CLOSED'
-
-  const OrderTabBar = ({ current, onChange }: { current: 'market' | 'limit'; onChange: (v: 'market' | 'limit') => void }) => (
-    <div className="flex gap-1 bg-[var(--bg-base)] rounded-lg p-0.5 mb-3">
-      <button
-        onClick={() => onChange('market')}
-        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
-          current === 'market' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-        }`}
-      >
-        市价
-      </button>
-      <button
-        onClick={() => onChange('limit')}
-        className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
-          current === 'limit' ? 'bg-[var(--border)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-        }`}
-      >
-        限价
-      </button>
-    </div>
-  )
 
   return (
     <div className="px-4 md:px-6 py-6 max-w-6xl mx-auto">

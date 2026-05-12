@@ -15,7 +15,7 @@ export default function OrderPanel() {
 
   const [amount, setAmount] = useState(10)
 
-  const odds = useMemo(() => getCurrentOdds(), [getCurrentOdds, currentDuration])
+  const odds = useMemo(() => getCurrentOdds(), [getCurrentOdds])
 
   const higherProfit = amount * odds.higher
   const lowerProfit = amount * odds.lower

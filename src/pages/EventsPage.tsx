@@ -425,7 +425,7 @@ export default function EventsPage() {
     if (urlCat && (CATEGORIES as readonly string[]).includes(urlCat) && urlCat !== selectedCategory) {
       setSelectedCategory(urlCat as EventCategory)
     }
-  }, [])
+  }, [searchParams, selectedCategory, setSelectedCategory])
 
   const handleCategoryChange = useCallback((cat: EventCategory) => {
     setSelectedCategory(cat)
@@ -464,15 +464,18 @@ export default function EventsPage() {
 
   // Reset sidebar filters when category changes
   useEffect(() => {
-    setStatusFilter('All')
-    setTagFilter('All')
-    setAssetClassFilter('All')
-    setLiveStatusFilter('All')
-    setSportFilter('All')
-    setLeagueFilter('All')
-    setExpandedSport(null)
-    setSportsTab('upcoming')
-    setMobileFilterOpen(false)
+    const id = window.setTimeout(() => {
+      setStatusFilter('All')
+      setTagFilter('All')
+      setAssetClassFilter('All')
+      setLiveStatusFilter('All')
+      setSportFilter('All')
+      setLeagueFilter('All')
+      setExpandedSport(null)
+      setSportsTab('upcoming')
+      setMobileFilterOpen(false)
+    }, 0)
+    return () => window.clearTimeout(id)
   }, [selectedCategory])
 
   // ── Derived data for category tabs ──

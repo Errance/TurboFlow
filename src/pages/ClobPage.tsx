@@ -12,7 +12,7 @@ export default function ClobPage() {
     if (leagueParam && leagueParam !== selectedLeague) {
       setSelectedLeague(leagueParam)
     }
-  }, [searchParams])
+  }, [searchParams, selectedLeague])
 
   const handleLeagueChange = (id: string) => {
     setSelectedLeague(id)

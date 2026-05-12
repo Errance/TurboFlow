@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { createChart, AreaSeries, type IChartApi, type Time } from 'lightweight-charts'
+import { createChart, AreaSeries, type IChartApi, type MouseEventParams, type Time } from 'lightweight-charts'
 import { getPnlHistory, getLatestPnl, type PnlRange } from '../data/pnlHistory'
 import { useThemeStore } from '../stores/themeStore'
 
@@ -51,15 +51,16 @@ export default function PnlChart({ className, portfolioValue }: Props) {
   const displayTime = hoverTime ?? (data.length > 0 ? data[data.length - 1].time : '')
   const isPositive = displayPnl >= 0
 
-  const handleCrosshairMove = useCallback((param: any) => {
+  const handleCrosshairMove = useCallback((param: MouseEventParams<Time>) => {
     if (!param?.time || !param.seriesData?.size) {
       setHoverPnl(null)
       setHoverTime(null)
       return
     }
     const entry = param.seriesData.values().next().value
-    if (entry && typeof entry.value === 'number') {
-      setHoverPnl(Math.round(entry.value * 100) / 100)
+    const value = entry && 'value' in entry ? entry.value : undefined
+    if (typeof value === 'number') {
+      setHoverPnl(Math.round(value * 100) / 100)
       setHoverTime(String(param.time))
     }
   }, [])
@@ -137,7 +138,7 @@ export default function PnlChart({ className, portfolioValue }: Props) {
       chart.remove()
       chartRef.current = null
     }
-  }, [range, theme, handleCrosshairMove])
+  }, [range, theme, data, handleCrosshairMove])
 
   return (
     <div className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden ${className ?? ''}`}>

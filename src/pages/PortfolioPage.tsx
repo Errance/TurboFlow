@@ -40,6 +40,34 @@ function fmtUsdc(v: number): string {
   return v.toFixed(2)
 }
 
+function FilterPills<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="flex gap-1 bg-[var(--bg-control)] rounded-lg p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.id}
+          onClick={() => onChange(opt.id)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[36px] ${
+            value === opt.id
+              ? 'bg-[var(--border)] text-[var(--text-primary)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function PnlText({ value, percent }: { value: number; percent?: number }) {
   const color = value >= 0 ? 'text-[#2DD4BF]' : 'text-[#E85A7E]'
   const sign = value >= 0 ? '+' : ''
@@ -177,26 +205,6 @@ function HistoryTab() {
   const kindOptions: { id: 'all' | 'trades' | 'orders'; label: string }[] = [
     { id: 'all', label: '全部' }, { id: 'trades', label: '成交' }, { id: 'orders', label: '委托' },
   ]
-
-  function FilterPills({ options, value, onChange }: { options: { id: string; label: string }[]; value: string; onChange: (v: any) => void }) {
-    return (
-      <div className="flex gap-1 bg-[var(--bg-control)] rounded-lg p-0.5">
-        {options.map((opt) => (
-          <button
-            key={opt.id}
-            onClick={() => onChange(opt.id)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors min-h-[36px] ${
-              value === opt.id
-                ? 'bg-[var(--border)] text-[var(--text-primary)]'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    )
-  }
 
   return (
     <div>

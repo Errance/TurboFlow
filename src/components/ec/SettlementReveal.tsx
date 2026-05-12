@@ -10,9 +10,10 @@ function Particles({ color }: { color: string }) {
   const particles = useMemo(() =>
     Array.from({ length: 12 }).map((_, i) => {
       const angle = (i / 12) * 360
-      const distance = 80 + Math.random() * 60
-      const size = 2 + Math.random() * 3
-      const delay = Math.random() * 0.3
+      const seed = (i * 37) % 100
+      const distance = 80 + seed * 0.6
+      const size = 2 + (seed % 30) / 10
+      const delay = (seed % 10) * 0.03
       return { angle, distance, size, delay, id: i }
     }), [])
 
@@ -272,5 +273,5 @@ export default function SettlementReveal() {
     return <AutoDismiss onDone={handleDone} delay={800} />
   }
 
-  return <FullReveal bet={pendingReveal as any} onDone={handleDone} />
+  return <FullReveal bet={pendingReveal as ECBet & { _ceremony?: 'streak' | 'comeback'; _streakCount?: number }} onDone={handleDone} />
 }

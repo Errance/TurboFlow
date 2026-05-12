@@ -24,7 +24,7 @@ export default function ClobMatchPage() {
   useEffect(() => {
     startSimulation()
     return () => stopSimulation()
-  }, [])
+  }, [startSimulation, stopSimulation])
 
   if (!clobMatch) {
     return (

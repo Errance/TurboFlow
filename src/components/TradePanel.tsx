@@ -119,7 +119,8 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
   }, [])
 
   useEffect(() => {
-    resetFields()
+    const id = window.setTimeout(resetFields, 0)
+    return () => window.clearTimeout(id)
   }, [selectedContractId, selectedSide, resetFields])
 
   if (!contract || !selectedSide) {

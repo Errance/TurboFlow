@@ -6,13 +6,17 @@ import { EC_ASSET_DECIMALS } from '../../types/eventContract'
 export default function PositionCard({ bet }: { bet: ECBet }) {
   const currentPrices = useEventContractStore((s) => s.currentPrices)
   const getEstimatedPnl = useEventContractStore((s) => s.getEstimatedPnl)
-  const [timeLeft, setTimeLeft] = useState(Math.max(0, bet.endsAt - Date.now()))
+  const [timeLeft, setTimeLeft] = useState(0)
 
   useEffect(() => {
+    const initialId = setTimeout(() => setTimeLeft(Math.max(0, bet.endsAt - Date.now())), 0)
     const id = setInterval(() => {
       setTimeLeft(Math.max(0, bet.endsAt - Date.now()))
     }, 100)
-    return () => clearInterval(id)
+    return () => {
+      clearTimeout(initialId)
+      clearInterval(id)
+    }
   }, [bet.endsAt])
 
   const currentPrice = currentPrices[bet.asset]

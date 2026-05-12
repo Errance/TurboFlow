@@ -27,7 +27,6 @@ function Sparkline({
   onRangeUpdate?: (range: PriceRange) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const currentPrices = useEventContractStore((s) => s.currentPrices)
   const activeBets = useEventContractStore((s) => s.activeBets)
   const settledBets = useEventContractStore((s) => s.settledBets)
   const rangeRef = useRef<PriceRange>({ min: 0, max: 0, height: 0 })
@@ -220,7 +219,7 @@ function Sparkline({
       ctx.fillStyle = mc
       ctx.fillText(label, lx, labelY)
     }
-  }, [asset, duration, currentPrices, activeBets, settledBets, onRangeUpdate])
+  }, [asset, duration, activeBets, settledBets, onRangeUpdate])
 
   useEffect(() => {
     draw()
@@ -299,18 +298,21 @@ function SettlementFloat({ s, priceRange }: { s: ECGlobalSettlement; priceRange:
 
 function MomentumBadge({ asset }: { asset: ECAsset }) {
   const price = useEventContractStore((s) => s.currentPrices[asset])
-  const [prev, setPrev] = useState(price)
+  const prev = useRef(price)
   const [momentum, setMomentum] = useState<'bullish' | 'bearish' | 'neutral'>('neutral')
 
   useEffect(() => {
-    const diff = price - prev
-    const pct = Math.abs(diff / prev)
-    if (pct > 0.0001) {
-      setMomentum(diff > 0 ? 'bullish' : 'bearish')
-    } else {
-      setMomentum('neutral')
-    }
-    setPrev(price)
+    const id = window.setTimeout(() => {
+      const diff = price - prev.current
+      const pct = Math.abs(diff / prev.current)
+      if (pct > 0.0001) {
+        setMomentum(diff > 0 ? 'bullish' : 'bearish')
+      } else {
+        setMomentum('neutral')
+      }
+      prev.current = price
+    }, 0)
+    return () => window.clearTimeout(id)
   }, [price])
 
   const label =
@@ -336,12 +338,17 @@ export function MarketPriceBar() {
   const price = currentPrices[currentAsset]
 
   useEffect(() => {
-    if (price > prevPrice.current) setFlash('up')
-    else if (price < prevPrice.current) setFlash('down')
-    prevPrice.current = price
+    const id = window.setTimeout(() => {
+      if (price > prevPrice.current) setFlash('up')
+      else if (price < prevPrice.current) setFlash('down')
+      prevPrice.current = price
+    }, 0)
 
     const t = setTimeout(() => setFlash(null), 300)
-    return () => clearTimeout(t)
+    return () => {
+      window.clearTimeout(id)
+      clearTimeout(t)
+    }
   }, [price])
 
   return (

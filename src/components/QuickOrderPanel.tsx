@@ -50,23 +50,26 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
     const created = after.find((o) => !before.some((b) => b.id === o.id))
     if (created) setTrackingId(created.id)
     setAmount('')
-  }, [market, amount, side])
+  }, [market, contractId, amount, side])
 
   useEffect(() => {
     if (!trackedOrder) return
-    const { status } = trackedOrder
-    if (status === 'Filled') {
-      useToastStore.getState().addToast({ type: 'success', message: '委托已成交' })
-      setFeedbackTimeout(Date.now() + 5000)
-    } else if (status === 'Rejected') {
-      useToastStore.getState().addToast({
-        type: 'error',
-        message: trackedOrder.rejectReason ?? '委托已拒绝',
-        cta: trackedOrder.rejectCta,
-      })
-      setFeedbackTimeout(Date.now() + 5000)
-    }
-  }, [trackedOrder?.status])
+    const id = window.setTimeout(() => {
+      const { status } = trackedOrder
+      if (status === 'Filled') {
+        useToastStore.getState().addToast({ type: 'success', message: '委托已成交' })
+        setFeedbackTimeout(Date.now() + 5000)
+      } else if (status === 'Rejected') {
+        useToastStore.getState().addToast({
+          type: 'error',
+          message: trackedOrder.rejectReason ?? '委托已拒绝',
+          cta: trackedOrder.rejectCta,
+        })
+        setFeedbackTimeout(Date.now() + 5000)
+      }
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [trackedOrder])
 
   useEffect(() => {
     if (!feedbackTimeout) return

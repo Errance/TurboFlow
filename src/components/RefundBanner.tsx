@@ -12,6 +12,7 @@ export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerPr
   const [showDetails, setShowDetails] = useState(false)
   const isCancelled = statusInfo.status === 'CANCELLED'
   const isVoided = statusInfo.status === 'VOIDED'
+  const referenceId = `RF-${Math.round(totalVolume).toString(36).toUpperCase()}`
 
   if (!isCancelled && !isVoided) return null
 
@@ -59,11 +60,11 @@ export default function RefundBanner({ statusInfo, totalVolume }: RefundBannerPr
           </p>
           <div className="flex justify-between text-xs">
             <span className="text-[var(--text-secondary)]">交易编号</span>
-            <span className="text-[var(--text-primary)] font-mono text-[10px]">RF-{Date.now().toString(36).toUpperCase()}</span>
+            <span className="text-[var(--text-primary)] font-mono text-[10px]">{referenceId}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-[var(--text-secondary)]">开始处理时间</span>
-            <span className="text-[var(--text-primary)]">{new Date().toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="text-[var(--text-primary)]">已进入处理队列</span>
           </div>
         </div>
       )}

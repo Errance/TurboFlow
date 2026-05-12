@@ -51,11 +51,14 @@ export default function ConfirmBetDialog({
 
   useEffect(() => {
     if (!isOpen) return
-    setNow(Date.now())
+    const immediate = window.setTimeout(() => setNow(Date.now()), 0)
     const timer = window.setInterval(() => {
       setNow(Date.now())
     }, 1000)
-    return () => window.clearInterval(timer)
+    return () => {
+      window.clearTimeout(immediate)
+      window.clearInterval(timer)
+    }
   }, [isOpen])
 
   const itemsNeedingAcceptance = useMemo(() => {

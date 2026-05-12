@@ -36,8 +36,11 @@ export default function LimitOrderPanel({
   const [showConfirm, setShowConfirm] = useState(false)
 
   useEffect(() => {
-    if (prefillPrice !== undefined) setPrice(prefillPrice.toString())
-    if (prefillSide) setSide(prefillSide)
+    const id = window.setTimeout(() => {
+      if (prefillPrice !== undefined) setPrice(prefillPrice.toString())
+      if (prefillSide) setSide(prefillSide)
+    }, 0)
+    return () => window.clearTimeout(id)
   }, [prefillPrice, prefillSide])
 
   const priceNum = parseFloat(price) || 0
@@ -103,7 +106,7 @@ export default function LimitOrderPanel({
     setShares('')
     setTotal('')
     onOrderPlaced?.()
-  }, [market, side, priceNum, sharesNum, onOrderPlaced])
+  }, [market, contractId, side, priceNum, sharesNum, onOrderPlaced])
 
   const lastPriceUsdc = market.lastPrice ?? 0.50
   const marketPrice = side === 'YES'

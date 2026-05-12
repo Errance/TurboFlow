@@ -19,13 +19,13 @@ export function convertOddsToPrice(odds: number): number {
 }
 
 function isHalfLine(line: string): boolean {
-  const n = parseFloat(line.replace(/[^0-9.\-]/g, ''))
+  const n = parseFloat(line.replace(/[^0-9.-]/g, ''))
   if (isNaN(n)) return false
   return n % 1 !== 0 && (n * 4) % 1 === 0
 }
 
 function isStrictHalfLine(line: string): boolean {
-  const n = parseFloat(line.replace(/[^0-9.\-]/g, ''))
+  const n = parseFloat(line.replace(/[^0-9.-]/g, ''))
   if (isNaN(n)) return false
   return n % 1 === 0.5
 }
@@ -169,10 +169,11 @@ function convertMarket(m: Market): ClobMarket[] {
   if (shouldDeleteMarket(m.title)) return []
 
   switch (m.type) {
-    case 'buttonGroup':
+    case 'buttonGroup': {
       if (shouldDeleteMarket(m.title)) return []
       const bg = convertButtonGroup(m)
       return bg ? [bg] : []
+    }
 
     case 'oddsTable':
       return convertOddsTable(m)

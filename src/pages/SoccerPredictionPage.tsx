@@ -88,16 +88,25 @@ export default function SoccerPredictionPage() {
   const [shareOpen, setShareOpen] = useState(false)
   const [shareEntry, setShareEntry] = useState<UserBracketEntry | null>(null)
   const [teachingOpen, setTeachingOpen] = useState(false)
+  const [now, setNow] = useState(0)
 
   useEffect(() => {
-    setPicks(initialEntry?.picks ?? {})
-    setTiebreakerGuess(initialEntry?.tiebreakerGuess)
-    setHasSubmitted(
-      initialEntry?.status === 'submitted' ||
-        initialEntry?.status === 'locked' ||
-        initialEntry?.status === 'settled',
-    )
-  }, [initialEntry?.id, initialEntry?.status, tournament.id])
+    const id = window.setTimeout(() => {
+      setPicks(initialEntry?.picks ?? {})
+      setTiebreakerGuess(initialEntry?.tiebreakerGuess)
+      setHasSubmitted(
+        initialEntry?.status === 'submitted' ||
+          initialEntry?.status === 'locked' ||
+          initialEntry?.status === 'settled',
+      )
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [initialEntry?.id, initialEntry?.status, initialEntry?.picks, initialEntry?.tiebreakerGuess, tournament.id])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setNow(Date.now()), 0)
+    return () => window.clearTimeout(id)
+  }, [])
 
   // 首次进入弹一次教学卡片
   useEffect(() => {
@@ -105,7 +114,8 @@ export default function SoccerPredictionPage() {
     const key = TEACHING_KEY_PREFIX + tournament.id
     const seen = window.localStorage.getItem(key)
     if (!seen) {
-      setTeachingOpen(true)
+      const id = window.setTimeout(() => setTeachingOpen(true), 0)
+      return () => window.clearTimeout(id)
     }
   }, [tournament.id])
 
@@ -116,7 +126,7 @@ export default function SoccerPredictionPage() {
     setTeachingOpen(false)
   }
 
-  const hasTimeLocked = Date.now() >= new Date(tournament.lockAt).getTime()
+  const hasTimeLocked = now >= new Date(tournament.lockAt).getTime()
   const isReadonly =
     tournament.status === 'locked' ||
     tournament.status === 'running' ||
@@ -231,25 +241,23 @@ export default function SoccerPredictionPage() {
     setShareOpen(true)
   }
 
-  const settledEntryForShare: UserBracketEntry = useMemo(() => {
-    return {
-      id: 'self-current',
-      tournamentId: tournament.id,
-      userName: '我',
-      picks,
-      tiebreakerGuess,
-      status: hasSubmitted ? 'submitted' : 'draft',
-      submittedAt: hasSubmitted ? new Date().toISOString() : undefined,
-      shareId: undefined,
-      totalScore: liveScore || undefined,
-      projectedPayout: projectedSelfPayout || undefined,
-      scoreShare:
-        tournament.poolSnapshot.aggregateScore > 0 && liveScore
-          ? liveScore / tournament.poolSnapshot.aggregateScore
-          : undefined,
-      attribution: storeEntry?.attribution ?? DEFAULT_ATTRIBUTION,
-    }
-  }, [picks, tiebreakerGuess, hasSubmitted, tournament, liveScore, projectedSelfPayout, storeEntry?.attribution])
+  const settledEntryForShare: UserBracketEntry = {
+    id: 'self-current',
+    tournamentId: tournament.id,
+    userName: '我',
+    picks,
+    tiebreakerGuess,
+    status: hasSubmitted ? 'submitted' : 'draft',
+    submittedAt: hasSubmitted ? (storeEntry?.submittedAt ?? tournament.lockAt) : undefined,
+    shareId: undefined,
+    totalScore: liveScore || undefined,
+    projectedPayout: projectedSelfPayout || undefined,
+    scoreShare:
+      tournament.poolSnapshot.aggregateScore > 0 && liveScore
+        ? liveScore / tournament.poolSnapshot.aggregateScore
+        : undefined,
+    attribution: storeEntry?.attribution ?? DEFAULT_ATTRIBUTION,
+  }
 
   const distributionMap = useMemo(() => {
     const map: Record<string, { totalPicks: number; shares: Record<string, number>; frozen: boolean; capturedAt: string }> = {}
