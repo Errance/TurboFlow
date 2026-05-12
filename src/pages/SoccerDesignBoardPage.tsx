@@ -113,14 +113,25 @@ export default function SoccerDesignBoardPage() {
         <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
           本页面拆成两个可切换 tab：完整 v6.0 展板用于签收当前 AMM 主流程；v5.0 → v6.0 对比只展示真实发生变化的 UI。
         </p>
-        <div className="mt-4 grid gap-2 md:grid-cols-6">
-          <Metric label="变更对比项" value="10+" />
-          <Metric label="v6 激活项" value={String(v6ActiveCoverage.length)} />
-          <Metric label="历史对照项" value={String(legacyCoverage.length)} />
-          <Metric label="本期盘口" value="7" />
-          <Metric label="赛事级市场" value={String(futureMarketCoverage.length)} />
-          <Metric label="明确排除" value={String(excludedCoverage.length)} />
-        </div>
+        {activeBoardTab === 'v6' ? (
+          <div className="mt-4 grid gap-2 md:grid-cols-6">
+            <Metric label="变更对比项" value="15" />
+            <Metric label="v6 激活项" value={String(v6ActiveCoverage.length)} />
+            <Metric label="历史对照项" value={String(legacyCoverage.length)} />
+            <Metric label="本期盘口" value="7" />
+            <Metric label="赛事级市场" value={String(futureMarketCoverage.length)} />
+            <Metric label="明确排除" value={String(excludedCoverage.length)} />
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-2 md:grid-cols-6">
+            <Metric label="UI 变更项" value="15/15" />
+            <Metric label="页面区域" value="5/5" />
+            <Metric label="单场市场" value="7/7" />
+            <Metric label="赛事级市场" value="11/11" />
+            <Metric label="状态变化" value="8/8" />
+            <Metric label="移除入口" value="6/6" />
+          </div>
+        )}
         <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
           <p className="text-xs font-semibold text-[var(--text-primary)]">v6.0 保持原市场范围，仅替换交易模型</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -170,13 +181,12 @@ export default function SoccerDesignBoardPage() {
         <V6FullDesignBoardTab />
       ) : (
         <>
-      <BoardSection id="v60-amm-delta" title="v5.0 → v6.0 全量 UI 变更对比" description="本区逐项说明哪些 UI 被改了。覆盖源包括 v5.0 PRD、v5 同期代码 8e53715、v6.0 PRD 和当前 v6 代码。每行左侧是原来的传统投注 UI，右侧是 v6.0 AMM 后的目标 UI。">
+      <BoardSection id="v60-amm-delta" title="v5.0 → v6.0 全量 UI 变更对比" description="本区只展示用户能看到的界面变化。每行左侧是 v5 旧 UI，右侧是 v6 新 UI，下方只写可见变化点。">
         <div className="rounded-2xl border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-4">
-          <div className="grid gap-3 md:grid-cols-4">
-            <SmallState title="读法" text="从左到右看：旧 UI → 新 UI。不是全量重做稿，只标注本次 AMM 改动。" />
-            <SmallState title="范围" text="只覆盖足球 tab 当前 mock：单场 7 个市场 + 冠军与晋级 11 个市场。" />
-            <SmallState title="不展示" text="不展示 CLOB、订单簿、限价单、挂单、撤单或部分成交挂起。" />
-            <SmallState title="设计重点" text="概率 + 份额价格、齿轮价格设置、交易面板、Portfolio、Vol.、流动性和异常状态。" />
+          <div className="grid gap-3 md:grid-cols-3">
+            <SmallState title="读法" text="从左到右看：v5 旧界面 → v6 新界面。" />
+            <SmallState title="覆盖" text="页面 5/5、单场市场 7/7、赛事级市场 11/11、状态 8/8、移除入口 6/6。" />
+            <SmallState title="只看 UI" text="只展示按钮、文案、面板、状态、入口和价格显示等可见变化。" />
           </div>
         </div>
 
@@ -197,12 +207,12 @@ export default function SoccerDesignBoardPage() {
             index="02"
             title="市场卡片和 outcome 按钮"
             scope="MarketRenderer → AmmMarketRenderer"
-            summary="原来点击赔率按钮加入投注单；现在点击 outcome 选中可交易份额，并在右栏生成 AMM quote。"
+            summary="原来点击赔率按钮加入投注单；现在点击 outcome 选中可交易份额，并在右栏显示交易预估。"
             before={<OldOutcomeButtonsPreview />}
             after={<NewAmmOutcomeButtonsPreview />}
             paths={['src/components/soccer/MarketRenderer.tsx', 'src/components/soccer/AmmMarketRenderer.tsx']}
             statusTags={['组件替换', 'outcome 交易']}
-            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol.、流动性和状态。', '欧洲赔率仅为展示换算，不改变成交字段。', '多 outcome 市场要展示总概率和互斥结算关系。']}
+            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol.、流动性和状态。', '欧洲赔率只作为另一种显示方式。', '多 outcome 市场保留总概率和互斥结果提示。']}
           />
 
           <ChangeComparisonRow
@@ -221,7 +231,7 @@ export default function SoccerDesignBoardPage() {
             index="04"
             title="比赛详情右栏"
             scope="SoccerBetSlip → AmmTradePanel"
-            summary="右栏从传统投注单改为 AMM 交易面板。买入和卖出都走即时 quote，支持部分卖出和全部卖出。"
+            summary="右栏从传统投注单改为 AMM 交易面板。买入和卖出都显示即时成交预估，支持部分卖出和全部卖出。"
             before={<OldBetSlipPanelPreview />}
             after={<NewAmmTradePanelPreview />}
             paths={['src/pages/SoccerMatchPage.tsx', 'src/components/soccer/AmmTradePanel.tsx']}
@@ -233,12 +243,12 @@ export default function SoccerDesignBoardPage() {
             index="05"
             title="交易面板状态矩阵"
             scope="AmmTradePanel / soccerAmmStore"
-            summary="v6 不再用投注单的空单、串关、二次确认状态；交易面板要覆盖 AMM quote 生命周期和风险拦截。"
+            summary="v6 不再用投注单的空单、串关、二次确认状态；交易面板改为覆盖用户能看到的交易状态和风险提示。"
             before={<OldBetSlipStateMatrixPreview />}
             after={<NewAmmTradeStateMatrixPreview />}
             paths={['src/components/soccer/AmmTradePanel.tsx', 'src/stores/soccerAmmStore.ts']}
             statusTags={['quote 生命周期', '风险反馈', '无挂单']}
-            notes={['空选择、买入、卖出、部分卖出、全部卖出都要有明确状态。', '余额不足、quote 过期、价格影响过高、流动性不足需要整笔失败并重新询价。', '不出现串关、接受赔率变化、二次确认投注等传统动作。']}
+            notes={['空选择、买入、卖出、部分卖出、全部卖出都要有明确状态。', '余额不足、报价过期、价格影响过高、流动性不足都以用户提示展示。', '不出现串关、接受赔率变化、二次确认投注等传统动作。']}
           />
 
           <ChangeComparisonRow
@@ -281,55 +291,55 @@ export default function SoccerDesignBoardPage() {
             index="09"
             title="价格格式切换和异常反馈"
             scope="全局偏好 / 市场卡 / 交易确认 / Portfolio"
-            summary="赔率格式设置从常驻按钮变成小齿轮弹框；异常从下单拒单转向 AMM quote、流动性和市场暂停反馈。"
+            summary="赔率格式设置从常驻按钮变成小齿轮弹框；异常提示从下单拒单变为报价过期、流动性不足和市场暂停。"
             before={<OldSettingsAndErrorPreview />}
             after={<NewPriceAndRiskPreview />}
             paths={['src/components/soccer/SoccerPriceFormatToggle.tsx', 'src/data/soccer/ammData.ts']}
             statusTags={['份额主价格', '欧洲赔率展示', 'AMM 风险态']}
-            notes={['交易确认中同时展示份额价格、implied probability 和欧洲赔率。', '报价过期、流动性不足、价格影响过高时整笔交易失败并重新询价。', '关键事件暂停同时影响买入和卖出。']}
+            notes={['交易确认中同时展示概率、份额价格和欧洲赔率换算。', '报价过期、流动性不足、价格影响过高都展示为明确提示。', '关键事件暂停同时影响买入和卖出按钮。']}
           />
 
           <ChangeComparisonRow
             index="10"
-            title="全局残留边界和明确排除"
+            title="移除的传统入口"
             scope="AppShell / SoccerBetSlipFloat / SoccerPrediction* / CLOB"
-            summary="把仍存在但不属于 v6 主流程的入口明确标成历史或排除项，避免设计评审把它们当作 AMM 需求。"
+            summary="把 v5 中会误导用户进入传统投注的入口从 v6 主流程中移除或替换。"
             before={<OldGlobalResidualPreview />}
             after={<NewV6BoundaryPreview />}
             paths={['src/layouts/AppShell.tsx', 'src/components/soccer/SoccerBetSlipFloat.tsx', 'src/pages/ClobPage.tsx']}
             statusTags={['历史残留', '未路由排除', 'CLOB 延后']}
-            notes={['SoccerBetSlipFloat 是传统投注残留，不能作为 v6 AMM 用户主流程。', 'SoccerPrediction* 未注册在当前路由，不纳入本次足球 AMM 差异。', 'CLOB 足球页是未来大版本，不展示订单簿、限价单或撤单。']}
+            notes={['传统浮动投注条不再作为足球 AMM 入口。', '订单簿、限价单、撤单等入口不在足球 AMM 页面展示。', '历史预测玩法不混入本次 AMM 主流程。']}
           />
 
           <ChangeComparisonRow
             index="11"
-            title="比赛详情交互细节"
+            title="比赛详情选择状态"
             scope="v5 code 8e53715 SoccerMatchPage → v6 current SoccerMatchPage"
-            summary="v5 代码里不只是市场卡，仍有 selectedKeys、同盘口选中、串关互斥、盘口折叠和 odds seed；这些都要在 v6 对比中消失或映射。"
+            summary="比赛详情从投注项高亮和串关冲突提示，改成 outcome 选中、右栏交易预估和持仓摘要。"
             before={<OldV5MatchInteractionPreview />}
             after={<NewV6MatchInteractionPreview />}
             paths={['git show 8e53715:src/pages/SoccerMatchPage.tsx', 'src/pages/SoccerMatchPage.tsx']}
             statusTags={['v5 代码基线', '交互全覆盖']}
-            notes={['selectedKeys 高亮从投注单选择态，改为 selectedOutcome。', 'MARKET_COLLAPSE_THRESHOLD 折叠仍可作为展示能力，但不再服务投注单选项。', '串关冲突提示在 v6 主流程消失。']}
+            notes={['旧 UI 高亮的是已加入投注单的赔率按钮。', '新 UI 高亮的是当前选中的 outcome。', '串关冲突提示从比赛详情主流程中移除。']}
           />
 
           <ChangeComparisonRow
             index="12"
-            title="报价锁定与刷新机制"
+            title="报价变化与交易反馈"
             scope="oddsRegistry / oddsTicker → AMM quote"
-            summary="v5 通过 oddsRegistry、oddsTicker、接受最新赔率和二次确认保护投注；v6 改为 quote 过期、重新询价和整笔交易失败。"
+            summary="v5 展示赔率变化和接受最新赔率；v6 展示报价过期、重新询价和交易失败提示。"
             before={<OldV5OddsLifecyclePreview />}
             after={<NewAmmQuoteLifecyclePreview />}
             paths={['src/services/oddsRegistry.ts', 'src/services/oddsTicker.ts', 'src/stores/soccerAmmStore.ts']}
             statusTags={['报价生命周期', '交易保护']}
-            notes={['v5 第一次点击接受最新赔率只更新快照。', 'v6 暂停后恢复必须重新 quote。', '价格影响和流动性不足不生成等待订单。']}
+            notes={['旧 UI 在投注单内提示赔率变化。', '新 UI 在交易面板内提示重新询价。', '价格影响和流动性不足都不会展示为等待订单。']}
           />
 
           <ChangeComparisonRow
             index="13"
             title="我的注单工具区"
             scope="v5 SoccerMyBetsPage → v6 SoccerMyBetsPage"
-            summary="v5 同期代码包含状态筛选、日期筛选、分页加载、Cash Out、重投、导出 CSV 和复制注单号；v6 全部要映射到 Portfolio 和 trade history。"
+            summary="旧我的注单页包含状态筛选、日期筛选、Cash Out、重投和导出；新页面改为 Portfolio 和交易历史。"
             before={<OldV5MyBetsToolsPreview />}
             after={<NewV6PortfolioToolsPreview />}
             paths={['git show 8e53715:src/pages/SoccerMyBetsPage.tsx', 'src/pages/SoccerMyBetsPage.tsx']}
@@ -339,9 +349,9 @@ export default function SoccerDesignBoardPage() {
 
           <ChangeComparisonRow
             index="14"
-            title="冠军与晋级代码细节"
+            title="冠军与晋级页面信息"
             scope="v5 SoccerFuturesPage → v6 SoccerFuturesPage"
-            summary="v5 代码中的平台欧洲盘报价、多笔单注、暂不串关、关闭时间和结算来源，都要逐项转换为长期 AMM position 的展示。"
+            summary="冠军与晋级页保留系列赛、阶段分组、关闭时间和结算来源，但报价按钮改为长期 AMM 持仓入口。"
             before={<OldV5FuturesCodePreview />}
             after={<NewV6FuturesCodePreview />}
             paths={['git show 8e53715:src/pages/SoccerFuturesPage.tsx', 'src/pages/SoccerFuturesPage.tsx']}
@@ -568,17 +578,14 @@ function CoverageList({ items, compact, status = 'covered' }: { items: string[][
 function ChangeComparisonRow({
   index,
   title,
-  scope,
   summary,
   before,
   after,
-  paths,
-  statusTags,
   notes,
 }: {
   index: string
   title: string
-  scope: string
+  scope?: string
   summary: string
   before: React.ReactNode
   after: React.ReactNode
@@ -594,21 +601,11 @@ function ChangeComparisonRow({
             <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#2DD4BF]">{index}</span>
             <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
           </div>
-          <p className="mt-1 text-xs text-[var(--text-secondary)]">{scope}</p>
         </div>
         <span className="rounded-lg bg-[var(--bg-control)] px-3 py-1.5 text-[10px] text-[var(--text-secondary)]">UI 变更对比</span>
       </div>
 
       <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{summary}</p>
-
-      {(paths?.length || statusTags?.length) && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {statusTags?.map((tag) => <Pill key={tag} tone="green">{tag}</Pill>)}
-          {paths?.map((path) => (
-            <span key={path} className="rounded-full bg-[var(--bg-control)] px-2 py-0.5 font-mono text-[9px] text-[var(--text-secondary)]">{path}</span>
-          ))}
-        </div>
-      )}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
@@ -622,7 +619,7 @@ function ChangeComparisonRow({
       </div>
 
       <div className="mt-4 rounded-xl bg-[var(--bg-control)] p-3">
-        <p className="mb-2 text-[10px] font-semibold text-[var(--text-primary)]">设计标注</p>
+        <p className="mb-2 text-[10px] font-semibold text-[var(--text-primary)]">可见变化点</p>
         <div className="grid gap-2 md:grid-cols-3">
           {notes.map((note) => (
             <p key={note} className="rounded-lg bg-[var(--bg-card)] px-3 py-2 text-[10px] leading-5 text-[var(--text-secondary)]">{note}</p>
@@ -766,9 +763,9 @@ function NewAmmSingleMarketCoveragePreview() {
           <div key={title} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-[var(--text-primary)]">{title}</span>
-              <span className="font-mono text-[10px] text-[#2DD4BF]">probability</span>
+              <span className="font-mono text-[10px] text-[#2DD4BF]">概率价格</span>
             </div>
-            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">点击 outcome 打开交易 quote</p>
+            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">点击 outcome 后在右栏交易</p>
           </div>
         ))}
       </div>
@@ -958,13 +955,13 @@ function NewPriceAndRiskPreview() {
 
 function OldGlobalResidualPreview() {
   return (
-    <UiPanel title="全局传统投注残留">
+    <UiPanel title="v5 传统入口">
       <div className="space-y-2">
         {[
-          ['AppShell', '仍挂载 SoccerBetSlipFloat'],
-          ['SoccerBetSlipFloat', '读取 soccerBetSlipStore'],
-          ['SoccerPrediction*', '历史文件存在但未入当前路由'],
-          ['CLOB 足球', '独立 /clob 线，不是 v6 AMM'],
+          ['浮动投注条', '底部常驻，可继续添加投注项'],
+          ['右栏投注单', '比赛详情和长期市场共用投注入口'],
+          ['预测玩法入口', '与足球交易主流程混在同一设计语境中'],
+          ['订单簿玩法', '独立入口展示挂单和限价交易心智'],
         ].map(([title, text]) => (
           <div key={title} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
             <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
@@ -978,13 +975,13 @@ function OldGlobalResidualPreview() {
 
 function NewV6BoundaryPreview() {
   return (
-    <UiPanel title="v6 AMM 范围边界">
+    <UiPanel title="v6 可见入口">
       <div className="space-y-2">
         {[
-          ['主流程', '/soccer、/soccer/match、/soccer/futures、/soccer/mybets'],
-          ['历史对照', '传统投注单只在 B 区回归展示'],
-          ['明确排除', '订单簿、限价单、撤单、挂单、部分成交挂起'],
-          ['未来版本', 'CLOB 足球升级另起大版本'],
+          ['足球首页', '只展示 AMM 比赛列表和冠军与晋级入口'],
+          ['比赛详情', '只展示 outcome、交易面板和持仓摘要'],
+          ['我的页面', '只展示 Portfolio 和交易历史'],
+          ['不再展示', '订单簿、限价单、撤单、挂单、部分成交挂起'],
         ].map(([title, text]) => (
           <div key={title} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
             <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
@@ -998,9 +995,9 @@ function NewV6BoundaryPreview() {
 
 function OldV5MatchInteractionPreview() {
   return (
-    <UiPanel title="v5 比赛详情代码交互">
+    <UiPanel title="v5 比赛详情交互">
       <div className="grid gap-2 md:grid-cols-2">
-        {['selectedKeys 高亮投注项', 'toggleItem 加入投注单', 'MARKET_COLLAPSE_THRESHOLD 折叠盘口', '串关模式 canCombine 冲突', 'oddsRegistry seedOdds', '进行中/完赛封盘'].map((item) => (
+        {['赔率按钮高亮', '点击加入投注单', '盘口折叠展示', '串关冲突提示', '赔率变化提示', '进行中/完赛封盘'].map((item) => (
           <div key={item} className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1010,9 +1007,9 @@ function OldV5MatchInteractionPreview() {
 
 function NewV6MatchInteractionPreview() {
   return (
-    <UiPanel title="v6 比赛详情代码交互">
+    <UiPanel title="v6 比赛详情交互">
       <div className="grid gap-2 md:grid-cols-2">
-        {['selectedOutcome 选中 outcome', 'selectOutcome 打开交易 quote', 'AmmMarketRenderer 渲染 7/7 市场', 'AmmTradePanel 买入/卖出', 'AmmPortfolioPanel compact', '市场暂停影响买入和卖出'].map((item) => (
+        {['outcome 卡片高亮', '右栏显示交易预估', '7/7 市场全部可交易', '买入/卖出双模式', '右栏展示持仓摘要', '市场暂停影响买入和卖出'].map((item) => (
           <div key={item} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1024,7 +1021,7 @@ function OldV5OddsLifecyclePreview() {
   return (
     <UiPanel title="v5 赔率生命周期">
       <div className="space-y-2">
-        {['seedOdds 注册初始赔率', 'oddsTicker 推动赔率变化', '投注单显示报价倒计时', '接受最新赔率只更新快照', '二次确认再次复核金额/赔率/返还'].map((item) => (
+        {['初始赔率展示', '赔率变化提示', '投注单显示报价倒计时', '接受最新赔率', '二次确认复核金额/赔率/返还'].map((item) => (
           <div key={item} className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1034,9 +1031,9 @@ function OldV5OddsLifecyclePreview() {
 
 function NewAmmQuoteLifecyclePreview() {
   return (
-    <UiPanel title="v6 quote 生命周期">
+    <UiPanel title="v6 交易反馈">
       <div className="space-y-2">
-        {['选择 outcome 后即时询价', 'quote 返回 avgPrice / endPrice / priceImpact / fee', '30 秒过期后必须重新询价', '价格影响过高或流动性不足整笔失败', '执行 trade 后更新 position 与 trades'].map((item) => (
+        {['选择 outcome 后显示预估成交', '展示均价、价格影响和手续费', '报价过期后提示重新询价', '价格影响过高或流动性不足整笔失败', '成交后更新持仓和交易历史'].map((item) => (
           <div key={item} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1060,7 +1057,7 @@ function NewV6PortfolioToolsPreview() {
   return (
     <UiPanel title="v6 Portfolio 工具">
       <div className="grid gap-2 md:grid-cols-2">
-        {['按单场/冠军与晋级筛选持仓', '查看份额、均价、现价、市值', '卖出入口替代 Cash Out', '最近成交替代注单记录', '已实现/未实现盈亏', 'settled / void 按 position 生命周期处理'].map((item) => (
+        {['按单场/冠军与晋级筛选持仓', '查看份额、均价、现价、市值', '卖出入口替代 Cash Out', '最近成交替代注单记录', '已实现/未实现盈亏', '已结算 / void 按持仓生命周期处理'].map((item) => (
           <div key={item} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1070,9 +1067,9 @@ function NewV6PortfolioToolsPreview() {
 
 function OldV5FuturesCodePreview() {
   return (
-    <UiPanel title="v5 冠军与晋级代码语义">
+    <UiPanel title="v5 冠军与晋级页面">
       <div className="space-y-2">
-        {['InfoPill：报价方式 = 平台欧洲盘报价', 'InfoPill：投注方式 = 多笔单注，暂不串关', 'MarketRenderer 渲染长期市场赔率按钮', '右栏 SoccerBetSlip + MyBetsPanel', '关闭时间和结算来源服务注单复核'].map((item) => (
+        {['报价方式：平台欧洲盘报价', '投注方式：多笔单注，暂不串关', '长期市场展示赔率按钮', '右栏展示投注单和我的注单摘要', '关闭时间和结算来源用于注单复核'].map((item) => (
           <div key={item} className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
@@ -1082,9 +1079,9 @@ function OldV5FuturesCodePreview() {
 
 function NewV6FuturesCodePreview() {
   return (
-    <UiPanel title="v6 冠军与晋级代码语义">
+    <UiPanel title="v6 冠军与晋级页面">
       <div className="space-y-2">
-        {['InfoPill：定价方式 = AMM 份额价格', 'InfoPill：交易方式 = 买入/部分卖出/全部卖出', 'AmmMarketRenderer 渲染 11/11 长期市场', '右栏 AmmTradePanel + AmmPortfolioPanel compact', '关闭时间和结算来源服务 resolution / void'].map((item) => (
+        {['定价方式：概率 + 份额价格', '交易方式：买入/部分卖出/全部卖出', '11/11 长期市场都展示 outcome 卡', '右栏展示交易面板和持仓摘要', '关闭时间和结算来源用于结果确认'].map((item) => (
           <div key={item} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
