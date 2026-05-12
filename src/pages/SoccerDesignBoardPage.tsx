@@ -212,7 +212,7 @@ export default function SoccerDesignBoardPage() {
             after={<NewAmmOutcomeButtonsPreview />}
             paths={['src/components/soccer/MarketRenderer.tsx', 'src/components/soccer/AmmMarketRenderer.tsx']}
             statusTags={['组件替换', 'outcome 交易']}
-            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol.、流动性和状态。', '欧洲赔率只作为另一种显示方式。', '多 outcome 市场保留总概率和互斥结果提示。']}
+            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol. 和 24h 涨跌幅。', '可交易、暂停、关闭等状态通过卡片视觉状态表达，不占用指标行。', '欧洲赔率只作为另一种显示方式。']}
           />
 
           <ChangeComparisonRow
@@ -388,7 +388,7 @@ function V6FullDesignBoardTab() {
     ['Design Board', '/soccer/design-board', '本页两 tab：v6 完整展板 + v5 到 v6 全量 UI 变更对比。'],
   ]
   const v6MarketCoverage = [
-    ...LEAN_MARKET_ORDER.map((title) => [title, '单场 7/7', 'v6 使用 AMM outcome、概率 + 份额价格、24h Vol.、流动性和交易状态。']),
+    ...LEAN_MARKET_ORDER.map((title) => [title, '单场 7/7', 'v6 使用 AMM outcome、概率 + 份额价格、24h Vol. 和 24h 涨跌幅；交易状态由卡片视觉表达。']),
     ...futureMarketCoverage.map((item) => [item.title, '冠军与晋级 11/11', `${item.text}｜v6 使用长期 AMM position，可买入、部分卖出、全部卖出。`]),
   ]
   const v6StateCoverage = [
@@ -453,7 +453,7 @@ function V6FullDesignBoardTab() {
       <BoardSection id="v6-markets" title="v6.0 市场全量覆盖" description="所有 v5 可见市场均切换为 AMM outcome。这里给出 7/7 单场和 11/11 冠军与晋级的覆盖证明。">
         <StateCard title="单场 7 个核心市场" description="保持 v5 名称、入口和排序，只替换价格和交易模型。">
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {LEAN_MARKET_ORDER.map((title) => <SmallState key={title} title={title} text="AMM outcome / 概率 + 份额价格 / 24h Vol. / 流动性 / 可交易状态。" />)}
+            {LEAN_MARKET_ORDER.map((title) => <SmallState key={title} title={title} text="AMM outcome / 概率 + 份额价格 / 24h Vol. / 24h 涨跌幅；状态用卡片视觉表达。" />)}
           </div>
         </StateCard>
         <StateCard title={`冠军与晋级 ${futureMarketCoverage.length} 个赛事级市场`} description="保留对象、分组、关闭时间和结算来源；交易改为长期 AMM position。">
@@ -721,9 +721,9 @@ function NewAmmOutcomeButtonsPreview() {
         </div>
         <div className="grid grid-cols-3 gap-2">
           {[
-            ['RJ博塔弗戈', '55%', 'Buy Yes 55¢ · 24h Vol. $2.4k · 流动性 $18k'],
-            ['平局', '29%', 'Buy Yes 29¢ · 24h Vol. $1.7k · 流动性 $12k'],
-            ['米拉索尔', '24%', 'Buy Yes 24¢ · 24h Vol. $1.1k · 流动性 $9k'],
+            ['RJ博塔弗戈', '55%', 'Buy Yes 55¢ · 24h Vol. $2.4k · -1.2%'],
+            ['平局', '29%', 'Buy Yes 29¢ · 24h Vol. $1.7k · +0.8%'],
+            ['米拉索尔', '24%', 'Buy Yes 24¢ · 24h Vol. $1.1k · +0.4%'],
           ].map(([label, price, depth]) => (
             <button key={label} className="rounded-lg border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 px-2 py-2 text-left">
               <span className="block text-[10px] text-[var(--text-primary)]">{label}</span>
@@ -910,8 +910,8 @@ function NewAmmFuturesMarketPreview() {
   return (
     <UiPanel title="冠军与晋级 · 长期 AMM 市场">
       <div className="space-y-2">
-        <Pill tone="green">世界杯 2026 · AMM 可交易 outcome</Pill>
-        {['法国 17% · Buy Yes 17¢ · 24h Vol. $3.1k', '巴西 16% · Buy Yes 16¢ · 24h Vol. $2.9k', '阿根廷 14% · Buy Yes 14¢ · 24h Vol. $2.4k'].map((item) => (
+        <Pill tone="green">世界杯 2026 · AMM outcome</Pill>
+        {['法国 17% · Buy Yes 17¢ · 24h Vol. $3.1k · +1.4%', '巴西 16% · Buy Yes 16¢ · 24h Vol. $2.9k · -0.6%', '阿根廷 14% · Buy Yes 14¢ · 24h Vol. $2.4k · +0.2%'].map((item) => (
           <div key={item} className="rounded-lg bg-[#2DD4BF]/5 px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>
         ))}
         <p className="text-[10px] text-[var(--text-secondary)]">买入后形成长期持仓，可部分卖出、全部卖出或等待官方结算。</p>

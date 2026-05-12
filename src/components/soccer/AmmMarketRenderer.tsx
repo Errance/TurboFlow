@@ -2,7 +2,6 @@ import type { Market } from '../../data/soccer/types'
 import {
   enumerateAmmMarketOutcomes,
   formatAmmPrice,
-  formatImpliedProbability,
   formatProbability,
   formatSharePrice,
   type SoccerAmmSubject,
@@ -14,14 +13,6 @@ interface Props {
   market: Market
   displayTitle: string
   subject: SoccerAmmSubject
-}
-
-const statusCopy = {
-  open: '可交易',
-  paused: '暂停交易',
-  closed: '已关闭',
-  settled: '已结算',
-  void: '作废退款',
 }
 
 export default function AmmMarketRenderer({ market, displayTitle, subject }: Props) {
@@ -124,10 +115,7 @@ function OutcomeGrid({
               </div>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--text-secondary)]">
-              <span>{statusCopy[outcome.status]}</span>
               <span>24h Vol. ${(outcome.volume24h / 1000).toFixed(1)}k</span>
-              <span>流动性 ${(outcome.liquidity / 1000).toFixed(0)}k</span>
-              {priceFormat === 'probability' && <span>{formatImpliedProbability(outcome.probability)}</span>}
               <span className={outcome.priceChange24h >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                 {outcome.priceChange24h >= 0 ? '+' : ''}{formatProbability(outcome.priceChange24h)}
               </span>
