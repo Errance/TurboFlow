@@ -2,7 +2,7 @@ import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 import type { SoccerAmmPriceFormat } from '../../data/soccer/ammData'
 
 const options: Array<{ id: SoccerAmmPriceFormat; label: string; hint: string }> = [
-  { id: 'probability', label: '概率价格', hint: '底层成交价' },
+  { id: 'probability', label: '份额价格', hint: '¢ / share' },
   { id: 'european', label: '欧洲赔率', hint: '仅展示换算' },
 ]
 

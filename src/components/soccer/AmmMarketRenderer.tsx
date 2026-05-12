@@ -2,6 +2,7 @@ import type { Market } from '../../data/soccer/types'
 import {
   enumerateAmmMarketOutcomes,
   formatAmmPrice,
+  formatImpliedProbability,
   formatProbability,
   type SoccerAmmSubject,
 } from '../../data/soccer/ammData'
@@ -39,8 +40,8 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-secondary)]">
           <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[#2DD4BF]">AMM 即时成交</span>
-          <span>总概率 {formatProbability(totalProbability)}</span>
-          <span>价格可切换，成交仍按概率价格执行</span>
+          <span>总隐含概率 {formatProbability(totalProbability)}</span>
+          <span>主价格按 ¢ / share 展示，可切换欧洲赔率</span>
         </div>
 
         {groups.length > 1 && groups.some(Boolean) ? (
@@ -119,6 +120,7 @@ function OutcomeGrid({
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--text-secondary)]">
               <span>{statusCopy[outcome.status]}</span>
               <span>深度 {Math.round(outcome.liquidity).toLocaleString('en-US')}</span>
+              {priceFormat === 'probability' && <span>{formatImpliedProbability(outcome.probability)}</span>}
               <span className={outcome.priceChange24h >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                 {outcome.priceChange24h >= 0 ? '+' : ''}{formatProbability(outcome.priceChange24h)}
               </span>

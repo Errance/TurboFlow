@@ -85,13 +85,24 @@ export function europeanOddsFromProbability(probability: number): number {
   return +(1 / safe).toFixed(2)
 }
 
+export function formatSharePrice(probability: number): string {
+  const safe = Math.min(0.99, Math.max(0.01, probability))
+  const cents = Math.round(safe * 100)
+  if (cents > 0 && cents < 100) return `${cents}¢`
+  return `$${safe.toFixed(2)}`
+}
+
 export function formatAmmPrice(probability: number, format: SoccerAmmPriceFormat): string {
   if (format === 'european') return europeanOddsFromProbability(probability).toFixed(2)
-  return `${Math.round(probability * 100)}%`
+  return formatSharePrice(probability)
 }
 
 export function formatProbability(probability: number): string {
   return `${(probability * 100).toFixed(1)}%`
+}
+
+export function formatImpliedProbability(probability: number): string {
+  return `${formatProbability(probability)} implied`
 }
 
 function slug(value: string): string {

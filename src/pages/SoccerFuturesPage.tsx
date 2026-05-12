@@ -58,7 +58,7 @@ export default function SoccerFuturesPage() {
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <InfoPill label="预测组织" value="系列赛内分组" />
-              <InfoPill label="定价方式" value="AMM 概率价格" />
+              <InfoPill label="定价方式" value="AMM 份额价格" />
               <InfoPill label="交易方式" value="买入 / 部分卖出 / 全部卖出" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">

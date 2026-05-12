@@ -25,7 +25,7 @@ export function PriceFormatToggle({
   return (
     <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
       {[
-        ['probability', '概率价格'],
+        ['probability', '份额价格'],
         ['decimal', '欧洲赔率'],
       ].map(([id, label]) => (
         <button

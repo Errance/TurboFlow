@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatAmmPrice, formatProbability } from '../../data/soccer/ammData'
+import { formatAmmPrice, formatImpliedProbability } from '../../data/soccer/ammData'
 import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 
 type Filter = 'all' | 'single' | 'futures'
@@ -84,7 +84,7 @@ export default function AmmPortfolioPanel({ compact = false }: { compact?: boole
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-[var(--border)]/50 pt-2">
                 <span className="text-[10px] text-[var(--text-secondary)]">
-                  市值 {marketValue.toFixed(2)} USDT · 概率 {formatProbability(position.currentProbability)}
+                  市值 {marketValue.toFixed(2)} USDT · {formatImpliedProbability(position.currentProbability)}
                 </span>
                 <button
                   onClick={() => selectOutcome({
