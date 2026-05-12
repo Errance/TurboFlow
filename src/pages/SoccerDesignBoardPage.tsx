@@ -212,7 +212,7 @@ export default function SoccerDesignBoardPage() {
             after={<NewAmmOutcomeButtonsPreview />}
             paths={['src/components/soccer/MarketRenderer.tsx', 'src/components/soccer/AmmMarketRenderer.tsx']}
             statusTags={['组件替换', 'outcome 交易']}
-            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol. 和 24h 涨跌幅。', '可交易、暂停、关闭等状态通过卡片视觉状态表达，不占用指标行。', '欧洲赔率只作为另一种显示方式。']}
+            notes={['每个 outcome 展示概率、Buy Yes/No 份额价格、24h Vol. 和 24h 涨跌幅。', '开放、暂停、关闭等状态通过卡片视觉状态表达，不占用指标行。', '欧洲赔率只作为另一种显示方式。']}
           />
 
           <ChangeComparisonRow
@@ -427,7 +427,7 @@ function V6FullDesignBoardTab() {
           <StateCard title="/soccer 左侧导航" description="联赛筛选、全部赛事、进行中和即将开赛保持 v5 信息架构。">
             <LeagueSidebarPreview />
           </StateCard>
-          <StateCard title="/soccer AMM 比赛列表" description="同一列表位置展示概率 + 份额价格和 24h Vol.，不再展示平台承诺赔率。">
+          <StateCard title="/soccer AMM 比赛列表" description="同一列表位置展示概率 + 份额价格、24h Vol. 和 24h 涨跌幅，不再展示平台承诺赔率。">
             <ListTablePreview />
           </StateCard>
         </div>
@@ -536,7 +536,7 @@ function V6FuturesDetailPreview() {
               <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
             </div>
             <p className="mt-2 text-xs font-semibold text-[var(--text-primary)]">{item.market.title}</p>
-            <p className="mt-1 text-[10px] text-[var(--text-secondary)]">AMM outcome · 概率 + 份额价格 · 可形成长期 position</p>
+            <p className="mt-1 text-[10px] text-[var(--text-secondary)]">AMM outcome · 概率 + 份额价格 · 24h Vol. + 涨跌幅</p>
             <p className="mt-2 text-[9px] text-[var(--text-secondary)]">结算来源：{item.subject.resolutionSource}</p>
           </div>
         ))}
@@ -786,7 +786,7 @@ function NewAmmTradePanelPreview() {
           <span className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-center text-xs text-[var(--text-secondary)]">卖出份额</span>
         </div>
         {[
-          ['预估成交均价', '55¢ / 54.8% implied / 欧赔 1.82'],
+          ['预估成交均价', '55% / 55¢ / 欧赔 1.82'],
           ['价格影响', '1.2%'],
           ['手续费', '0.30 USDT'],
           ['最大亏损', '50.30 USDT'],
@@ -1009,7 +1009,7 @@ function NewV6MatchInteractionPreview() {
   return (
     <UiPanel title="v6 比赛详情交互">
       <div className="grid gap-2 md:grid-cols-2">
-        {['outcome 卡片高亮', '右栏显示交易预估', '7/7 市场全部可交易', '买入/卖出双模式', '右栏展示持仓摘要', '市场暂停影响买入和卖出'].map((item) => (
+        {['outcome 卡片高亮', '右栏显示交易预估', '7/7 市场全部 outcome 化', '买入/卖出双模式', '右栏展示持仓摘要', '市场暂停影响买入和卖出'].map((item) => (
           <div key={item} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2 text-[10px] text-[var(--text-primary)]">{item}</div>
         ))}
       </div>
