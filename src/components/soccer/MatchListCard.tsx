@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import type { SoccerMatch } from '../../data/soccer/types'
+import { formatAmmPrice, probabilityFromEuropeanOdds } from '../../data/soccer/ammData'
+import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 
 interface Props {
   match: SoccerMatch
@@ -7,6 +9,7 @@ interface Props {
 
 export default function MatchListCard({ match }: Props) {
   const navigate = useNavigate()
+  const priceFormat = useSoccerAmmStore((state) => state.priceFormat)
   const homeTab = match.tabs.find((t) => t.id === 'home') ?? match.tabs.find((t) => t.id === 'all') ?? match.tabs[0]
   const markets = homeTab?.markets ?? []
 
@@ -54,7 +57,9 @@ export default function MatchListCard({ match }: Props) {
         {oneXTwo?.type === 'buttonGroup' && oneXTwo.options.map((opt, i) => (
           <div key={opt.label} className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
             <span className="text-[9px] text-[var(--text-secondary)] block">{i === 0 ? '1' : i === 1 ? 'X' : '2'}</span>
-            <span className="text-xs font-mono font-medium text-[var(--text-primary)]">{opt.odds.toFixed(2)}</span>
+            <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
+              {formatAmmPrice(probabilityFromEuropeanOdds(opt.odds), priceFormat)}
+            </span>
           </div>
         ))}
       </div>
@@ -64,11 +69,15 @@ export default function MatchListCard({ match }: Props) {
           <>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
               <span className="text-[9px] text-[var(--text-secondary)]">大 2.5</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[0].toFixed(2)}</span>
+              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">
+                {formatAmmPrice(probabilityFromEuropeanOdds(totalsRow.odds[0]), priceFormat)}
+              </span>
             </div>
             <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
               <span className="text-[9px] text-[var(--text-secondary)]">小 2.5</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">{totalsRow.odds[1].toFixed(2)}</span>
+              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">
+                {formatAmmPrice(probabilityFromEuropeanOdds(totalsRow.odds[1]), priceFormat)}
+              </span>
             </div>
           </>
         )}
@@ -79,18 +88,22 @@ export default function MatchListCard({ match }: Props) {
           <>
             <div className="w-16 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1 py-1">
               <span className="text-[9px] text-[var(--text-secondary)] block truncate">{asian.rows[0].line.split('/')[0].trim()}</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">{asian.rows[0].odds[0].toFixed(2)}</span>
+              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
+                {formatAmmPrice(probabilityFromEuropeanOdds(asian.rows[0].odds[0]), priceFormat)}
+              </span>
             </div>
             <div className="w-16 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1 py-1">
               <span className="text-[9px] text-[var(--text-secondary)] block truncate">{asian.rows[0].line.split('/')[1]?.trim()}</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">{asian.rows[0].odds[1].toFixed(2)}</span>
+              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
+                {formatAmmPrice(probabilityFromEuropeanOdds(asian.rows[0].odds[1]), priceFormat)}
+              </span>
             </div>
           </>
         )}
       </div>
 
       <div className="w-16 shrink-0 text-right">
-        <span className="text-[10px] text-[#2DD4BF] group-hover:underline">+{match.tabs.length > 1 ? match.tabs.length * 8 : 4}</span>
+        <span className="text-[10px] text-[#2DD4BF] group-hover:underline">AMM +{match.tabs.length > 1 ? match.tabs.length * 8 : 4}</span>
       </div>
     </div>
   )
