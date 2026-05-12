@@ -4,6 +4,7 @@ import {
   formatAmmPrice,
   formatImpliedProbability,
   formatProbability,
+  formatSharePrice,
   type SoccerAmmSubject,
 } from '../../data/soccer/ammData'
 import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
@@ -41,7 +42,7 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
         <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-secondary)]">
           <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[#2DD4BF]">AMM 即时成交</span>
           <span>总隐含概率 {formatProbability(totalProbability)}</span>
-          <span>主价格按 ¢ / share 展示，可切换欧洲赔率</span>
+          <span>默认展示概率 + 份额价格，可切换欧洲赔率</span>
         </div>
 
         {groups.length > 1 && groups.some(Boolean) ? (
@@ -114,12 +115,18 @@ function OutcomeGrid({
                 {outcome.label}
               </span>
               <span className={`text-sm font-semibold font-mono tabular-nums ${isSelected ? 'text-[#2DD4BF]' : 'text-[var(--text-primary)]'}`}>
-                {formatAmmPrice(outcome.probability, priceFormat)}
+                {priceFormat === 'probability' ? formatProbability(outcome.probability) : formatAmmPrice(outcome.probability, priceFormat)}
               </span>
             </div>
+            {priceFormat === 'probability' && (
+              <div className="mt-1 rounded-md bg-[#2DD4BF]/10 px-2 py-1 text-center text-[10px] font-semibold text-[#2DD4BF]">
+                Buy Yes {formatSharePrice(outcome.probability)}
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--text-secondary)]">
               <span>{statusCopy[outcome.status]}</span>
-              <span>深度 {Math.round(outcome.liquidity).toLocaleString('en-US')}</span>
+              <span>24h Vol. ${(outcome.volume24h / 1000).toFixed(1)}k</span>
+              <span>流动性 ${(outcome.liquidity / 1000).toFixed(0)}k</span>
               {priceFormat === 'probability' && <span>{formatImpliedProbability(outcome.probability)}</span>}
               <span className={outcome.priceChange24h >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                 {outcome.priceChange24h >= 0 ? '+' : ''}{formatProbability(outcome.priceChange24h)}

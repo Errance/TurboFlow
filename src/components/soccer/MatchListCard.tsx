@@ -1,6 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import type { SoccerMatch } from '../../data/soccer/types'
-import { formatAmmPrice, probabilityFromEuropeanOdds } from '../../data/soccer/ammData'
+import {
+  formatAmmPrice,
+  formatProbability,
+  formatSharePrice,
+  probabilityFromEuropeanOdds,
+  type SoccerAmmPriceFormat,
+} from '../../data/soccer/ammData'
 import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 
 interface Props {
@@ -12,6 +18,7 @@ export default function MatchListCard({ match }: Props) {
   const priceFormat = useSoccerAmmStore((state) => state.priceFormat)
   const homeTab = match.tabs.find((t) => t.id === 'home') ?? match.tabs.find((t) => t.id === 'all') ?? match.tabs[0]
   const markets = homeTab?.markets ?? []
+  const volume24h = 380_000 + match.id.length * 9_500 + markets.length * 12_000
 
   const oneXTwo = markets.find((m) => m.type === 'buttonGroup' && m.title === '胜平负')
   const totals = markets.find((m) => m.type === 'oddsTable' && m.title === '大小球')
@@ -51,34 +58,22 @@ export default function MatchListCard({ match }: Props) {
           <span className="text-[10px] text-[var(--text-secondary)]">vs</span>
           <span className="text-sm text-[var(--text-primary)] truncate">{match.awayTeam.name}</span>
         </div>
+        <p className="mt-0.5 text-[10px] text-[var(--text-secondary)]">
+          24h Vol. ${(volume24h / 1000).toFixed(0)}k
+        </p>
       </div>
 
       <div className="hidden sm:flex items-center gap-1 shrink-0">
         {oneXTwo?.type === 'buttonGroup' && oneXTwo.options.map((opt, i) => (
-          <div key={opt.label} className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-            <span className="text-[9px] text-[var(--text-secondary)] block">{i === 0 ? '1' : i === 1 ? 'X' : '2'}</span>
-            <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
-              {formatAmmPrice(probabilityFromEuropeanOdds(opt.odds), priceFormat)}
-            </span>
-          </div>
+          <PriceCell key={opt.label} label={i === 0 ? '1' : i === 1 ? 'X' : '2'} probability={probabilityFromEuropeanOdds(opt.odds)} priceFormat={priceFormat} />
         ))}
       </div>
 
       <div className="hidden md:flex items-center gap-1 shrink-0">
         {totalsRow && (
           <>
-            <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">大 2.5</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">
-                {formatAmmPrice(probabilityFromEuropeanOdds(totalsRow.odds[0]), priceFormat)}
-              </span>
-            </div>
-            <div className="w-14 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)]">小 2.5</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)] block">
-                {formatAmmPrice(probabilityFromEuropeanOdds(totalsRow.odds[1]), priceFormat)}
-              </span>
-            </div>
+            <PriceCell label="大 2.5" probability={probabilityFromEuropeanOdds(totalsRow.odds[0])} priceFormat={priceFormat} />
+            <PriceCell label="小 2.5" probability={probabilityFromEuropeanOdds(totalsRow.odds[1])} priceFormat={priceFormat} />
           </>
         )}
       </div>
@@ -86,25 +81,43 @@ export default function MatchListCard({ match }: Props) {
       <div className="hidden lg:flex items-center gap-1 shrink-0">
         {asian?.type === 'oddsTable' && asian.rows[0] && (
           <>
-            <div className="w-16 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)] block truncate">{asian.rows[0].line.split('/')[0].trim()}</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
-                {formatAmmPrice(probabilityFromEuropeanOdds(asian.rows[0].odds[0]), priceFormat)}
-              </span>
-            </div>
-            <div className="w-16 text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1 py-1">
-              <span className="text-[9px] text-[var(--text-secondary)] block truncate">{asian.rows[0].line.split('/')[1]?.trim()}</span>
-              <span className="text-xs font-mono font-medium text-[var(--text-primary)]">
-                {formatAmmPrice(probabilityFromEuropeanOdds(asian.rows[0].odds[1]), priceFormat)}
-              </span>
-            </div>
+            <PriceCell label={asian.rows[0].line.split('/')[0].trim()} probability={probabilityFromEuropeanOdds(asian.rows[0].odds[0])} priceFormat={priceFormat} wide />
+            <PriceCell label={asian.rows[0].line.split('/')[1]?.trim() ?? ''} probability={probabilityFromEuropeanOdds(asian.rows[0].odds[1])} priceFormat={priceFormat} wide />
           </>
         )}
       </div>
 
       <div className="w-16 shrink-0 text-right">
-        <span className="text-[10px] text-[#2DD4BF] group-hover:underline">AMM +{match.tabs.length > 1 ? match.tabs.length * 8 : 4}</span>
+        <span className="text-[10px] text-[#2DD4BF] group-hover:underline">More</span>
       </div>
+    </div>
+  )
+}
+
+function PriceCell({
+  label,
+  probability,
+  priceFormat,
+  wide,
+}: {
+  label: string
+  probability: number
+  priceFormat: SoccerAmmPriceFormat
+  wide?: boolean
+}) {
+  return (
+    <div className={`${wide ? 'w-16' : 'w-14'} text-center bg-[var(--bg-control)] border border-[var(--border)] rounded px-1.5 py-1`}>
+      <span className="text-[9px] text-[var(--text-secondary)] block truncate">{label}</span>
+      {priceFormat === 'probability' ? (
+        <>
+          <span className="block text-xs font-mono font-semibold text-[var(--text-primary)]">{formatProbability(probability)}</span>
+          <span className="block text-[9px] font-mono text-[#2DD4BF]">Buy {formatSharePrice(probability)}</span>
+        </>
+      ) : (
+        <span className="block text-xs font-mono font-medium text-[var(--text-primary)]">
+          {formatAmmPrice(probability, priceFormat)}
+        </span>
+      )}
     </div>
   )
 }

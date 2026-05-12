@@ -54,7 +54,7 @@ export default function AmmTradePanel() {
           选择任一 outcome 后，可按 AMM 即时报价买入预测份额；已有持仓可在这里部分卖出或全部卖出。
         </p>
         <div className="mt-3 rounded-lg bg-[var(--bg-control)] p-3 text-[10px] leading-5 text-[var(--text-secondary)]">
-          平台只提供交易、结算和展示，不作为用户交易对手方。份额价格以 ¢ / share 为主，欧洲赔率仅为展示换算。
+          平台只提供交易、结算和展示，不作为用户交易对手方。默认同时展示概率和份额价格，欧洲赔率仅为展示换算。
         </div>
       </aside>
     )
@@ -130,8 +130,8 @@ export default function AmmTradePanel() {
       )}
 
       <div className="mt-4 space-y-2 rounded-lg border border-[var(--border)] p-3 text-xs">
-        <QuoteRow label="当前份额价格" value={`${formatAmmPrice(selectedOutcome.probability, 'probability')} / ${formatImpliedProbability(selectedOutcome.probability)} / 欧赔 ${europeanOddsFromProbability(selectedOutcome.probability).toFixed(2)}`} />
-        <QuoteRow label="预估成交均价" value={currentQuote ? `${formatAmmPrice(currentQuote.avgPrice, 'probability')} / ${formatImpliedProbability(currentQuote.avgPrice)} / 欧赔 ${europeanOddsFromProbability(currentQuote.avgPrice).toFixed(2)}` : '--'} />
+        <QuoteRow label="当前概率 / 份额价格" value={`${formatProbability(selectedOutcome.probability)} / Buy Yes ${formatAmmPrice(selectedOutcome.probability, 'probability')} / 欧赔 ${europeanOddsFromProbability(selectedOutcome.probability).toFixed(2)}`} />
+        <QuoteRow label="预估成交均价" value={currentQuote ? `${formatImpliedProbability(currentQuote.avgPrice)} / ${formatAmmPrice(currentQuote.avgPrice, 'probability')} / 欧赔 ${europeanOddsFromProbability(currentQuote.avgPrice).toFixed(2)}` : '--'} />
         <QuoteRow label={side === 'buy' ? '预估获得份额' : '预计收回金额'} value={currentQuote ? (side === 'buy' ? `${currentQuote.shares.toFixed(4)} 份` : `${Math.max(0, currentQuote.collateral - currentQuote.fee).toFixed(2)} USDT`) : '--'} />
         <QuoteRow label="价格影响" value={currentQuote ? formatProbability(currentQuote.priceImpact) : '--'} warning={!!currentQuote && currentQuote.priceImpact > 0.05} />
         <QuoteRow label="手续费" value={currentQuote ? `${currentQuote.fee.toFixed(2)} USDT` : '--'} />

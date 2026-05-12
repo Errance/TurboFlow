@@ -87,8 +87,11 @@ export function europeanOddsFromProbability(probability: number): number {
 
 export function formatSharePrice(probability: number): string {
   const safe = Math.min(0.99, Math.max(0.01, probability))
-  const cents = Math.round(safe * 100)
-  if (cents > 0 && cents < 100) return `${cents}¢`
+  const cents = safe * 100
+  if (cents > 0 && cents < 100) {
+    const rounded = Math.round(cents * 10) / 10
+    return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)}¢`
+  }
   return `$${safe.toFixed(2)}`
 }
 
