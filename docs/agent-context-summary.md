@@ -87,7 +87,7 @@ v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘�
 
 盘口 / outcome 卡片只展示这些辅助指标：
 
-- `24h Vol.`
+- `24h Vol.`：该盘口最近 24 小时交易量。
 - 24h 涨跌幅
 
 盘口 / outcome 卡片不展示：
@@ -174,13 +174,9 @@ v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘�
   - 不应展示代码路径、store、PRD 引用、git 命令、scope、技术实现细节或未来 CLOB 边界。
   - 必须覆盖页面 5/5、单场市场 7/7、赛事级市场 11/11、状态、术语和移除项。
 
-- `public/404.html` 和 `src/main.tsx`
-  - GitHub Pages SPA deep link fallback。
-  - 直接打开 `https://errance.github.io/TurboFlow/soccer/design-board` 应进入应用。
-
 ## Design Board 当前要求
 
-Design Board 是产品 / 设计签收页，不是技术审计页。
+Design Board 是产品 / 设计签收页，不是 v6.0 PRD 正文内容，也不是技术审计页。
 
 完整 v6 tab 必须展示：
 
@@ -217,8 +213,6 @@ v5→v6 UI 变更 tab 必须只展示变化项：
   - Design Board 同步盘口卡指标为 `24h Vol.` + 24h 涨跌幅。
 - `625a5d5 feat(soccer): simplify AMM market card metrics`
   - 实际 AMM outcome 卡片移除流动性、implied 和可交易文本。
-- `59921e0 fix: preserve GitHub Pages SPA fallback`
-  - 保留 GitHub Pages 的 SPA fallback。
 - `136a3b6 feat(soccer): complete pure UI design board delta`
   - 完成纯 UI 变更对比页。
 
@@ -234,11 +228,6 @@ v5→v6 UI 变更 tab 必须只展示变化项：
 
 - dev server 通常为 `http://127.0.0.1:5173/TurboFlow/`
 - Design Board：`http://127.0.0.1:5173/TurboFlow/soccer/design-board`
-
-线上验证：
-
-- `https://errance.github.io/TurboFlow/soccer/design-board`
-- GitHub Pages 自定义 404 fallback 的纯 HTTP 状态可能仍是 404，但浏览器应通过 fallback 脚本回到 SPA 路由。
 
 ## Git 和提交规则
 
