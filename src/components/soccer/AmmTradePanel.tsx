@@ -9,6 +9,8 @@ import {
 import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 import { useWalletStore } from '../../stores/walletStore'
 
+const QUICK_TRADE_AMOUNTS = [50, 100, 200, 500]
+
 export default function AmmTradePanel() {
   const [amount, setAmount] = useState('50')
   const [sharesInput, setSharesInput] = useState('')
@@ -33,6 +35,10 @@ export default function AmmTradePanel() {
   const sellAll = () => {
     if (!position) return
     setSharesInput(position.shares.toFixed(4))
+  }
+
+  const buyMax = () => {
+    setAmount(Math.max(0, balance).toFixed(2))
   }
 
   const submit = () => {
@@ -102,12 +108,29 @@ export default function AmmTradePanel() {
       {side === 'buy' ? (
         <label className="mt-4 block">
           <span className="text-[10px] text-[var(--text-secondary)]">投入金额 USDT</span>
-          <input
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            inputMode="decimal"
-            className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]/50"
-          />
+          <div className="relative mt-1">
+            <input
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              inputMode="decimal"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 pr-14 text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]/50"
+            />
+            <button type="button" onClick={buyMax} className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+              Max
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {QUICK_TRADE_AMOUNTS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setAmount(String(value))}
+                className="rounded-md bg-[var(--bg-control)] px-2 py-1.5 text-[10px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
+              >
+                {value}
+              </button>
+            ))}
+          </div>
         </label>
       ) : (
         <label className="mt-4 block">
@@ -119,13 +142,18 @@ export default function AmmTradePanel() {
               </button>
             )}
           </span>
-          <input
-            value={sharesInput}
-            onChange={(event) => setSharesInput(event.target.value)}
-            inputMode="decimal"
-            className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]/50"
-            placeholder={position ? `最多 ${position.shares.toFixed(4)}` : '当前无可卖持仓'}
-          />
+          <div className="relative mt-1">
+            <input
+              value={sharesInput}
+              onChange={(event) => setSharesInput(event.target.value)}
+              inputMode="decimal"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 pr-14 text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]/50"
+              placeholder={position ? `最多 ${position.shares.toFixed(4)}` : '当前无可卖持仓'}
+            />
+            <button type="button" onClick={sellAll} disabled={!position} className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4] disabled:opacity-40">
+              Max
+            </button>
+          </div>
         </label>
       )}
 

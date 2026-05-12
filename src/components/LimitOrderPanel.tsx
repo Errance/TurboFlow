@@ -7,6 +7,7 @@ import Modal from './ui/Modal'
 import type { Market, OrderSide } from '../types'
 
 const MOCK_BALANCE = 1000
+const QUICK_ORDER_AMOUNTS = [50, 100, 200, 500]
 
 function fmt(v: number): string {
   return v.toFixed(2)
@@ -68,17 +69,6 @@ export default function LimitOrderPanel({
     const t = parseFloat(val) || 0
     if (priceNum > 0 && t > 0) {
       setShares(Math.floor(t / priceNum).toString())
-    }
-  }
-
-  const handlePercentClick = (pct: number) => {
-    const budget = MOCK_BALANCE * (pct / 100)
-    if (priceNum > 0) {
-      const s = Math.floor(budget / priceNum)
-      setShares(s.toString())
-      setTotal(fmt(priceNum * s))
-    } else {
-      setTotal(fmt(budget))
     }
   }
 
@@ -170,13 +160,13 @@ export default function LimitOrderPanel({
             <span className="text-xs text-[var(--text-secondary)]">份</span>
           </div>
           <div className="flex gap-1.5 mt-1.5">
-            {[25, 50, 75, 100].map((pct) => (
+            {QUICK_ORDER_AMOUNTS.map((value) => (
               <button
-                key={pct}
-                onClick={() => handlePercentClick(pct)}
+                key={value}
+                onClick={() => handleSharesChange(String(value))}
                 className="flex-1 py-1 text-xs text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
               >
-                {pct === 100 ? '最大' : `${pct}%`}
+                {value}
               </button>
             ))}
           </div>
@@ -197,6 +187,20 @@ export default function LimitOrderPanel({
               step="0.01"
             />
             <span className="text-xs text-[var(--text-secondary)]">USDC</span>
+            <button type="button" onClick={() => handleTotalChange(String(MOCK_BALANCE))} className="text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+              Max
+            </button>
+          </div>
+          <div className="flex gap-1.5 mt-1.5">
+            {QUICK_ORDER_AMOUNTS.map((v) => (
+              <button
+                key={v}
+                onClick={() => handleTotalChange(String(v))}
+                className="flex-1 py-1 text-xs text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                ${v}
+              </button>
+            ))}
           </div>
         </div>
 

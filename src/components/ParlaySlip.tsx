@@ -3,6 +3,9 @@ import { useParlayStore } from '../stores/parlayStore'
 import type { ParlayMode } from '../stores/parlayStore'
 import Button from './ui/Button'
 
+const QUICK_ORDER_AMOUNTS = [50, 100, 200, 500]
+const DEMO_MAX_ORDER_AMOUNT = 1000
+
 function formatUsdc(v: number): string {
   return v.toFixed(2)
 }
@@ -210,9 +213,12 @@ function ParlayPanel({
                 step="0.01"
               />
               <span className="text-xs text-[var(--text-secondary)]">USDC</span>
+              <button type="button" onClick={() => setStake(String(DEMO_MAX_ORDER_AMOUNT))} className="text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+                Max
+              </button>
             </div>
             <div className="flex gap-1.5 mt-2">
-              {[10, 25, 50, 100].map((v) => (
+              {QUICK_ORDER_AMOUNTS.map((v) => (
                 <button
                   key={v}
                   onClick={() => setStake(String(v))}

@@ -785,6 +785,17 @@ function NewAmmTradePanelPreview() {
           <span className="rounded-lg bg-[#2DD4BF]/15 px-3 py-2 text-center text-xs text-[#2DD4BF]">买入份额</span>
           <span className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-center text-xs text-[var(--text-secondary)]">卖出份额</span>
         </div>
+        <div className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[var(--text-secondary)]">投入金额</span>
+            <span className="font-mono text-[var(--text-primary)]">50 USDT <span className="text-[#2DD4BF]">Max</span></span>
+          </div>
+          <div className="mt-2 grid grid-cols-4 gap-1">
+            {[50, 100, 200, 500].map((value) => (
+              <span key={value} className="rounded bg-[var(--bg-card)] px-2 py-1 text-center text-[10px] text-[var(--text-secondary)]">{value}</span>
+            ))}
+          </div>
+        </div>
         {[
           ['预估成交均价', '55% / 55¢ / 欧赔 1.82'],
           ['价格影响', '1.2%'],

@@ -3,7 +3,7 @@ import { useEventContractStore } from '../../stores/eventContractStore'
 import { EC_TIME_OPTIONS, EC_MIN_BET, EC_MAX_BET, type ECTimeIncrement } from '../../types/eventContract'
 import { useToastStore } from '../../stores/toastStore'
 
-const CHIPS = [5, 10, 20, 50, 100]
+const CHIPS = [50, 100, 200, 500]
 
 export default function OrderPanel() {
   const balance = useEventContractStore((s) => s.balance)
@@ -91,7 +91,7 @@ export default function OrderPanel() {
             onClick={() => setAmount(Math.min(balance, EC_MAX_BET))}
             className="text-[10px] font-semibold text-[#2DD4BF] hover:text-[#2DD4BF]/80 transition-colors"
           >
-            最大
+            Max
           </button>
         </div>
         {/* Chips */}

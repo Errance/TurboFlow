@@ -10,6 +10,7 @@ function formatUsdc(v: number): string {
 }
 
 const MOCK_BALANCE = 1000
+const QUICK_ORDER_AMOUNTS = [50, 100, 200, 500]
 
 interface TradeResult {
   side: 'YES' | 'NO'
@@ -174,18 +175,6 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
     const t = parseFloat(val) || 0
     if (lPrice > 0 && t > 0) {
       setLimitShares(Math.floor(t / lPrice).toString())
-    }
-  }
-
-  const handlePercentClick = (pct: number) => {
-    const available = MOCK_BALANCE
-    const budget = available * (pct / 100)
-    if (lPrice > 0) {
-      const shares = Math.floor(budget / lPrice)
-      setLimitShares(shares.toString())
-      setLimitTotal(formatUsdc(lPrice * shares))
-    } else {
-      setLimitTotal(formatUsdc(budget))
     }
   }
 
@@ -371,9 +360,12 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
                 step="0.01"
               />
               <span className="text-xs text-[var(--text-secondary)]">USDC</span>
+              <button type="button" onClick={() => setSpendAmount(String(MOCK_BALANCE))} className="text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+                Max
+              </button>
             </div>
             <div className="flex gap-1.5 mt-2">
-              {[10, 25, 50, 100].map((v) => (
+              {QUICK_ORDER_AMOUNTS.map((v) => (
                 <button
                   key={v}
                   onClick={() => setSpendAmount(String(v))}
@@ -483,13 +475,13 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
               <span className="text-xs text-[var(--text-secondary)]">份</span>
             </div>
             <div className="flex gap-1.5 mt-2">
-              {[25, 50, 75, 100].map((pct) => (
+              {QUICK_ORDER_AMOUNTS.map((value) => (
                 <button
-                  key={pct}
-                  onClick={() => handlePercentClick(pct)}
+                  key={value}
+                  onClick={() => handleLimitSharesChange(String(value))}
                   className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
-                  {pct === 100 ? '最大' : `${pct}%`}
+                  {value}
                 </button>
               ))}
             </div>
@@ -510,6 +502,20 @@ export default function TradePanel({ event, context = 'detail' }: TradePanelProp
                 step="0.01"
               />
               <span className="text-xs text-[var(--text-secondary)]">USDC</span>
+              <button type="button" onClick={() => handleLimitTotalChange(String(MOCK_BALANCE))} className="text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+                Max
+              </button>
+            </div>
+            <div className="flex gap-1.5 mt-2">
+              {QUICK_ORDER_AMOUNTS.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => handleLimitTotalChange(String(v))}
+                  className="flex-1 py-2 min-h-[36px] text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-base)] rounded hover:bg-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  ${v}
+                </button>
+              ))}
             </div>
           </div>
 

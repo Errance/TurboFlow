@@ -10,6 +10,9 @@ import Spinner from './ui/Spinner'
 import { quickOrderScenarios } from '../data/scenarios'
 import type { Market, OrderSide } from '../types'
 
+const QUICK_ORDER_AMOUNTS = [50, 100, 200, 500]
+const DEMO_MAX_ORDER_AMOUNT = 1000
+
 interface Props {
   market: Market
   contractId?: string
@@ -124,9 +127,29 @@ export default function QuickOrderPanel({ market, contractId, className, onLimit
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            suffix="USDC"
+            suffix={(
+              <>
+                <span>USDC</span>
+                <button type="button" onClick={() => setAmount(String(DEMO_MAX_ORDER_AMOUNT))} disabled={!isOpen} className="font-semibold text-[#2DD4BF] hover:text-[#5EEAD4] disabled:opacity-40">
+                  Max
+                </button>
+              </>
+            )}
             disabled={!isOpen}
           />
+          <div className="grid grid-cols-4 gap-1.5">
+            {QUICK_ORDER_AMOUNTS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setAmount(String(value))}
+                disabled={!isOpen}
+                className="rounded-md bg-[var(--bg-control)] px-2 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--border)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {value}
+              </button>
+            ))}
+          </div>
 
           <Button
             fullWidth

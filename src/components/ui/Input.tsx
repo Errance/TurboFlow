@@ -44,14 +44,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               "transition-all duration-150",
               error ? "border-[#E85A7E]" : "border-[var(--border)]",
               disabled && "opacity-40 cursor-not-allowed",
-              suffix && "pr-16",
+              suffix && "pr-24",
             ]
               .filter(Boolean)
               .join(" ")}
             {...props}
           />
           {suffix && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm pointer-events-none">
+            <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2 text-[var(--text-secondary)] text-sm">
               {suffix}
             </span>
           )}

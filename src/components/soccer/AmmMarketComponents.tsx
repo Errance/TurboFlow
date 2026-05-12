@@ -15,6 +15,9 @@ import {
   type TradeSide,
 } from '../../data/soccer/ammMarkets'
 
+const QUICK_TRADE_AMOUNTS = [50, 100, 200, 500]
+const DEMO_MAX_TRADE_AMOUNT = 1000
+
 export function PriceFormatToggle({
   value,
   onChange,
@@ -217,11 +220,30 @@ export function AmmTradePanel({
 
       <label className="mt-4 block">
         <span className="text-[10px] text-[var(--text-secondary)]">{side === 'buy' ? '交易金额 USDT' : '卖出 shares'}</span>
-        <input
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]"
-        />
+        <div className="relative mt-1">
+          <input
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2 pr-14 font-mono text-sm text-[var(--text-primary)] outline-none focus:border-[#2DD4BF]"
+          />
+          <button type="button" onClick={() => setAmount(side === 'sell' && position ? String(position.shares) : String(DEMO_MAX_TRADE_AMOUNT))} className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+            Max
+          </button>
+        </div>
+        {side === 'buy' && (
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {QUICK_TRADE_AMOUNTS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setAmount(String(value))}
+                className="rounded-md bg-[var(--bg-control)] px-2 py-1.5 text-[10px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--border)] hover:text-[var(--text-primary)]"
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        )}
       </label>
 
       {quote && (

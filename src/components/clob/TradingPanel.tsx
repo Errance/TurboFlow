@@ -6,6 +6,8 @@ interface Props {
   selection: TradingSelection | null
 }
 
+const QUICK_ORDER_AMOUNTS = [50, 100, 200, 500]
+
 export default function TradingPanel({ selection }: Props) {
   const { balance, placeOrder } = useClobStore()
   const [side, setSide] = useState<OrderSide>('yes')
@@ -193,21 +195,35 @@ export default function TradingPanel({ selection }: Props) {
       {/* Total */}
       <div>
         <label className="text-[10px] text-[var(--text-secondary)] mb-1 block">总额 (USDC)</label>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={total}
-          onChange={e => {
-            setTotal(e.target.value)
-            setLastTouched('total')
-            recalc('total', e.target.value)
-          }}
-          placeholder="0.00"
-          className="w-full px-3 py-2 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:border-[#2DD4BF]/50"
-        />
+        <div className="relative">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={total}
+            onChange={e => {
+              setTotal(e.target.value)
+              setLastTouched('total')
+              recalc('total', e.target.value)
+            }}
+            placeholder="0.00"
+            className="w-full px-3 py-2 pr-14 bg-[var(--bg-control)] border border-[var(--border)] rounded-lg text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:border-[#2DD4BF]/50"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const value = balance.available.toFixed(2)
+              setTotal(value)
+              setLastTouched('total')
+              recalc('total', value)
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]"
+          >
+            Max
+          </button>
+        </div>
         <div className="flex gap-1 mt-1">
-          {[10, 25, 50, 100].map(v => (
+          {QUICK_ORDER_AMOUNTS.map(v => (
             <button
               key={v}
               onClick={() => {

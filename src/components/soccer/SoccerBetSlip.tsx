@@ -16,6 +16,8 @@ import { getFutureMarket } from '../../data/soccer/futuresData'
 import { formatOdds } from '../../utils/oddsFormat'
 import { canCombine } from '../../data/soccer/marketFamily'
 
+const QUICK_STAKE_AMOUNTS = [50, 100, 200, 500]
+
 /**
  * 投注单面板。Phase 3 完整重构：
  * - 顶部余额条
@@ -157,6 +159,7 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
 
   const stake = parseFloat(amount) || 0
   const totalStake = betType === 'multi_single' ? +(stake * items.length).toFixed(2) : stake
+  const maxStakeAmount = betType === 'multi_single' && items.length > 0 ? balance / items.length : balance
   const potentialReturn = stake > 0
     ? betType === 'multi_single'
       ? +items.reduce((sum, item) => sum + stake * item.oddsCurrent, 0).toFixed(2)
@@ -508,7 +511,14 @@ export default function SoccerBetSlip({ currentMatchId, suspendedMarkets, matchS
               label={betType === 'multi_single' ? '单笔投注金额' : '投注金额'}
               type="number"
               placeholder="0.00"
-              suffix="USDT"
+              suffix={(
+                <>
+                  <span>USDT</span>
+                  <button type="button" onClick={() => setAmount(String(+maxStakeAmount.toFixed(2)))} className="font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]">
+                    Max
+                  </button>
+                </>
+              )}
               min={BETTING_LIMITS.minStake}
               max={BETTING_LIMITS.maxStake}
               step={BETTING_LIMITS.stakeStep}
@@ -618,10 +628,9 @@ function BalanceBadge({ balance, locked }: { balance: number; locked: number }) 
 }
 
 function QuickStakes({ balance, onPick }: { balance: number; onPick: (value: number) => void }) {
-  const quick = useSettingsStore((s) => s.quickStakes)
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {quick.map((v) => (
+      {QUICK_STAKE_AMOUNTS.map((v) => (
         <button
           key={v}
           onClick={() => onPick(v)}
@@ -636,7 +645,7 @@ function QuickStakes({ balance, onPick }: { balance: number; onPick: (value: num
         disabled={balance <= 0}
         className="text-[10px] px-2 py-1 rounded-md bg-[var(--bg-control)] hover:bg-[var(--border)] text-[var(--text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        最大
+        Max
       </button>
     </div>
   )
