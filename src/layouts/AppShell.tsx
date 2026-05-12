@@ -1,10 +1,8 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { ToastContainer } from '../components/ui/Toast'
 import { useParlayStore } from '../stores/parlayStore'
-import { useSoccerBetSlipStore } from '../stores/soccerBetSlipStore'
 import { useThemeStore } from '../stores/themeStore'
 import ParlaySlip from '../components/ParlaySlip'
-import SoccerBetSlipFloat from '../components/soccer/SoccerBetSlipFloat'
 
 const navItems = [
   { to: '/', label: '探索' },
@@ -19,19 +17,11 @@ const navItems = [
 export default function AppShell() {
   const location = useLocation()
   const hasLegs = useParlayStore((s) => s.slip.length > 0)
-  const soccerItemsCount = useSoccerBetSlipStore((s) => s.items.length)
-  // 只有在非 SoccerMatchPage 时浮动条才显示，需要给 main 底部留白避免遮挡
-  const hasSoccerFloat =
-    soccerItemsCount > 0 && !location.pathname.startsWith('/soccer/match/')
   const { theme, toggleTheme } = useThemeStore()
 
-  // 移动端底部浮动条累积高度：ParlayBar ~40px + SoccerBetSlipBar ~40px，基础 tab bar 56px
+  // 移动端底部浮动条累积高度：ParlayBar ~40px，基础 tab bar 56px
   const mainBottomPadClass =
-    hasLegs && hasSoccerFloat
-      ? 'pb-[136px]'
-      : hasLegs || hasSoccerFloat
-        ? 'pb-[96px]'
-        : 'pb-20'
+    hasLegs ? 'pb-[96px]' : 'pb-20'
 
   return (
     <div className="min-h-dvh bg-[var(--bg-base)] text-[var(--text-primary)] flex flex-col overflow-x-clip">
@@ -140,7 +130,6 @@ export default function AppShell() {
       </nav>
 
       <ParlaySlip />
-      <SoccerBetSlipFloat />
       <ToastContainer />
     </div>
   )

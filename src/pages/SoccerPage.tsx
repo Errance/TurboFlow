@@ -1,9 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { leagues, matches } from '../data/soccer/mockData'
-import { futuresCompetitions } from '../data/soccer/futuresData'
-import MatchListCard from '../components/soccer/MatchListCard'
+import {
+  AmmMarketCard,
+  AmmPortfolioPanel,
+  AmmTradePanel,
+  PriceFormatToggle,
+} from '../components/soccer/AmmMarketComponents'
 import { SoccerListSkeleton } from '../components/soccer/SoccerSkeletons'
+import { leagues, matches } from '../data/soccer/mockData'
+import {
+  ammMarkets,
+  marketsByCategory,
+  type AmmMarket,
+  type AmmOutcome,
+  type PriceFormat,
+} from '../data/soccer/ammMarkets'
 
 type SoccerView = 'matches' | 'futures'
 
@@ -12,15 +23,8 @@ function parseView(value: string | null): SoccerView {
   return 'matches'
 }
 
-function uniqueGroups(markets: typeof futuresCompetitions[number]['markets']): string[] {
-  return Array.from(new Set(markets.map((item) => item.group)))
-}
-
-function formatCloseTime(iso?: string): string {
-  if (!iso) return '按市场规则'
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return '按市场规则'
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+function categoryLabel(view: SoccerView): string {
+  return view === 'matches' ? '单场预测' : '冠军与晋级'
 }
 
 export default function SoccerPage() {
@@ -29,15 +33,20 @@ export default function SoccerPage() {
   const [selectedLeague, setSelectedLeague] = useState<string>(() => searchParams.get('league') ?? 'all')
   const [view, setView] = useState<SoccerView>(() => parseView(searchParams.get('view')))
   const [bootstrapped, setBootstrapped] = useState(false)
-
-  useEffect(() => {
-    const leagueParam = searchParams.get('league')
-    if (leagueParam && leagueParam !== selectedLeague) {
-      setSelectedLeague(leagueParam)
-    }
-    const nextView = parseView(searchParams.get('view'))
-    if (nextView !== view) setView(nextView)
-  }, [searchParams])
+  const [priceFormat, setPriceFormat] = useState<PriceFormat>('probability')
+  const visibleMarkets = useMemo(
+    () => marketsByCategory(view === 'matches' ? 'single' : 'futures')
+      .filter((market) => {
+        if (view !== 'matches' || selectedLeague === 'all') return true
+        const match = matches.find((item) => item.id === market.matchId)
+        return match?.leagueId === selectedLeague
+      }),
+    [selectedLeague, view],
+  )
+  const [selected, setSelected] = useState(() => {
+    const market = ammMarkets[0]
+    return { market, outcome: market.outcomes[0] }
+  })
 
   useEffect(() => {
     const id = window.setTimeout(() => setBootstrapped(true), 120)
@@ -62,121 +71,72 @@ export default function SoccerPage() {
     setSearchParams(params)
   }
 
-  const filteredMatches = selectedLeague === 'all'
-    ? matches
-    : matches.filter((m) => m.leagueId === selectedLeague)
+  const handleSelect = (market: AmmMarket, outcome: AmmOutcome) => {
+    setSelected({ market, outcome })
+  }
 
-  const liveCount = matches.filter((m) => m.status === 'live').length
-  const groupedByLeague = filteredMatches.reduce<Record<string, typeof matches>>((acc, m) => {
-    ;(acc[m.league] ??= []).push(m)
-    return acc
-  }, {})
+  const effectiveSelected = visibleMarkets.some((market) => market.id === selected.market.id)
+    ? selected
+    : {
+        market: visibleMarkets[0] ?? selected.market,
+        outcome: (visibleMarkets[0] ?? selected.market).outcomes[0],
+      }
+  const liveCount = matches.filter((match) => match.status === 'live').length
+  const openMarketCount = visibleMarkets.filter((market) => market.status === 'open').length
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left sidebar - League navigation */}
-        <nav className="md:w-56 shrink-0">
-          <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-              <path d="M2 12h20" />
-            </svg>
-            足球
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <nav className="shrink-0 lg:w-60">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+            足球 AMM
           </h2>
 
-          <div className="space-y-0.5">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
             <button
               onClick={() => handleLeagueChange('all')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                 selectedLeague === 'all'
                   ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-control)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <span>全部赛事</span>
-              <div className="flex items-center gap-1.5">
-                {liveCount > 0 && (
-                  <span className="text-[10px] text-[#E85A7E] font-mono">{liveCount} 场进行中</span>
-                )}
-                <span className="text-[10px] text-[var(--text-secondary)] font-mono">{matches.length}</span>
-              </div>
+              <span>全部单场赛事</span>
+              <span className="font-mono text-[10px]">{marketsByCategory('single').length}</span>
             </button>
-
             {leagues.map((league) => {
-              const leagueMatches = matches.filter((m) => m.leagueId === league.id)
-              const leagueLive = leagueMatches.filter((m) => m.status === 'live').length
+              const count = matches.filter((match) => match.leagueId === league.id).length
               return (
                 <button
                   key={league.id}
                   onClick={() => handleLeagueChange(league.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                     selectedLeague === league.id
                       ? 'bg-[#2DD4BF]/10 text-[#2DD4BF] font-medium'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-control)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <div className="flex flex-col items-start">
-                    <span className="truncate">{league.name}</span>
-                    <span className="text-[10px] opacity-60">{league.country}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {leagueLive > 0 && (
-                      <span className="text-[10px] text-[#E85A7E] font-mono">{leagueLive}</span>
-                    )}
-                    <span className="text-[10px] text-[var(--text-secondary)] font-mono">{leagueMatches.length}</span>
-                  </div>
+                  <span className="truncate">{league.name}</span>
+                  <span className="font-mono text-[10px]">{count}</span>
                 </button>
               )
             })}
           </div>
 
-          {matches.some((m) => m.status === 'live') && (
-            <div className="mt-6 border-t border-[var(--border)] pt-4">
-              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">正在进行</h3>
-              <div className="space-y-1">
-                {matches.filter((m) => m.status === 'live').slice(0, 3).map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[#E85A7E]/5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#E85A7E] animate-pulse shrink-0" />
-                    <span className="text-[10px] text-[var(--text-primary)] truncate">
-                      {m.homeTeam.shortName} vs {m.awayTeam.shortName}
-                    </span>
-                    {m.score && (
-                      <span className="text-[10px] text-[#E85A7E] font-mono ml-auto shrink-0">
-                        {m.score.home}-{m.score.away}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+          <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">实时概览</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Metric label="进行中" value={`${liveCount}`} />
+              <Metric label="可交易" value={`${openMarketCount}`} />
+              <Metric label="24h 成交" value={`${(visibleMarkets.reduce((sum, item) => sum + item.volume24h, 0) / 1000).toFixed(1)}k`} />
+              <Metric label="流动性" value={`${(visibleMarkets.reduce((sum, item) => sum + item.liquidity, 0) / 1000).toFixed(0)}k`} />
             </div>
-          )}
-
-          {matches.some((m) => m.status === 'scheduled') && (
-            <div className="mt-4 border-t border-[var(--border)] pt-4">
-              <h3 className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">即将开赛</h3>
-              <div className="space-y-1">
-                {matches.filter((m) => m.status === 'scheduled').slice(0, 3).map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-[var(--bg-control)]/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-secondary)]/50 shrink-0" />
-                    <span className="text-[10px] text-[var(--text-primary)] truncate">
-                      {m.homeTeam.shortName} vs {m.awayTeam.shortName}
-                    </span>
-                    <span className="text-[10px] text-[var(--text-secondary)] font-mono ml-auto shrink-0">
-                      {m.time}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
         </nav>
 
-        {/* Main content - Match list */}
-        <div className="flex-1 min-w-0">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex rounded-xl bg-[var(--bg-card)] border border-[var(--border)] p-1">
+        <main className="min-w-0 flex-1">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
               {[
                 { id: 'matches' as const, label: '单场预测' },
                 { id: 'futures' as const, label: '冠军与晋级' },
@@ -194,105 +154,48 @@ export default function SoccerPage() {
                 </button>
               ))}
             </div>
+            <PriceFormatToggle value={priceFormat} onChange={setPriceFormat} />
           </div>
 
-          {/* Differentiated tagline per tab */}
-          <div className="mb-4">
-            {view === 'matches' && (
-              <p className="text-xs text-[var(--text-secondary)]">近期单场比赛结果和内容预测，按比赛逐场下注。</p>
-            )}
-            {view === 'futures' && (
-              <p className="text-xs text-[var(--text-secondary)]">
-                <span className="text-[var(--text-primary)] font-medium">冠军与晋级｜</span>
-                先选择系列赛或赛季，再进入查看该对象下的小组赛、淘汰赛、冠军等预测。
-              </p>
-            )}
+          <section className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <p className="text-xs font-semibold text-[#2DD4BF]">v6.0 AMM 预测市场</p>
+            <h1 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{categoryLabel(view)}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+              用户买卖 outcome 的预测份额，形成持仓后可部分卖出、全部卖出或等待结算。概率价格是底层价格，欧洲赔率仅为展示换算；平台不作为交易对手方。
+            </p>
+          </section>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {visibleMarkets.map((market) => (
+              <AmmMarketCard
+                key={market.id}
+                market={market}
+                priceFormat={priceFormat}
+                selectedOutcomeId={effectiveSelected.market.id === market.id ? effectiveSelected.outcome.id : undefined}
+                onSelect={handleSelect}
+                onOpen={(item) => {
+                  if (item.category === 'single' && item.matchId) navigate(`/soccer/match/${item.matchId}`)
+                  if (item.category === 'futures' && item.seriesId) navigate(`/soccer/futures/${item.seriesId}`)
+                }}
+              />
+            ))}
           </div>
+        </main>
 
-          {view === 'matches' && Object.entries(groupedByLeague).map(([league, leagueMatches]) => (
-            <div key={league} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{league}</h3>
-                <span className="text-[10px] text-[var(--text-secondary)] font-mono">
-                  {leagueMatches.length} 场
-                </span>
-              </div>
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
-                <span className="w-12 shrink-0 text-center">时间</span>
-                <span className="flex-1">比赛</span>
-                <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
-                <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
-                <span className="hidden lg:block w-[138px] shrink-0 text-center">让球</span>
-                <span className="w-16 shrink-0 text-right">盘口</span>
-              </div>
-              <div className="border border-[var(--border)] rounded-lg overflow-hidden">
-                {leagueMatches.map((match) => (
-                  <MatchListCard key={match.id} match={match} />
-                ))}
-              </div>
-            </div>
-          ))}
-
-          {view === 'futures' && (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {futuresCompetitions.map((competition) => (
-                <button
-                  key={competition.id}
-                  onClick={() => navigate(`/soccer/futures/${competition.id}`)}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 text-left transition-colors hover:border-[#2DD4BF]/40"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-semibold text-[#2DD4BF]">{competition.region} · {competition.seriesType}</p>
-                      <h3 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
-                      <p className="mt-2 text-sm text-[var(--text-secondary)]">{competition.headline}</p>
-                    </div>
-                    <span className="rounded-full bg-[var(--bg-control)] px-2.5 py-1 text-[10px] text-[var(--text-secondary)]">
-                      {competition.markets.length} 个预测
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {uniqueGroups(competition.markets).map((group) => (
-                      <span key={group} className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{group}</span>
-                    ))}
-                  </div>
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    {competition.marketSummary.slice(0, 4).map((item) => (
-                      <div key={item} className="rounded-xl bg-[var(--bg-control)] px-3 py-2 text-xs text-[var(--text-primary)]">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    {competition.markets.slice(0, 2).map((item) => (
-                      <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-[var(--text-primary)]">{item.market.title}</span>
-                          <span className="text-[10px] text-[var(--text-secondary)]">{item.group}</span>
-                        </div>
-                        <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">
-                          {item.market.options.slice(0, 2).map((option) => `${option.label} ${option.odds.toFixed(2)}`).join(' / ')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[10px] text-[var(--text-secondary)]">
-                    <span>关闭：{formatCloseTime(competition.markets[0]?.subject.closesAt)}</span>
-                    <span className="text-[#2DD4BF]">进入系列赛 &gt;</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {view === 'matches' && filteredMatches.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-[var(--text-secondary)]">暂无赛事</p>
-            </div>
-          )}
-        </div>
+        <aside className="space-y-4 lg:w-[360px] lg:shrink-0">
+          <AmmTradePanel market={effectiveSelected.market} outcome={effectiveSelected.outcome} priceFormat={priceFormat} />
+          <AmmPortfolioPanel compact />
+        </aside>
       </div>
     </div>
   )
 }
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-[var(--bg-control)] px-3 py-2">
+      <p className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)]">{label}</p>
+      <p className="mt-1 font-mono text-xs text-[var(--text-primary)]">{value}</p>
+    </div>
+  )
+}

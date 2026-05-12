@@ -1,911 +1,277 @@
-import MatchHeader from '../components/soccer/MatchHeader'
-import MatchInfoPanel from '../components/soccer/MatchInfoPanel'
-import MatchListCard from '../components/soccer/MatchListCard'
-import MarketRenderer from '../components/soccer/MarketRenderer'
-import MyBetCard from '../components/soccer/MyBetCard'
-import MyBetsPanel from '../components/soccer/MyBetsPanel'
-import { SoccerListSkeleton, SoccerMatchSkeleton } from '../components/soccer/SoccerSkeletons'
-import { futuresCompetitions } from '../data/soccer/futuresData'
-import { matches } from '../data/soccer/mockData'
-import type { Market, MyBetItem, SettlementResult, SoccerMatch } from '../data/soccer/types'
-
-const noop = () => {}
-
-const LEAN_MARKET_ORDER = [
-  '胜平负',
-  '开球权',
-  '让球',
-  '让球 0:1',
-  '总进球数',
-  '大小球',
-  '波胆',
-]
+import { useState, type ReactNode } from 'react'
+import {
+  AmmMarketCard,
+  AmmPortfolioPanel,
+  AmmStatusBadge,
+  AmmTradePanel,
+  PriceFormatToggle,
+} from '../components/soccer/AmmMarketComponents'
+import {
+  ammMarkets,
+  estimateAmmQuote,
+  type AmmMarket,
+  type PriceFormat,
+} from '../data/soccer/ammMarkets'
 
 const boardSections = [
   ['coverage', '范围说明'],
-  ['coverage-matrix', '覆盖矩阵'],
-  ['page-states', '页面级状态'],
-  ['match-states', '比赛状态'],
-  ['lean-markets', '本期盘口'],
-  ['future-markets', '冠军与晋级'],
-  ['market-states', '盘口状态'],
-  ['goal-toggle', '开赛封盘'],
-  ['betslip-states', '投注单状态'],
-  ['float-states', '浮动投注单'],
-  ['mybets-states', '我的注单'],
-  ['rule-states', '报价和提交反馈'],
-  ['component-matrix', '组件覆盖'],
-  ['edge-states', '异常与边界'],
-  ['compliance-degrade', '合规降级'],
+  ['routes', '页面覆盖'],
+  ['discovery', '发现页'],
+  ['single', '单场预测'],
+  ['futures', '冠军与晋级'],
+  ['trade', '交易面板'],
+  ['portfolio', 'Portfolio'],
+  ['states', '市场状态'],
+  ['risk', '风控与异常'],
+  ['audit', '审计清单'],
 ]
 
-const soccerRouteCoverage = [
-  ['SoccerPage', '/soccer', '首页单场预测 / 冠军与晋级两个 tab、左侧导航、比赛列表'],
-  ['SoccerMatchPage', '/soccer/match/:matchId', '比赛详情、右栏信息、盘口列表、投注单'],
-  ['SoccerFuturesPage', '/soccer/futures/:competitionId', '冠军与晋级系列赛详情'],
-  ['SoccerMyBetsPage', '/soccer/mybets', '传统注单列表、筛选、cash out、导出'],
-  ['SoccerDesignBoardPage', '/soccer/design-board', '设计状态总览'],
-  ['SoccerV47DeltaBoardPage', '/soccer/design-board/v4.7-delta', '仅展示 v4.7 本次 UI 变更'],
+const routeCoverage = [
+  ['/soccer', 'AMM 市场发现：首页、单场预测 / 冠军与晋级、价格格式切换、右侧交易面板和 Portfolio 摘要'],
+  ['/soccer/match/:matchId', '单场 AMM 市场详情：比赛信息、outcome 卡片、买入 / 卖出交易面板、暂停提示'],
+  ['/soccer/futures/:competitionId', '冠军与晋级 AMM 市场组：阶段筛选、长期结算规则、交易面板'],
+  ['/soccer/mybets', 'Portfolio：当前持仓、可卖 shares、均价、市值、盈亏、历史成交'],
+  ['/soccer/design-board', 'v6.0 AMM Design Board 全状态评审'],
 ]
 
-const soccerComponentCoverage = [
-  ['MatchHeader', '比赛状态头部'],
-  ['MatchInfoPanel', '右栏赛事信息'],
-  ['MatchListCard', '首页比赛卡'],
-  ['MarketRenderer', '盘口分发器'],
-  ['ButtonGroupMarket', '胜平负 / 开球权'],
-  ['RangeButtonsMarket', '进球区间 / 离散选项'],
-  ['OddsTableMarket', '让球 / 大小球线值卡片'],
-  ['ScoreGridMarket', '波胆分组卡片'],
-  ['OddsDisplay', '赔率格式'],
-  ['MarketCard', '盘口折叠容器'],
-  ['SoccerBetSlip', '右栏投注单'],
-  ['SoccerBetSlipFloat', '跨页浮动投注单'],
-  ['ConfirmBetDialog', '传统投注二次确认'],
-  ['BetSlipSettingsMenu', '投注单设置'],
-  ['MyBetCard', '我的注单卡'],
-  ['MyBetsPanel', '右栏我的注单摘要'],
-  ['SoccerSkeletons', '列表 / 详情骨架'],
-  ['KickoffCountdown', '开赛倒计时'],
-  ['MatchTimeline', '比赛事件'],
-  ['MatchStatsBar', '统计条'],
-  ['FormationPitch', '阵型图'],
-  ['HeadToHeadPanel', '历史交锋'],
+const componentCoverage = [
+  ['AmmMarketCard', '市场问题、outcome、概率价格、欧洲赔率、流动性、成交量、状态'],
+  ['AmmTradePanel', '买入、部分卖出、全部卖出、quote、价格影响、手续费、暂停和无持仓限制'],
+  ['AmmPortfolioPanel', '持仓摘要、可卖 shares、平均成本、市值、未实现 / 已实现盈亏'],
+  ['PriceFormatToggle', '概率价格 / 欧洲赔率展示切换'],
+  ['AmmStatusBadge', '可交易、暂停、只可查看、等待官方结果、已结算、已作废'],
 ]
 
-const soccerStateCoverage = [
-  ['v4.3 单场', '赛前 / 进行中 / 已结束 / 中断 / 腰斩 / 延期 / 取消'],
-  ['盘口状态', '开放 / 选中 / 暂停 / 即将开放 / 作废 / 取消 / 结算 / 串关互斥 / 隐藏'],
-  ['投注单', '空单 / 多笔单注 / 串关 / 报价变化 / 余额不足 / 提交失败 / 二次确认'],
-  ['v4.7 冠军与晋级', '系列赛对象 / 小组赛 / 淘汰赛 / 冠军 / 晋级 / 赛季结果 / 两回合系列赛 / 不可串关'],
-  ['合规降级', '大陆只资讯与免费预测 / 非大陆真钱版 / 隐藏赔率派奖返佣'],
+const stateCoverage = [
+  ['可交易', '外部流动性正常报价，可买入、可卖出。'],
+  ['暂停交易', '关键事件、VAR、红牌、报价异常或平台风控触发，买卖都不可执行。'],
+  ['只可查看', '市场保留展示但不再接受交易。'],
+  ['等待官方结果', '比赛或赛事结束后等待官方确认，持仓不可交易，等待结算。'],
+  ['已结算', '正确 outcome 兑付 1，错误 outcome 归 0。'],
+  ['已作废', '触发 void rule，按规则退款。'],
 ]
 
-const futureMarketCoverage = futuresCompetitions.flatMap((competition) =>
-  competition.markets.map((item) => ({
-    id: item.id,
-    title: `${competition.shortName} · ${item.group} · ${item.market.title}`,
-    text: `状态：${item.status}｜${item.description}`,
-  })),
-)
-
-function futureGroups(competition: (typeof futuresCompetitions)[number]): string[] {
-  return Array.from(new Set(competition.markets.map((item) => item.group)))
-}
-
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T
-}
-
-const sourceMatch = matches[0]
-const liveSourceMatch = matches.find((match) => match.status === 'live') ?? sourceMatch
-const finishedSourceMatch = matches.find((match) => match.status === 'finished') ?? sourceMatch
-
-function matchWith(status: SoccerMatch['status'], overrides: Partial<SoccerMatch> = {}): SoccerMatch {
-  const shouldShowScore = status === 'live' || status === 'finished' || status === 'interrupted' || status === 'abandoned'
-  return {
-    ...clone(sourceMatch),
-    id: `board-${status}`,
-    status,
-    score: shouldShowScore ? (overrides.score ?? { home: 1, away: status === 'finished' ? 2 : 0 }) : undefined,
-    currentMinute: status === 'live' || status === 'interrupted' || status === 'abandoned' ? (overrides.currentMinute ?? 65) : undefined,
-    events: status === 'live' || status === 'finished' || status === 'interrupted' || status === 'abandoned' ? liveSourceMatch.events : sourceMatch.events,
-    stats: status === 'live' || status === 'finished' || status === 'interrupted' || status === 'abandoned' ? liveSourceMatch.stats : sourceMatch.stats,
-    ...overrides,
-  }
-}
-
-const allMarkets = sourceMatch.tabs.flatMap((tab) => tab.markets)
-
-function marketByTitle(title: string, fallback?: Market): Market {
-  const market = allMarkets.find((item) => item.title === title)
-  if (!market && fallback) return clone(fallback)
-  if (!market) return clone(marketByTitle('胜平负'))
-  return clone(market)
-}
-
-function marketWith(title: string, patch: Partial<Market>): Market {
-  return { ...marketByTitle(title), ...patch } as Market
-}
-
-function selectedKeyFor(market: Market): string | undefined {
-  switch (market.type) {
-    case 'buttonGroup':
-    case 'rangeButtons':
-      return `${market.title}|${market.options[0]?.label}`
-    case 'oddsTable':
-      return `${market.title}|${market.columns[0]} ${market.rows[0]?.line}`
-    case 'scoreGrid': {
-      const firstScore = Object.keys(market.odds)[0]
-      return firstScore ? `${market.title}|${firstScore}` : undefined
-    }
-    case 'playerList': {
-      const firstPlayer = market.players[0]
-      if (!firstPlayer) return undefined
-      const tier = market.tiers[0] ?? ''
-      return `${market.title}|${tier ? `${firstPlayer.name} ${tier}` : firstPlayer.name}`
-    }
-    case 'comboGrid':
-      return `${market.title}|${market.cells[0]?.label}`
-  }
-}
-
-function settlementMarket(result: SettlementResult): Market {
-  return marketWith('波胆', {
-    status: 'settled',
-    settlementResult: result,
-    winningSelection: result === 'win' ? '1:0' : undefined,
-  })
-}
-
-const listMatches: SoccerMatch[] = [
-  matchWith('scheduled', { id: 'board-list-scheduled', date: '04月28日', time: '20:00' }),
-  matchWith('live', { id: 'board-list-live', score: { home: 2, away: 1 }, currentMinute: 72 }),
-  matchWith('finished', { id: 'board-list-finished', score: { home: 0, away: 1 } }),
-  matchWith('postponed', { id: 'board-list-postponed', date: '待定', time: '待定' }),
+const riskCoverage = [
+  ['价格影响过高', '交易面板展示黄色警示，超过阈值时应阻断确认。'],
+  ['quote 过期', '需要重新询价，不能沿用旧价格成交。'],
+  ['流动性不足', '整笔交易失败，不产生挂单或部分成交。'],
+  ['部分卖出 dust', '卖出后剩余持仓低于阈值时提示全部卖出。'],
+  ['外部报价暂停', 'provider_quote_status 非 quoting 时暂停买入和卖出。'],
+  ['官方争议', '进入官方待确认，不提前结算。'],
 ]
 
-const headerMatches: Array<{ label: string; note: string; match: SoccerMatch }> = [
-  { label: '赛前', note: '展示开赛时间，不展示比分。', match: matchWith('scheduled') },
-  { label: '进行中', note: '展示比分、比赛分钟和进行中状态。', match: matchWith('live', { score: { home: 1, away: 0 }, currentMinute: 65 }) },
-  { label: '已结束', note: '展示最终比分，不再接受新增投注。', match: matchWith('finished', { score: { home: 0, away: 1 } }) },
-  { label: '中断', note: '展示已发生比分和中断说明。', match: matchWith('interrupted', { score: { home: 1, away: 1 }, currentMinute: 54 }) },
-  { label: '腰斩', note: '展示异常结束状态和结算说明。', match: matchWith('abandoned', { score: { home: 0, away: 2 }, currentMinute: 39 }) },
-  { label: '延期', note: '展示延期状态，不展示比分。', match: matchWith('postponed', { date: '待定', time: '待定' }) },
-  { label: '取消', note: '展示取消状态，相关盘口作废。', match: matchWith('cancelled', { date: '待定', time: '待定' }) },
-]
-
-const leanMarketScenarios = LEAN_MARKET_ORDER.map((title) => ({
-  title,
-  market: marketByTitle(title),
-}))
-
-const marketStateScenarios: Array<{ label: string; note: string; market?: Market; selectedKey?: string; conflict?: boolean }> = [
-  { label: '开放', note: '用户可以选择并加入投注单。', market: marketByTitle('胜平负') },
-  { label: '选中', note: '同一盘口当前选项高亮。', market: marketByTitle('胜平负'), selectedKey: selectedKeyFor(marketByTitle('胜平负')) },
-  { label: '暂停', note: '盘口保留展示，但不可选择。', market: marketWith('大小球', { status: 'suspended' }) },
-  { label: '即将开放', note: '盘口存在，但尚未开放投注。', market: marketWith('总进球数', { status: 'upcoming' }) },
-  { label: '作废', note: '盘口作废，已下注按退款规则处理。', market: marketWith('大小球', { status: 'void' }) },
-  { label: '取消', note: '盘口取消，不再接受投注。', market: marketWith('胜平负', { status: 'cancelled' }) },
-  { label: '已结算赢', note: '展示命中结果。', market: settlementMarket('win') },
-  { label: '已结算输', note: '展示未命中。', market: settlementMarket('loss') },
-  { label: '退款', note: '走盘或盘口作废按退款展示。', market: settlementMarket('push') },
-  { label: '串关互斥', note: '仅在串关模式下解释与已选盘口不可组合。', market: marketByTitle('波胆'), conflict: true },
-  { label: '隐藏', note: '后台隐藏的盘口不出现在用户列表中。' },
-]
-
-const conflictExamples = [
-  ['胜平负 × 波胆', '波胆会直接推出胜平负结果。'],
-  ['总进球数 × 大小球', '总进球档位会决定大小球结果。'],
-  ['让球 × 波胆', '波胆会决定让球结果。'],
-]
-
-const rejectReasons = [
-  ['赔率已变化', '最新报价与加入投注单时不同，提交前需要确认。'],
-  ['报价已过期', '锁价时间已结束，请先接受最新报价。'],
-  ['盘口已关闭', '该盘口已暂停、作废或结算，请移除相关选项。'],
-  ['该比赛暂不支持投注', '比赛已结束、延期、取消或进入异常处理。'],
-  ['余额不足', '可用余额低于本次投注金额，请调整金额后再提交。'],
-  ['未达最低投注金额', '投注金额需满足当前最低投注要求。'],
-  ['超过单注投注上限', '投注金额高于当前单注上限，请降低金额。'],
-  ['预计返还超过限制', '预计返还已超过平台限制，请降低投注金额或减少选项。'],
-  ['还需添加投注项', '当前投注方式需要更多选项，请继续添加或切换投注方式。'],
-  ['投注项数量超过上限', '当前投注方式不支持这么多选项，请移除部分选项。'],
-  ['不可同场串关', '同场强相关盘口不能放入同一张串关，可改为多笔单注。'],
-  ['提交未成功', '投注单内容已保留，请稍后重试。'],
-  ['投注正在确认中', '请等待当前提交结果返回后再操作。'],
-]
-
-function makeBet(id: string, status: MyBetItem['status'], patch: Partial<MyBetItem> = {}): MyBetItem {
-  const settlementResult = patch.settlementResult ?? (patch.result === 'loss' ? 'loss' : patch.result === 'push' ? 'push' : 'win')
-  return {
-    id,
-    betCode: `TF-DESIGN${id.slice(-2).toUpperCase()}`,
-    matchLabel: 'RJ博塔弗戈 vs 米拉索尔',
-    marketTitle: '胜平负',
-    selection: 'RJ博塔弗戈',
-    odds: 1.83,
-    amount: 50,
-    stake: 50,
-    result: settlementResult === 'loss' || settlementResult === 'half_loss' ? 'loss' : settlementResult === 'push' || settlementResult === 'void' ? 'push' : 'win',
-    settlementResult,
-    status,
-    payout: status === 'settled' ? 91.5 : 0,
-    potentialReturn: 91.5,
-    placedAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-    cashout: status === 'placed' || status === 'live' ? { availablePrice: 45, minutesUntilExpire: 10 } : undefined,
-    ...patch,
-  }
-}
-
-const sampleBets: MyBetItem[] = [
-  makeBet('bet-pending', 'pending', { betCode: 'TF-PENDING', potentialReturn: 91.5 }),
-  makeBet('bet-placed', 'placed', { betCode: 'TF-PLACED' }),
-  makeBet('bet-live', 'live', { betCode: 'TF-LIVE01', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '大小球', selection: '大 2.5', odds: 2.05, potentialReturn: 205 }),
-  makeBet('bet-win', 'settled', { betCode: 'TF-WIN001', result: 'win', settlementResult: 'win', payout: 168, marketTitle: '波胆', selection: '0:1', odds: 8.4 }),
-  makeBet('bet-loss', 'settled', { betCode: 'TF-LOSS01', result: 'loss', settlementResult: 'loss', payout: 0 }),
-  makeBet('bet-push', 'settled', { betCode: 'TF-PUSH01', result: 'push', settlementResult: 'push', payout: 50, marketTitle: '让球', selection: '0 / 0' }),
-  makeBet('bet-void', 'settled', { betCode: 'TF-VOID01', result: 'push', settlementResult: 'void', payout: 50, marketTitle: '大小球', selection: '大 2.5' }),
-  makeBet('bet-halfwin', 'settled', { betCode: 'TF-HALFWN', result: 'win', settlementResult: 'half_win', payout: 70 }),
-  makeBet('bet-halfloss', 'settled', { betCode: 'TF-HALFLS', result: 'loss', settlementResult: 'half_loss', payout: 25 }),
-  makeBet('bet-cashout', 'cashed_out', { betCode: 'TF-CASH01', payout: 286.5, odds: 5.62, marketTitle: '串关', selection: '3 项' }),
-]
-
-const parlayBet: MyBetItem = makeBet('bet-parlay', 'placed', {
-  betCode: 'TF-PARLAY',
-  betType: 'accumulator',
-  odds: 5.62,
-  stake: 100,
-  amount: 100,
-  potentialReturn: 562,
-  legs: [
-    { id: 'l1', matchId: 'm1', matchLabel: 'RJ博塔弗戈 vs 米拉索尔', marketTitle: '胜平负', selection: 'RJ博塔弗戈', oddsAtPlacement: 1.83 },
-    { id: 'l2', matchId: 'm2', matchLabel: '弗拉门戈 vs 科林蒂安', marketTitle: '大小球', selection: '大 2.5', oddsAtPlacement: 2.05 },
-    { id: 'l3', matchId: 'm3', matchLabel: '阿森纳 vs 切尔西', marketTitle: '让球', selection: '-0.5', oddsAtPlacement: 1.50 },
-  ],
-})
-
-function stopBoardInteraction(event: React.SyntheticEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-}
+const singleMarkets = ammMarkets.filter((market) => market.category === 'single')
+const futuresMarkets = ammMarkets.filter((market) => market.category === 'futures')
+const selectedOpenMarket = ammMarkets.find((market) => market.status === 'open') ?? ammMarkets[0]
+const selectedPositionMarket = ammMarkets.find((market) => market.id === 'amm-world-cup-winner') ?? selectedOpenMarket
+const pausedMarket = ammMarkets.find((market) => market.status === 'paused') ?? selectedOpenMarket
+const pendingMarket = ammMarkets.find((market) => market.status === 'official_pending') ?? selectedOpenMarket
 
 export default function SoccerDesignBoardPage() {
+  const [priceFormat, setPriceFormat] = useState<PriceFormat>('probability')
+  const [selectedMarket, setSelectedMarket] = useState<AmmMarket>(selectedOpenMarket)
+  const selectedOutcome = selectedMarket.outcomes[0]
+  const highImpactQuote = estimateAmmQuote(selectedOpenMarket, selectedOpenMarket.outcomes[0], 'buy', 4500, 'collateral')
+
   return (
-    <div
-      className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-10 [&_a]:cursor-default [&_button]:cursor-default"
-      onClickCapture={stopBoardInteraction}
-      onKeyDownCapture={stopBoardInteraction}
-      onSubmitCapture={stopBoardInteraction}
-    >
-      <header id="coverage" className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
-        <p className="text-xs text-[#2DD4BF] font-semibold mb-2">足球盘口设计状态展板</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">足球盘口页面、元素和状态</h1>
-        <p className="mt-3 max-w-4xl text-sm text-[var(--text-secondary)] leading-6">
-          本页面用于产品和设计评审，集中展示用户会看到的页面状态、盘口、投注单、注单和提交反馈。
-          当前覆盖 v4.7 范围内的单场预测、冠军与晋级系列赛结构、对象内预测、多笔单注、串关、报价确认和封盘能力。
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      <header className="mb-6 rounded-3xl border border-[#2DD4BF]/30 bg-[#2DD4BF]/10 p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2DD4BF]">Soccer v6.0 AMM Design Board</p>
+        <h1 className="mt-3 text-3xl font-semibold text-[var(--text-primary)]">足球 AMM 预测市场设计状态总览</h1>
+        <p className="mt-3 max-w-4xl text-sm leading-6 text-[var(--text-secondary)]">
+          本展板只覆盖 v6.0 AMM 预测市场：市场问题、outcome、预测份额、交易面板、部分卖出、Portfolio、外部流动性和结算异常。不展示 CLOB、挂单、限价单、订单簿、传统投注单或串关。
         </p>
-        <div className="mt-4 grid gap-2 md:grid-cols-6">
-          <Metric label="足球路由" value={String(soccerRouteCoverage.length)} />
-          <Metric label="足球组件" value={String(soccerComponentCoverage.length)} />
-          <Metric label="比赛状态" value="7" />
-          <Metric label="本期盘口" value="7" />
-          <Metric label="赛事级市场" value={String(futureMarketCoverage.length)} />
-          <Metric label="投注单状态" value="20+" />
-        </div>
-        <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">v4.7 盘口范围</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {LEAN_MARKET_ORDER.map((title) => (
-              <span key={title} className="rounded-full bg-[#2DD4BF]/10 px-2.5 py-1 text-[10px] text-[#2DD4BF]">{title}</span>
-            ))}
-            {['小组赛', '淘汰赛', '冠军', '晋级', '赛季名次', '两回合系列赛'].map((title) => (
-              <span key={title} className="rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] text-[#E85A7E]">{title}</span>
-            ))}
-          </div>
-        </div>
-        <nav className="mt-4 flex flex-wrap gap-2">
-          <a href={`${import.meta.env.BASE_URL}soccer/design-board/v4.7-delta`} className="rounded-lg border border-[#E85A7E]/40 bg-[#E85A7E]/10 px-3 py-1.5 text-xs text-[#E85A7E] hover:text-[#E85A7E]">
-            v4.7 变更页
-          </a>
-          {boardSections.map(([id, label]) => (
-            <a key={id} href={`#${id}`} className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF]">
-              {label}
-            </a>
-          ))}
-        </nav>
       </header>
 
-      <BoardSection id="coverage-matrix" title="0. 覆盖矩阵" description="按页面、组件和状态三条线核对 Design Board 覆盖范围，避免新增功能只停留在文字摘要里。">
-        <div className="grid gap-4 xl:grid-cols-3">
-          <StateCard title="足球路由页面" description="App.tsx 中所有 /soccer 相关路由都必须能在展板找到对应预览或状态说明。">
-            <CoverageList items={soccerRouteCoverage} />
+      <nav className="sticky top-0 z-10 mb-6 flex flex-wrap gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/95 p-3 backdrop-blur">
+        {boardSections.map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="rounded-full bg-[var(--bg-control)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[#2DD4BF]">
+            {label}
+          </a>
+        ))}
+      </nav>
+
+      <BoardSection id="coverage" title="0. 范围说明" description="v6.0 是全量 AMM 化，不是传统盘口 UI 换皮。">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <StateCard title="产品边界" description="用户与 AMM 池交易 outcome shares，平台不作为交易对手方。">
+            <Checklist items={['买入预测份额', '部分卖出', '全部卖出', '等待结算', 'void 退款']} />
           </StateCard>
-          <StateCard title="足球组件清单" description={`${soccerComponentCoverage.length} 个当前可见核心 soccer 组件按真实组件或说明性状态进入展板。`}>
-            <CoverageList items={soccerComponentCoverage} compact />
+          <StateCard title="不进入本期" description="这些能力不应出现在页面、mock 或设计稿中。">
+            <Checklist items={['CLOB 订单簿', '挂单', '限价单', '部分成交挂起', '传统投注单', '串关']} danger />
           </StateCard>
-          <StateCard title="关键状态族" description="跨 v4.3 / v4.4 / v4.7 / 合规降级的状态族。">
-            <CoverageList items={soccerStateCoverage} />
+          <StateCard title="价格体系" description="概率价格是底层价格，欧洲赔率只是展示换算。">
+            <PriceFormatToggle value={priceFormat} onChange={setPriceFormat} />
           </StateCard>
         </div>
       </BoardSection>
 
-      <BoardSection id="page-states" title="1. 页面级状态" description="先展示页面整体，再展示关键元素状态。这里包含首页、比赛详情、我的注单、异常页和加载骨架。">
-        <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-          <StateCard title="首页左侧导航" description="联赛筛选、全部赛事、进行中数量、进行中比赛和即将开赛。">
-            <LeagueSidebarPreview />
-          </StateCard>
-          <StateCard title="首页比赛列表" description="赛前、进行中、已结束和异常比赛同屏展示；快捷赔率列应正常显示。">
-            <ListTablePreview />
-          </StateCard>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <StateCard title="比赛详情页布局" description="路径导航、比赛头部、所有盘口、盘口列表、右栏信息和投注单。">
-            <MatchDetailPreview />
-          </StateCard>
-          <StateCard title="冠军与晋级首页" description="先展示不同系列赛或赛季对象，再进入对象内部查看预测。">
-            <FuturesSeriesPreview />
-          </StateCard>
-          <StateCard title="冠军与晋级详情页" description="系列赛详情页：头部、阶段分组、官方结算来源和不可串关提示。">
-            <FuturesDetailPreview />
-          </StateCard>
-          <StateCard title="我的注单页布局" description="状态筛选、日期筛选、导出、列表、加载更多和空态。">
-            <MyBetsPagePreview />
-          </StateCard>
-          <StateCard title="未找到该场比赛" description="无效比赛入口的异常页面和返回动作。">
-            <NotFoundPreview />
-          </StateCard>
-          <StateCard title="页面骨架" description="列表页和详情页加载中的骨架状态。">
-            <div className="space-y-4">
-              <div className="max-h-56 overflow-hidden rounded-lg border border-[var(--border)]"><SoccerListSkeleton /></div>
-              <div className="max-h-56 overflow-hidden rounded-lg border border-[var(--border)]"><SoccerMatchSkeleton /></div>
-            </div>
-          </StateCard>
+      <BoardSection id="routes" title="1. 页面覆盖" description="设计与测试需要逐页核对这些路由。">
+        <div className="grid gap-3 lg:grid-cols-2">
+          {routeCoverage.map(([route, desc]) => (
+            <StateCard key={route} title={route} description={desc}>
+              <div className="h-2 rounded-full bg-[#2DD4BF]/40" />
+            </StateCard>
+          ))}
         </div>
       </BoardSection>
 
-      <BoardSection id="match-states" title="2. 比赛状态和右栏信息" description="展示赛前、进行中、已结束和异常比赛状态，以及倒计时、事件、阵容、交锋、统计和特殊情况说明。">
+      <BoardSection id="discovery" title="2. 发现页状态" description="首页需要同时支持单场预测和冠军与晋级的 AMM 市场发现。">
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {ammMarkets.slice(0, 4).map((market) => (
+              <AmmMarketCard
+                key={market.id}
+                market={market}
+                priceFormat={priceFormat}
+                selectedOutcomeId={selectedMarket.id === market.id ? selectedOutcome.id : undefined}
+                onSelect={(nextMarket) => setSelectedMarket(nextMarket)}
+              />
+            ))}
+          </div>
+          <AmmTradePanel market={selectedMarket} outcome={selectedOutcome} priceFormat={priceFormat} />
+        </div>
+      </BoardSection>
+
+      <BoardSection id="single" title="3. 单场预测 AMM" description="覆盖赛果、大小球、系列赛晋级、球队表现等单场 outcome。">
         <div className="grid gap-4 lg:grid-cols-2">
-          {headerMatches.map((item) => (
-            <StateCard key={item.label} title={item.label} description={item.note}>
-              <MatchHeader match={item.match} />
-            </StateCard>
+          {singleMarkets.map((market) => (
+            <AmmMarketCard key={market.id} market={market} priceFormat={priceFormat} />
           ))}
         </div>
+      </BoardSection>
+
+      <BoardSection id="futures" title="4. 冠军与晋级 AMM" description="覆盖长期赛事级市场，包括多 outcome 冠军和二元晋级 / 资格市场。">
+        <div className="grid gap-4 lg:grid-cols-2">
+          {futuresMarkets.map((market) => (
+            <AmmMarketCard key={market.id} market={market} priceFormat={priceFormat} />
+          ))}
+        </div>
+      </BoardSection>
+
+      <BoardSection id="trade" title="5. 交易面板状态" description="买入、部分卖出、全部卖出、暂停、无持仓和高价格影响都必须能设计。">
         <div className="grid gap-4 xl:grid-cols-3">
-          <StateCard title="赛前信息右栏" description="倒计时、裁判、阵容和交锋。">
-            <MatchInfoPanel match={matchWith('scheduled')} />
+          <StateCard title="买入确认" description="展示 shares、成交均价、价格影响、手续费、交易后价格。">
+            <AmmTradePanel market={selectedOpenMarket} outcome={selectedOpenMarket.outcomes[0]} priceFormat={priceFormat} />
           </StateCard>
-          <StateCard title="进行中信息右栏" description="比分、分钟、事件、统计和阵容。">
-            <MatchInfoPanel match={matchWith('live', { score: { home: 1, away: 0 }, currentMinute: 65 })} />
+          <StateCard title="已有持仓可部分卖出" description="输入小于可卖 shares 的数量；也可点击全部卖出。">
+            <AmmTradePanel market={selectedPositionMarket} outcome={selectedPositionMarket.outcomes[0]} priceFormat={priceFormat} />
           </StateCard>
-          <StateCard title="完赛信息右栏" description="最终比分、统计和完赛事件。">
-            <MatchInfoPanel match={matchWith('finished', { score: { home: 0, away: 1 }, events: finishedSourceMatch.events, stats: finishedSourceMatch.stats })} />
+          <StateCard title="暂停交易" description="关键事件或外部报价暂停时买卖都不可执行。">
+            <AmmTradePanel market={pausedMarket} outcome={pausedMarket.outcomes[0]} priceFormat={priceFormat} />
+          </StateCard>
+        </div>
+        <div className="mt-4 rounded-2xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-4">
+          <p className="text-sm font-semibold text-[#F59E0B]">高价格影响样例</p>
+          <p className="mt-2 text-xs text-[var(--text-secondary)]">
+            大额买入 4500 USDT 的预估价格影响为 {highImpactQuote.priceImpact.toFixed(2)}%，交易后价格 {Math.round(highImpactQuote.nextPrice * 100)}%。超过产品阈值时应阻断确认并提示拆单或降低规模。
+          </p>
+        </div>
+      </BoardSection>
+
+      <BoardSection id="portfolio" title="6. Portfolio" description="Portfolio 是 v6.0 P0，支持用户管理可卖 shares 和盈亏。">
+        <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+          <AmmPortfolioPanel />
+          <StateCard title="Portfolio 必须展示" description="没有这些字段，卖出体验不可上线。">
+            <Checklist items={['可卖 shares', '平均成本', '当前价格', '持仓市值', '未实现盈亏', '已实现盈亏', '历史成交', '结算状态']} />
           </StateCard>
         </div>
       </BoardSection>
 
-      <BoardSection id="lean-markets" title="3. v4.7 单场预测本期盘口" description="单场预测仍平铺当前 7 个核心盘口；冠军与晋级在下一节按系列赛对象单独展示。">
-        <div className="grid gap-3 md:grid-cols-3">
-          <SmallState title="波胆" text="猜具体比分，按主胜比分、平局比分、客胜比分和其他比分分组展示。" />
-          <SmallState title="总进球数" text="猜整场准确总进球档位，例如 0、1、2、3、4、5+。" />
-          <SmallState title="大小球" text="围绕线值选择大或小，例如大 2.5 / 小 2.5，不等同于总进球数。" />
-        </div>
-        <StateCard title="盘口命名交付口径" description="设计稿、文案和 mock 必须统一使用这些用户可见名称，旧翻译只作为内部兼容。">
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              ['让球', '亚洲让球 / Asian Handicap，按钮内展示球队与线值。'],
-              ['让球 0:1', '欧洲让球胜平负，先加虚拟比分再判断胜平负。'],
-              ['大小球', 'Over / Under，例如大 2.5、 小 2.5。'],
-              ['总进球数', '准确总进球档位，例如 0、1、2、3、4、5+。'],
-              ['波胆', 'Correct Score，分组展示具体比分和其他比分。'],
-              ['双重机会', 'Double Chance，扩展盘口中不再使用“双胜彩”。'],
-              ['胜平负', '1X2，判断全场主胜、平局、客胜。'],
-              ['开球权', '趣味盘，判断哪方先开球。'],
-            ].map(([title, text]) => (
-              <SmallState key={title} title={title} text={text} />
-            ))}
-          </div>
-        </StateCard>
-        <div className="grid gap-4 xl:grid-cols-2">
-          {leanMarketScenarios.map((item) => (
-            <StateCard key={item.title} title={item.title} description="当前主流程盘口。">
-              <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={liveSourceMatch.id} onSelect={noop} />
-            </StateCard>
-          ))}
+      <BoardSection id="states" title="7. 市场状态" description="每个状态都影响 outcome 卡、交易面板和 Portfolio。">
+        <div className="grid gap-3 lg:grid-cols-3">
+          {stateCoverage.map(([label, desc]) => {
+            const market = label === '暂停交易' ? pausedMarket : label === '等待官方结果' ? pendingMarket : selectedOpenMarket
+            return (
+              <StateCard key={label} title={label} description={desc}>
+                <AmmStatusBadge market={market} />
+              </StateCard>
+            )
+          })}
         </div>
       </BoardSection>
 
-      <BoardSection id="future-markets" title="4. v4.7 冠军与晋级系列赛结构" description="冠军与晋级先按系列赛或赛季对象组织，再在对象内部展示不同阶段和预测市场；仍使用平台报价和传统投注单。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          {futuresCompetitions.map((competition) => (
-            <StateCard key={competition.id} title={competition.shortName} description={competition.headline}>
-              <div className="space-y-3">
-                <div className="grid gap-2 md:grid-cols-3">
-                  <SmallState title="系列赛对象" text={`${competition.region} · ${competition.seriesType} · ${competition.phase}`} />
-                  <SmallState title="投注方式" text="支持单注和多笔单注；第一版暂不支持串关。" />
-                  <SmallState title="结算来源" text="按官方赛事结果、积分榜或晋级结果结算。" />
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {futureGroups(competition).map((group) => (
-                    <span key={group} className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{group}</span>
-                  ))}
-                </div>
-                {competition.markets.map((item) => (
-                  <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
-                      <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
-                    </div>
-                    <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
-                    <p className="mt-2 text-[10px] text-[var(--text-secondary)]">结算来源：{item.subject.resolutionSource}</p>
-                  </div>
-                ))}
+      <BoardSection id="risk" title="8. 风控与异常" description="这些状态不是边角料，而是 AMM 足球市场的核心安全体验。">
+        <div className="grid gap-3 lg:grid-cols-2">
+          {riskCoverage.map(([label, desc]) => (
+            <StateCard key={label} title={label} description={desc}>
+              <div className="rounded-xl bg-[var(--bg-control)] p-3 text-[10px] text-[var(--text-secondary)]">
+                用户动作：重新询价 / 降低规模 / 等待恢复 / 查看结算规则
               </div>
             </StateCard>
           ))}
         </div>
-        <StateCard title={`冠军与晋级 ${futureMarketCoverage.length} 个市场全量覆盖`} description="逐项核对当前 futuresData 中全部赛事级市场，确保系列赛对象、阶段分组、冠军、晋级、赛季结果、系列赛和 upcoming 状态没有遗漏。">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {futureMarketCoverage.map((item) => (
-              <SmallState key={item.id} title={item.title} text={item.text} />
-            ))}
-          </div>
-        </StateCard>
-        <div className="grid gap-4 md:grid-cols-3">
-          <BetSlipPreview title="长期盘多笔单注" lines={['欧冠冠军 · 皇家马德里 @4.20', '晋级决赛 · 曼城 是 @2.55', '每项独立生成注单']} footer="二次确认" />
-          <BetSlipPreview title="系列赛预测" lines={['皇家马德里 vs 巴塞罗那 · 两回合系列赛', '选择：皇家马德里晋级 @1.92', '包含加时和点球晋级结果']} footer="按 UEFA 官方结果结算" />
-          <BetSlipPreview title="暂不支持串关" lines={['冠军与晋级类强相关边界复杂', '第一版作为多笔单注提交', '串关按钮给出明确说明']} footer="可改为多笔单注" tone="warning" />
-        </div>
       </BoardSection>
 
-      <BoardSection id="market-states" title="5. 盘口状态和串关互斥" description="暂停、作废、结算、封盘和串关冲突都需要给出清晰反馈；多笔单注不做同场组合限制。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          {marketStateScenarios.map((item) => (
-            <StateCard key={item.label} title={item.label} description={item.note}>
-              {item.market ? (
-                <MarketRenderer
-                  market={item.market}
-                  displayTitle={item.market.title}
-                  matchId={liveSourceMatch.id}
-                  onSelect={noop}
-                  selectedKey={item.selectedKey}
-                  conflictWith={item.conflict ? '胜平负' : undefined}
-                  conflictReason={item.conflict ? '波胆会直接推出胜平负结果，不能放进同一张串关。' : undefined}
-                  onReplaceConflict={item.conflict ? noop : undefined}
-                />
-              ) : (
-                <HiddenPlaceholder />
-              )}
-            </StateCard>
-          ))}
-        </div>
-        <StateCard title="串关互斥说明" description="只在串关模式展示冲突对象、原因和可继续操作的方式。">
-          <div className="grid gap-3 md:grid-cols-3">
-            {conflictExamples.map(([title, reason]) => (
-              <SmallState key={title} title={title} text={reason} />
-            ))}
-          </div>
-        </StateCard>
-      </BoardSection>
-
-      <BoardSection id="goal-toggle" title="6. 开赛封盘和市场关闭" description="单场比赛开始后封盘；冠军、晋级和系列赛类盘口按市场关闭时间、阶段开始、数学确定或官方暂停关闭。">
-        <div className="grid gap-4 lg:grid-cols-4">
-          <StateCard title="赛前可投注" description="比赛未开始，开放盘口可以选择。">
-            <MarketRenderer market={marketByTitle('大小球')} displayTitle="大小球" matchId={liveSourceMatch.id} onSelect={noop} />
+      <BoardSection id="audit" title="9. 审计清单" description="设计师、研发和测试可以按此清单判断 v6.0 是否完整。">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <StateCard title="组件覆盖" description="所有 AMM 主组件必须进入设计评审。">
+            <Checklist items={componentCoverage.map(([name, desc]) => `${name}：${desc}`)} />
           </StateCard>
-          <StateCard title="开赛后封盘" description="比赛进行中，盘口保留展示但不可选择。">
-            <MarketRenderer market={marketByTitle('大小球')} displayTitle="大小球" matchId={liveSourceMatch.id} onSelect={noop} bettingClosed />
-          </StateCard>
-          <StateCard title="赔率锁定" description="开赛后赔率停止变化，只保留开赛前最后一次报价。">
-            <BetSlipPreview title="盘口已封盘" lines={['弗拉门戈 vs 科林蒂安', '大小球 · 大 2.5 @2.05', '比赛已开始，赔率已锁定']} footer="不可提交" tone="warning" />
-          </StateCard>
-          <StateCard title="投注单已有该场比赛" description="开赛后，投注单中的相关项不可提交，需要移除。">
-            <BetSlipPreview title="含不可用项" lines={['弗拉门戈 vs 科林蒂安', '大小球 · 大 2.5 @2.05', '比赛已开始，盘口已封盘']} footer="移除不可用项后再提交" tone="warning" />
+          <StateCard title="卖出覆盖" description="部分卖出和全部卖出必须区别于 CLOB 部分成交。">
+            <Checklist items={[
+              '用户输入卖出 shares',
+              '可点击全部卖出',
+              '成交后减少持仓',
+              '展示本次已实现盈亏',
+              '低于 dust threshold 时提示全仓卖出',
+              '失败时整笔失败，不生成挂单',
+            ]} />
           </StateCard>
         </div>
       </BoardSection>
-
-      <BoardSection id="betslip-states" title="7. 投注单状态" description="集中展示空单、多笔单注、串关、报价、二次确认、提交反馈和设置。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <BetSlipPreview title="空单" lines={['投注单', '点击赔率按钮添加选项']} footer="不可提交" />
-          <BetSlipPreview title="多笔单注" lines={['2 项 · 独立注单', '每项分别输入或套用金额', '提交后生成多张单腿注单']} footer="二次确认" />
-          <BetSlipPreview title="串关" lines={['3 项 · 跨 3 场', '总赔率 7.42', '全部选项命中方可获胜']} footer="确认串关" />
-          <BetSlipPreview title="同盘口替换" lines={['已选择：主胜 @1.83', '再选平局时替换原选项', '投注单只保留一个同盘口选项']} footer="替换后重新核对" />
-          <BetSlipPreview title="多笔单注同场多盘口" lines={['胜平负 + 波胆', '作为独立单注提交', '不展示串关冲突遮罩']} footer="可继续提交" tone="success" />
-          <BetSlipPreview title="串关同场冲突" lines={['胜平负 × 波胆', '波胆会推出胜平负', '不能放入同一张串关']} footer="移除冲突项或改为多笔单注" tone="warning" />
-          <BetSlipPreview title="折叠投注单" lines={['投注单已收起', '3 项 · 总赔率 7.42']} footer="点击展开" />
-          <BetSlipPreview title="报价倒计时" lines={['报价剩余 00:24', '最新报价 @1.83']} footer="可提交" tone="success" />
-          <BetSlipPreview title="报价过期" lines={['报价已过期', '请接受最新报价']} footer="接受最新报价" tone="warning" />
-          <BetSlipPreview title="下单区报价变化" lines={['1.83 → 1.76', '主按钮变为接受最新报价', '第一次点击只更新赔率快照']} footer="再次点击才进入确认" tone="warning" />
-          <BetSlipPreview title="二次确认" lines={['投注方式、明细、金额、赔率', '核对后提交']} footer="确认投注" />
-          <BetSlipPreview title="确认中报价变化" lines={['1.83 → 1.76', '弹窗主按钮变为接受最新报价', '接受后回到确认弹窗复核']} footer="再次确认后提交" tone="warning" />
-          <BetSlipPreview title="未达最低投注金额" lines={['投注金额 0.5 USDT', '最低投注金额为 1 USDT']} footer="调整金额" tone="danger" />
-          <BetSlipPreview title="余额不足" lines={['总投注额 12,000 USDT', '可用余额 10,000 USDT']} footer="降低金额" tone="danger" />
-          <BetSlipPreview title="含开赛封盘项" lines={['比赛已开始', '该比赛盘口已封盘', '关联投注项不可提交']} footer="移除不可用项" tone="warning" />
-          <BetSlipPreview title="提交中" lines={['正在确认投注...', '按钮禁用，避免重复提交']} footer="请等待" />
-          <BetSlipPreview title="提交失败" lines={['盘口已关闭', '投注单和金额保留']} footer="移除后重试" tone="danger" />
-          <SettingsPreview />
-          <ConfirmPreview />
-          <BetSlipPreview title="提交反馈汇总" lines={['赔率变化 / 盘口关闭 / 比赛暂不支持投注', '金额、余额、投注项数量、选项组合、提交状态']} footer="按提示调整后重新提交" tone="warning" />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="float-states" title="8. 浮动投注单" description="用户离开比赛详情页或赛事级预测页后，已有足球投注单仍可通过浮动条返回。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SmallState title="无投注项" text="不展示浮动条。" />
-          <FloatPreview title="1 项" subtitle="总赔率 1.83" />
-          <FloatPreview title="3 项" subtitle="总赔率 7.42 · 跨 3 场" />
-          <FloatPreview title="赔率已变动" subtitle="总赔率 6.88 · 赔率已变动" warning />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="mybets-states" title="9. 我的注单" description="展示注单页、右栏摘要、多笔单注卡、串关卡、赛事级注单和结算结果。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          <StateCard title="右栏我的注单摘要" description="最近注单、已实现盈亏、未结算本金和前往我的注单。">
-            <MyBetsPanel bets={sampleBets.slice(0, 5)} />
-          </StateCard>
-          <StateCard title="我的注单页筛选和空态" description="状态筛选、日期筛选、导出、加载更多、空列表。">
-            <MyBetsPagePreview />
-          </StateCard>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {sampleBets.map((bet) => (
-            <MyBetCard key={bet.id} bet={bet} onCashOut={noop} onReplay={noop} onCopyCode={noop} />
-          ))}
-          <MyBetCard bet={parlayBet} onCashOut={noop} onReplay={noop} onCopyCode={noop} />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="rule-states" title="10. 报价和提交反馈" description="这些状态需要在用户提交前后给出清晰、可操作的提示。">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {rejectReasons.map(([title, text]) => (
-            <SmallState key={title} title={title} text={text} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <SmallState title="多笔单注" text="一次提交多个投注项，但每笔独立生成注单、独立结算。" />
-          <SmallState title="串关" text="多个投注项组成一张注单，全部命中方可获胜。" />
-          <SmallState title="开赛封盘" text="比赛开始后所有盘口不可再选，投注单内相关项不可提交。" />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="component-matrix" title="11. 足球组件覆盖" description="逐个核对足球组件目录，复杂组件在对应业务 section 中真实展示，基础组件在此说明覆盖位置。">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {soccerComponentCoverage.map(([name, text]) => (
-            <SmallState key={name} title={name} text={text} />
-          ))}
-        </div>
-      </BoardSection>
-
-      <BoardSection id="edge-states" title="12. 异常与边界" description="集中展示当前用户可见异常：比赛取消、盘口作废、无数据、骨架和无效入口。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <BetSlipPreview title="比赛取消" lines={['比赛状态：取消', '相关盘口不再接受选择', '已下注按作废/退款规则处理']} footer="相关盘口作废" tone="warning" />
-          <BetSlipPreview title="盘口作废" lines={['盘口状态：void', '注单保留记录', '本金退回或按走盘处理']} footer="退款 / 走盘" tone="warning" />
-          <NotFoundPreview />
-          <SmallState title="加载骨架" text="列表和详情仍使用 SoccerListSkeleton / SoccerMatchSkeleton。" />
-        </div>
-      </BoardSection>
-
-      <BoardSection id="compliance-degrade" title="13. 中国大陆语境合规降级视图" description="仅作为设计状态展示，不实现地区准入、KYC、身份认证或真实拦截逻辑。">
-        <ComplianceDegradePreview />
-      </BoardSection>
     </div>
   )
 }
 
-function CoverageList({ items, compact }: { items: string[][]; compact?: boolean }) {
+function BoardSection({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string
+  title: string
+  description: string
+  children: ReactNode
+}) {
   return (
-    <div className={`grid gap-2 ${compact ? 'md:grid-cols-2' : ''}`}>
-      {items.map(([name, pathOrText, detail]) => (
-        <div key={name} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-[var(--text-primary)]">{name}</span>
-            <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[9px] text-[#2DD4BF]">covered</span>
-          </div>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)] leading-4">{detail ?? pathOrText}</p>
-          {detail && <p className="mt-0.5 text-[9px] font-mono text-[var(--text-secondary)]">{pathOrText}</p>}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FuturesSeriesPreview() {
-  return (
-    <div className="grid gap-3">
-      <div className="flex rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1">
-        <span className="rounded-lg px-3 py-1.5 text-xs text-[var(--text-secondary)]">单场预测</span>
-        <span className="rounded-lg bg-[#2DD4BF]/15 px-3 py-1.5 text-xs font-semibold text-[#2DD4BF]">冠军与晋级</span>
-      </div>
-      {futuresCompetitions.map((competition) => (
-        <div key={competition.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold text-[#E85A7E]">{competition.region} · {competition.seriesType}</p>
-              <h3 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
-              <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{competition.headline}</p>
-            </div>
-            <span className="rounded-full bg-[var(--bg-card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{competition.markets.length} 个预测</span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {competition.marketSummary.slice(0, 4).map((item) => (
-              <span key={item} className="rounded-full bg-[var(--bg-card)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{item}</span>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FuturesDetailPreview() {
-  const competition = futuresCompetitions[0]
-  const groups = futureGroups(competition)
-  return (
-    <div className="space-y-3">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-[10px] text-[#E85A7E] uppercase tracking-wider font-semibold">{competition.region} · {competition.seriesType}</p>
-        <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">{competition.shortName}</h3>
-        <p className="mt-1 text-xs text-[var(--text-secondary)]">{competition.headline}</p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {['全部', ...groups].map((group, index) => (
-            <span key={group} className={`rounded-lg px-2.5 py-1 text-[10px] ${index === 0 ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-control)] text-[var(--text-secondary)]'}`}>{group}</span>
-          ))}
-        </div>
-      </div>
-      {groups.map((group) => (
-        <div key={group} className="space-y-2">
-          <p className="text-xs font-semibold text-[var(--text-primary)]">{group}</p>
-          {competition.markets.filter((item) => item.group === group).slice(0, 2).map((item) => (
-            <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[10px] text-[#E85A7E]">{item.group}</span>
-                <span className="text-[10px] text-[var(--text-secondary)]">{item.subject.resolutionTimeLabel}</span>
-              </div>
-              <MarketRenderer market={item.market} displayTitle={item.market.title} matchId={item.subject.subjectId} onSelect={noop} />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ComplianceDegradePreview() {
-  const hidden = ['赔率', '投注单', '入场费', '奖金池', '派奖', '抽水', 'Cash Out', '推广 / 邀请返佣']
-  const visible = ['赛程', '球队', '比分', '赛事资讯', '免费预测', '非金钱排行榜', '赛后复盘']
-  return (
-    <div className="grid gap-4 xl:grid-cols-3">
-      <StateCard title="大陆可见版" description="只展示资讯和免费预测，不展示真钱交易元素。">
-        <div className="flex flex-wrap gap-2">
-          {visible.map((item) => <span key={item} className="rounded-full bg-[#2DD4BF]/10 px-2.5 py-1 text-[10px] text-[#2DD4BF]">{item}</span>)}
-        </div>
-      </StateCard>
-      <StateCard title="大陆隐藏项" description="设计上需要确认这些元素在大陆语境下不可见。">
-        <div className="flex flex-wrap gap-2">
-          {hidden.map((item) => <span key={item} className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] text-red-400">{item}</span>)}
-        </div>
-      </StateCard>
-      <StateCard title="非大陆真钱版" description="在合法合规地区继续展示当前 v4.3/v4.4/v4.7 功能。">
-        <SmallState title="完整模式" text="保留赔率、下注、赛事级个体盘、cash out 等当前可见能力。" />
-      </StateCard>
-    </div>
-  )
-}
-
-function ListTablePreview() {
-  return (
-    <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-card)]">
-      <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-[9px] text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border)]">
-        <span className="w-12 shrink-0 text-center">时间</span>
-        <span className="flex-1">比赛</span>
-        <span className="hidden sm:block w-[182px] shrink-0 text-center">胜平负</span>
-        <span className="hidden md:block w-[118px] shrink-0 text-center">大小球</span>
-        <span className="hidden lg:block w-[138px] shrink-0 text-center">让球</span>
-        <span className="w-16 shrink-0 text-right">盘口</span>
-      </div>
-      {listMatches.map((match) => (
-        <MatchListCard key={match.id} match={match} />
-      ))}
-    </div>
-  )
-}
-
-function LeagueSidebarPreview() {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        {['全部赛事 · 14 场 · 4 场进行中', 'Brasileiro Serie A · 5 场 · 2 场进行中', 'Premier League · 4 场 · 1 场进行中', 'UEFA Champions League · 2 场 · 1 场进行中', 'La Liga · 3 场'].map((item, index) => (
-          <div key={item} className={`rounded-lg px-3 py-2 text-xs ${index === 0 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[var(--bg-control)] text-[var(--text-secondary)]'}`}>
-            {item}
-          </div>
-        ))}
-      </div>
-      <SmallState title="正在进行" text="展示最多 3 场进行中的比赛和比分。" />
-      <SmallState title="即将开赛" text="展示赛前比赛和开赛时间。" />
-      <SmallState title="空列表" text="筛选无结果时显示“暂无赛事”。" />
-    </div>
-  )
-}
-
-function MatchDetailPreview() {
-  const markets = sourceMatch.tabs[0]?.markets.slice(0, 4) ?? []
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
-        <span>足球</span><span>/</span><span>{sourceMatch.league}</span><span>/</span><span className="text-[var(--text-primary)]">比赛详情</span>
-      </div>
-      <MatchHeader match={sourceMatch} />
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
-        <span className="rounded-lg bg-[#2DD4BF]/10 px-3 py-1.5 text-xs text-[#2DD4BF]">所有盘口</span>
-      </div>
-      {markets.map((market) => (
-        <MarketRenderer key={market.title} market={market} displayTitle={market.title} matchId={sourceMatch.id} onSelect={noop} />
-      ))}
-      <BetSlipPreview title="右栏投注单" lines={['当前选择：胜平负', '金额、报价、返还、提交状态']} footer="详情页右侧固定展示" />
-    </div>
-  )
-}
-
-function MyBetsPagePreview() {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-lg font-semibold text-[var(--text-primary)]">我的注单</p>
-          <p className="text-[10px] text-[var(--text-secondary)]">提前结清报价为参考报价，刷新后将更新。</p>
-        </div>
-        <button className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">导出记录</button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {['全部', '待结算', '已结算', '提前结清'].map((item, index) => (
-          <span key={item} className={`rounded-full px-3 py-1.5 text-xs ${index === 0 ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>{item}</span>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {['今天', '7 天', '30 天', '全部'].map((item, index) => (
-          <span key={item} className={`rounded-md px-2.5 py-1 text-[10px] ${index === 1 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>{item}</span>
-        ))}
-      </div>
-      <div className="rounded-lg border border-dashed border-[var(--border)] p-5 text-center text-xs text-[var(--text-secondary)]">
-        当前筛选条件下暂无注单
-      </div>
-      <button className="w-full rounded-lg bg-[var(--bg-control)] py-2 text-xs text-[#2DD4BF]">加载更多</button>
-    </div>
-  )
-}
-
-function NotFoundPreview() {
-  return (
-    <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
-      <p className="text-sm text-[var(--text-secondary)]">未找到该场比赛</p>
-      <button className="mt-4 rounded-lg bg-[var(--bg-control)] px-4 py-2 text-xs text-[#2DD4BF]">返回赛事列表</button>
-    </div>
-  )
-}
-
-function BetSlipPreview({ title, lines, footer, tone = 'neutral' }: { title: string; lines: string[]; footer: string; tone?: 'neutral' | 'success' | 'warning' | 'danger' }) {
-  const toneClass = {
-    neutral: 'border-[var(--border)] text-[var(--text-secondary)]',
-    success: 'border-emerald-500/25 text-emerald-400',
-    warning: 'border-amber-500/25 text-amber-400',
-    danger: 'border-red-500/25 text-red-400',
-  }[tone]
-  return (
-    <div className={`rounded-xl border bg-[var(--bg-card)] p-4 ${toneClass}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
-        <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-1 text-[10px] text-[#2DD4BF]">投注单</span>
-      </div>
-      <div className="space-y-2">
-        {lines.map((line) => (
-          <div key={line} className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-xs text-[var(--text-primary)]">{line}</div>
-        ))}
-      </div>
-      <div className="mt-3 rounded-lg border border-current/20 px-3 py-2 text-xs">{footer}</div>
-    </div>
-  )
-}
-
-function SettingsPreview() {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)]">设置菜单</h3>
-      <p className="mt-1 text-xs text-[var(--text-secondary)]">当前只提供赔率格式切换。</p>
-      <div className="mt-3 space-y-3">
-        <div>
-          <p className="mb-2 text-[10px] text-[var(--text-secondary)]">赔率格式</p>
-          <div className="flex gap-1.5">{['欧洲盘', '分数盘', '美式盘'].map((item) => <span key={item} className="rounded bg-[var(--bg-control)] px-2 py-1 text-[10px] text-[var(--text-primary)]">{item}</span>)}</div>
-        </div>
-        <p className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-secondary)]">
-          报价变化统一由用户在下单区或二次确认弹窗内手动接受最新报价。
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function ConfirmPreview() {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)]">二次确认弹窗</h3>
-      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-control)] p-4">
-        <div className="flex items-center justify-between text-xs"><span className="text-[var(--text-secondary)]">投注方式</span><span className="text-[var(--text-primary)]">串关 · 3 项</span></div>
-        <div className="my-3 space-y-2">
-          {['胜平负 · RJ博塔弗戈', '大小球 · 大 2.5', '让球 · -0.5'].map((item) => <div key={item} className="rounded bg-[var(--bg-card)] px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>)}
-        </div>
-        <div className="space-y-1 text-xs">
-          <div className="flex justify-between"><span className="text-[var(--text-secondary)]">总赔率</span><span>7.42</span></div>
-          <div className="flex justify-between"><span className="text-[var(--text-secondary)]">投注金额</span><span>1,000.00 USDT</span></div>
-          <div className="flex justify-between text-[#2DD4BF]"><span>可能返还</span><span>7,420.00 USDT</span></div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FloatPreview({ title, subtitle, warning }: { title: string; subtitle: string; warning?: boolean }) {
-  return (
-    <div className="rounded-xl border border-[#E85A7E]/30 bg-[var(--bg-card)] p-4">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-[var(--text-primary)]">足球投注单</span>
-        <span className="rounded bg-[#E85A7E]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#E85A7E]">{title}</span>
-      </div>
-      <p className="mt-1 text-xs font-mono text-[var(--text-secondary)]">{subtitle}</p>
-      {warning && <p className="mt-1 text-[10px] text-amber-400">赔率已变动</p>}
-      <p className="mt-3 text-xs text-[#E85A7E]">查看</p>
-    </div>
-  )
-}
-
-function BoardSection({ id, title, description, children }: { id: string; title: string; description: string; children: React.ReactNode }) {
-  return (
-    <section id={id} className="scroll-mt-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
-        <p className="mt-1 text-sm text-[var(--text-secondary)] leading-6">{description}</p>
+    <section id={id} className="mb-8 scroll-mt-24">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">{title}</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>
       </div>
       {children}
     </section>
   )
 }
 
-function StateCard({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function StateCard({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
-        <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">{description}</p>
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function SmallState({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
       <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
-      <p className="mt-1 text-xs text-[var(--text-secondary)] leading-5">{text}</p>
+      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{description}</p>
+      <div className="mt-3">{children}</div>
     </div>
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Checklist({ items, danger = false }: { items: string[]; danger?: boolean }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-4 py-3">
-      <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{value}</p>
-    </div>
-  )
-}
-
-function HiddenPlaceholder() {
-  return (
-    <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-control)] p-5 text-center">
-      <p className="text-sm font-medium text-[var(--text-primary)]">用户页面不展示</p>
-      <p className="mt-1 text-xs text-[var(--text-secondary)]">该盘口仅用于规则说明，不出现在用户投注页面。</p>
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item} className="flex gap-2 text-xs text-[var(--text-secondary)]">
+          <span className={danger ? 'text-[#E85A7E]' : 'text-[#2DD4BF]'}>{danger ? '×' : '✓'}</span>
+          <span>{item}</span>
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,257 +1,198 @@
-/**
- * 我的注单页。
- *
- * 功能：
- * - 状态筛选：全部、待结算、已结算、提前结清
- * - 日期范围：今天 / 7 天 / 30 天 / 全部
- * - 分页：20/页，底部"加载更多"
- * - Cash Out
- * - 重投
- * - 导出 CSV
- *
- * Cash Out 使用本地模拟报价。
- */
-
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMyBetsStore } from '../stores/myBetsStore'
-import { useToastStore } from '../stores/toastStore'
-import MyBetCard from '../components/soccer/MyBetCard'
-import Button from '../components/ui/Button'
-import type { MyBetItem } from '../data/soccer/types'
+import {
+  ammPositions,
+  ammTradeHistory,
+  decimalOdds,
+  getAmmMarketById,
+  getOutcome,
+  type AmmCategory,
+} from '../data/soccer/ammMarkets'
 
-type StatusFilter = 'all' | 'unsettled' | 'settled_any' | 'cashed_out'
-type DateFilter = 'today' | '7d' | '30d' | 'all'
+type ScopeFilter = 'all' | AmmCategory
+type StateFilter = 'all' | 'tradable' | 'paused' | 'settled'
+type SortMode = 'value' | 'pnl' | 'updated'
 
-const STATUS_TABS: { id: StatusFilter; label: string }[] = [
+const SCOPE_TABS: { id: ScopeFilter; label: string }[] = [
   { id: 'all', label: '全部' },
-  { id: 'unsettled', label: '待结算' },
-  { id: 'settled_any', label: '已结算' },
-  { id: 'cashed_out', label: '提前结清' },
+  { id: 'single', label: '单场预测' },
+  { id: 'futures', label: '冠军与晋级' },
 ]
 
-const DATE_TABS: { id: DateFilter; label: string }[] = [
-  { id: 'today', label: '今天' },
-  { id: '7d', label: '7 天' },
-  { id: '30d', label: '30 天' },
-  { id: 'all', label: '全部' },
+const STATE_TABS: { id: StateFilter; label: string }[] = [
+  { id: 'all', label: '全部状态' },
+  { id: 'tradable', label: '可交易' },
+  { id: 'paused', label: '暂停 / 待确认' },
+  { id: 'settled', label: '已结算' },
 ]
-
-const PAGE_SIZE = 20
-
-function cashoutPrice(bet: MyBetItem): number {
-  const stake = bet.stake ?? bet.amount ?? 0
-  const odds = bet.odds ?? 1
-  if (bet.status === 'live') {
-    const seed = Array.from(bet.id).reduce((sum, ch) => sum + ch.charCodeAt(0), 0)
-    const factor = 0.55 + (seed % 20) / 100
-    return +(stake * odds * factor).toFixed(2)
-  }
-  return +(stake * 0.9).toFixed(2)
-}
-
-function quoteExpiresAt(): string {
-  return new Date(Date.now() + 10 * 60 * 1000).toISOString()
-}
-
-function dateFloor(filter: DateFilter): string | null {
-  if (filter === 'all') return null
-  const now = Date.now()
-  if (filter === 'today') {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return d.toISOString()
-  }
-  if (filter === '7d') return new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
-  if (filter === '30d') return new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
-  return null
-}
 
 export default function SoccerMyBetsPage() {
   const navigate = useNavigate()
-  const [statusTab, setStatusTab] = useState<StatusFilter>('all')
-  const [dateTab, setDateTab] = useState<DateFilter>('7d')
-  const [page, setPage] = useState(1)
+  const [scope, setScope] = useState<ScopeFilter>('all')
+  const [state, setState] = useState<StateFilter>('all')
+  const [sort, setSort] = useState<SortMode>('value')
 
-  const bets = useMyBetsStore((s) => s.bets)
-  const cashout = useMyBetsStore((s) => s.cashout)
-  const exportCsv = useMyBetsStore((s) => s.exportCsv)
-  const duplicateToSlip = useMyBetsStore((s) => s.duplicateToSlip)
-  const update = useMyBetsStore((s) => s.update)
-  const addToast = useToastStore((s) => s.addToast)
-
-  const filtered = useMemo(() => {
-    const floor = dateFloor(dateTab)
-    return bets
-      .filter((b) => {
-        if (floor && b.placedAt && b.placedAt < floor) return false
-        if (statusTab === 'all') return true
-        if (statusTab === 'unsettled')
-          return b.status === 'placed' || b.status === 'live' || b.status === 'pending'
-        if (statusTab === 'settled_any')
-          return b.status === 'settled' || b.status === 'cashed_out'
-        return b.status === statusTab
+  const rows = useMemo(() => {
+    return ammPositions
+      .map((position) => {
+        const market = getAmmMarketById(position.marketId)
+        const outcome = market ? getOutcome(market, position.outcomeId) : undefined
+        const currentPrice = outcome?.price ?? position.avgPrice
+        const value = position.shares * currentPrice
+        const cost = position.shares * position.avgPrice
+        const unrealizedPnl = value - cost
+        return { position, market, outcome, currentPrice, value, unrealizedPnl, totalPnl: unrealizedPnl + position.realizedPnl }
       })
-      .sort((a, b) => (a.placedAt ?? '') < (b.placedAt ?? '') ? 1 : -1)
-  }, [bets, statusTab, dateTab])
-
-  const visible = filtered.slice(0, page * PAGE_SIZE)
-  const hasMore = filtered.length > visible.length
-
-  const handleCashOut = (bet: MyBetItem) => {
-    const price = bet.cashout?.availablePrice ?? cashoutPrice(bet)
-    const ok = window.confirm(
-      `是否按当前参考结算价 ${price.toFixed(2)} USDT 提前结清本注单（单号：${bet.betCode ?? bet.id}）？结清后无法撤销。`,
-    )
-    if (!ok) return
-    const done = cashout(bet.id, price)
-    addToast({
-      type: done ? 'success' : 'error',
-      message: done ? `已提前结清，${price.toFixed(2)} USDT 已计入可用余额` : '当前注单不支持提前结清',
-    })
-  }
-
-  const handleReplay = (bet: MyBetItem) => {
-    const ok = duplicateToSlip(bet.id)
-    if (ok) {
-      addToast({ type: 'success', message: '已加入投注单' })
-    } else {
-      addToast({ type: 'error', message: '该注单暂无可重新投注的选项' })
-    }
-  }
-
-  const handleCopyCode = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(code)
-      addToast({ type: 'info', message: `已复制 ${code}` })
-    } catch {
-      addToast({ type: 'error', message: '复制失败，请手动复制注单号' })
-    }
-  }
-
-  const handleExport = () => {
-    const csv = exportCsv()
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    a.href = url
-    a.download = `mybets-${date}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
-  // 给待结算注单补一份可见的参考提前结清价。
-  useEffect(() => {
-    for (const b of bets) {
-      if (b.cashout && !b.cashout.needsRequote) continue
-      if (b.status !== 'placed' && b.status !== 'live') continue
-      const price = cashoutPrice(b)
-      update(b.id, {
-        cashout: {
-          availablePrice: price,
-          minutesUntilExpire: 10,
-          expiresAt: quoteExpiresAt(),
-          isSimulated: true,
-        },
+      .filter((row) => {
+        if (!row.market) return false
+        if (scope !== 'all' && row.market.category !== scope) return false
+        if (state === 'tradable') return row.market.status === 'open'
+        if (state === 'paused') return row.market.status === 'paused' || row.market.status === 'official_pending'
+        if (state === 'settled') return row.market.status === 'settled'
+        return true
       })
-    }
-    // 仅按 bet 数量变化兜底；避免循环写入
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bets.length])
+      .sort((a, b) => {
+        if (sort === 'pnl') return b.totalPnl - a.totalPnl
+        if (sort === 'updated') return b.position.updatedAt.localeCompare(a.position.updatedAt)
+        return b.value - a.value
+      })
+  }, [scope, sort, state])
+
+  const totalValue = rows.reduce((sum, row) => sum + row.value, 0)
+  const totalPnl = rows.reduce((sum, row) => sum + row.totalPnl, 0)
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-6">
-      <nav className="flex items-center gap-1 text-sm min-h-[44px] mb-4">
-        <button
-          onClick={() => navigate('/soccer')}
-          className="text-[var(--text-secondary)] hover:text-[#2DD4BF] transition-colors"
-        >
-          足球
+    <div className="mx-auto max-w-5xl px-6 py-6">
+      <nav className="mb-4 flex min-h-[44px] items-center gap-1 text-sm">
+        <button onClick={() => navigate('/soccer')} className="text-[var(--text-secondary)] transition-colors hover:text-[#2DD4BF]">
+          足球 AMM
         </button>
         <span className="text-[var(--text-secondary)]/40">›</span>
-        <span className="text-[var(--text-primary)] font-medium">我的注单</span>
+        <span className="font-medium text-[var(--text-primary)]">Portfolio</span>
       </nav>
 
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">我的注单</h1>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
-            提前结清报价为参考报价，刷新后将更新。
-          </p>
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+        <p className="text-xs font-semibold text-[#2DD4BF]">我的持仓</p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Portfolio</h1>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">管理可卖 shares、平均成本、当前价格、未实现盈亏和历史成交。</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Metric label="持仓市值" value={`${totalValue.toFixed(2)} USDT`} />
+            <Metric label="总盈亏" value={`${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)} USDT`} accent={totalPnl >= 0 ? 'green' : 'red'} />
+          </div>
         </div>
-        <Button variant="ghost" onClick={handleExport} className="!py-1.5 !text-xs">
-          导出记录
-        </Button>
-      </div>
+      </section>
 
-      {/* Status filter */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {STATUS_TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setStatusTab(t.id)
-              setPage(1)
-            }}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-              statusTab === t.id
-                ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
-                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
+      <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <div className="flex flex-wrap gap-2">
+          {SCOPE_TABS.map((tab) => (
+            <FilterButton key={tab.id} active={scope === tab.id} onClick={() => setScope(tab.id)}>{tab.label}</FilterButton>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {STATE_TABS.map((tab) => (
+              <FilterButton key={tab.id} active={state === tab.id} onClick={() => setState(tab.id)}>{tab.label}</FilterButton>
+            ))}
+          </div>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortMode)}
+            className="rounded-lg border border-[var(--border)] bg-[var(--bg-control)] px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none"
           >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Date filter */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {DATE_TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setDateTab(t.id)
-              setPage(1)
-            }}
-            className={`text-[10px] px-2.5 py-1 rounded-md transition-colors ${
-              dateTab === t.id
-                ? 'bg-[var(--bg-card)] text-[var(--text-primary)]'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="py-16 text-center">
-          <p className="text-sm text-[var(--text-secondary)]">当前无符合条件的注单</p>
+            <option value="value">按市值排序</option>
+            <option value="pnl">按盈亏排序</option>
+            <option value="updated">按最近更新排序</option>
+          </select>
         </div>
-      )}
+      </div>
 
-      <div className="space-y-3">
-        {visible.map((b) => (
-          <MyBetCard
-            key={b.id}
-            bet={b}
-            onCashOut={handleCashOut}
-            onReplay={handleReplay}
-            onCopyCode={handleCopyCode}
-          />
+      <div className="mt-4 space-y-3">
+        {rows.map(({ position, market, outcome, currentPrice, value, unrealizedPnl, totalPnl }) => (
+          <section key={position.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[var(--bg-control)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">
+                    {market?.category === 'single' ? '单场预测' : '冠军与晋级'}
+                  </span>
+                  <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] text-[#2DD4BF]">
+                    {market?.status === 'open' ? '可卖出' : '需等待恢复或结算'}
+                  </span>
+                </div>
+                <h2 className="mt-2 text-base font-semibold text-[var(--text-primary)]">{market?.questionTitle}</h2>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">{outcome?.label}</p>
+              </div>
+              <button
+                onClick={() => {
+                  if (market?.category === 'single' && market.matchId) navigate(`/soccer/match/${market.matchId}`)
+                  if (market?.category === 'futures' && market.seriesId) navigate(`/soccer/futures/${market.seriesId}`)
+                }}
+                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:border-[#2DD4BF]/50 hover:text-[#2DD4BF]"
+              >
+                去交易
+              </button>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              <Metric label="可卖 shares" value={position.shares.toFixed(2)} />
+              <Metric label="平均成本" value={`${Math.round(position.avgPrice * 100)}%`} />
+              <Metric label="当前价格" value={`${Math.round(currentPrice * 100)}% / ${decimalOdds(currentPrice).toFixed(2)}`} />
+              <Metric label="持仓市值" value={`${value.toFixed(2)} USDT`} />
+              <Metric label="未实现盈亏" value={`${unrealizedPnl >= 0 ? '+' : ''}${unrealizedPnl.toFixed(2)}`} accent={unrealizedPnl >= 0 ? 'green' : 'red'} />
+              <Metric label="已实现盈亏" value={`${position.realizedPnl >= 0 ? '+' : ''}${position.realizedPnl.toFixed(2)}`} accent={position.realizedPnl >= 0 ? 'green' : 'red'} />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[10px]">
+              <span className="text-[var(--text-secondary)]">总盈亏</span>
+              <span className={`font-mono ${totalPnl >= 0 ? 'text-[#10B981]' : 'text-[#E85A7E]'}`}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(2)} USDT</span>
+            </div>
+          </section>
         ))}
       </div>
 
-      {hasMore && (
-        <div className="mt-4 text-center">
-          <Button variant="ghost" onClick={() => setPage((p) => p + 1)}>
-            加载更多（剩余 {filtered.length - visible.length} 条）
-          </Button>
+      <section className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)]">历史成交</h2>
+        <div className="mt-3 space-y-2">
+          {ammTradeHistory.map((trade) => {
+            const market = getAmmMarketById(trade.marketId)
+            const outcome = market ? getOutcome(market, trade.outcomeId) : undefined
+            return (
+              <div key={trade.id} className="grid gap-2 rounded-xl bg-[var(--bg-control)]/40 p-3 text-xs text-[var(--text-secondary)] sm:grid-cols-[1fr_80px_100px_100px]">
+                <span className="truncate text-[var(--text-primary)]">{market?.questionTitle} · {outcome?.label}</span>
+                <span className={trade.side === 'buy' ? 'text-[#2DD4BF]' : 'text-[#F59E0B]'}>{trade.side === 'buy' ? '买入' : '卖出'}</span>
+                <span className="font-mono">{trade.shares.toFixed(2)} shares</span>
+                <span className="font-mono">{trade.collateral.toFixed(2)} USDT</span>
+              </div>
+            )
+          })}
         </div>
-      )}
+      </section>
+    </div>
+  )
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-3 py-1.5 text-xs transition-colors ${
+        active
+          ? 'bg-[#2DD4BF]/15 text-[#2DD4BF]'
+          : 'bg-[var(--bg-control)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Metric({ label, value, accent }: { label: string; value: string; accent?: 'green' | 'red' }) {
+  const color = accent === 'green' ? 'text-[#10B981]' : accent === 'red' ? 'text-[#E85A7E]' : 'text-[var(--text-primary)]'
+  return (
+    <div className="rounded-xl bg-[var(--bg-control)] px-3 py-2">
+      <p className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)]">{label}</p>
+      <p className={`mt-1 font-mono text-xs ${color}`}>{value}</p>
     </div>
   )
 }
