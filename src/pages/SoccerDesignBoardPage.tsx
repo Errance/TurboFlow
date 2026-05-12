@@ -322,43 +322,75 @@ export default function SoccerDesignBoardPage() {
         </nav>
       </header>
 
-      <BoardSection id="v60-amm-delta" title="v6.0 AMM 变更对比" description="本区不是重做 Design Board，只标注本次需要改的 UI 组件和板块：之前是什么，现在要改成什么。盘口目录和市场数量不变。">
-        <div className="grid gap-4 xl:grid-cols-2">
-          <DeltaCard
-            title="市场卡片价格"
-            before="展示欧洲赔率按钮，点击后加入投注单。"
-            after="展示 AMM outcome 份额价格。底层主价格为概率价格，欧洲赔率只是切换后的展示换算；点击 outcome 打开交易面板。"
-            note="设计需同时覆盖概率价格、欧洲赔率、24h 变化、流动性深度和暂停状态。"
+      <BoardSection id="v60-amm-delta" title="v6.0 AMM UI 变更对比总览" description="本区作为设计师优先看的大页面：逐项说明哪些 UI 被改了。每行左侧是原来的传统投注 UI，右侧是 v6.0 AMM 后的目标 UI。盘口目录和市场数量不变，只改交易、价格、持仓和异常表达。">
+        <div className="rounded-2xl border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <SmallState title="读法" text="从左到右看：旧 UI → 新 UI。不是全量重做稿，只标注本次 AMM 改动。" />
+            <SmallState title="范围" text="只覆盖足球 tab 当前 mock：单场 7 个市场 + 冠军与晋级 11 个市场。" />
+            <SmallState title="不展示" text="不展示 CLOB、订单簿、限价单、挂单、撤单或部分成交挂起。" />
+            <SmallState title="设计重点" text="概率价格 / 欧洲赔率切换、交易面板、Portfolio、流动性和异常状态。" />
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <ChangeComparisonRow
+            index="01"
+            title="首页比赛列表价格列"
+            scope="SoccerPage / MatchListCard"
+            summary="比赛列表仍展示胜平负、大小球、让球列，但数字不再表达平台承诺赔率，而是 AMM outcome 的可切换价格。"
+            before={<OldMarketListPreview />}
+            after={<NewAmmMarketListPreview />}
+            notes={['保留原来的列位置和市场入口。', '价格格式受全局偏好影响：概率价格 / 欧洲赔率。', '点击比赛仍进入详情页，不在列表直接提交交易。']}
           />
-          <DeltaCard
-            title="右栏交易区域"
-            before="SoccerBetSlip：多笔单注 / 串关、金额、赔率、可能返还、二次确认。"
-            after="AmmTradePanel：买入 / 卖出、份额、成交均价、价格影响、手续费、最大亏损、预计收回金额、卖出后剩余持仓。"
-            note="卖出支持部分卖出和全部卖出；部分卖出不是挂单，也不是部分成交。"
+
+          <ChangeComparisonRow
+            index="02"
+            title="市场卡片和 outcome 按钮"
+            scope="MarketRenderer → AmmMarketRenderer"
+            summary="原来点击赔率按钮加入投注单；现在点击 outcome 选中可交易份额，并在右栏生成 AMM quote。"
+            before={<OldOutcomeButtonsPreview />}
+            after={<NewAmmOutcomeButtonsPreview />}
+            notes={['每个 outcome 展示价格、24h 变化、流动性深度和状态。', '欧洲赔率仅为展示换算，不改变成交字段。', '多 outcome 市场要展示总概率和互斥结算关系。']}
           />
-          <DeltaCard
-            title="我的注单"
-            before="MyBets：注单列表、待结算、已结算、Cash Out、重投、导出。"
-            after="Portfolio：当前持仓、可卖份额、平均成本、当前价格、市值、已实现 / 未实现盈亏、最近成交和卖出入口。"
-            note="卖出能力没有 Portfolio 不可上线。"
+
+          <ChangeComparisonRow
+            index="03"
+            title="比赛详情右栏"
+            scope="SoccerBetSlip → AmmTradePanel"
+            summary="右栏从传统投注单改为 AMM 交易面板。买入和卖出都走即时 quote，支持部分卖出和全部卖出。"
+            before={<OldBetSlipPanelPreview />}
+            after={<NewAmmTradePanelPreview />}
+            notes={['买入确认展示份额、成交均价、价格影响、手续费和最大亏损。', '卖出确认额外展示收回金额、已实现盈亏和卖出后剩余份额。', '部分卖出不是部分成交，也不产生挂单。']}
           />
-          <DeltaCard
-            title="冠军与晋级"
-            before="系列赛对象 + 平台欧洲盘报价 + 多笔单注，不支持串关。"
-            after="系列赛对象不变，11 个赛事级市场全部转换为 AMM 可交易 outcome，仍按官方来源结算。"
-            note="不新增、不删除、不重排市场。"
+
+          <ChangeComparisonRow
+            index="04"
+            title="我的注单页面"
+            scope="SoccerMyBetsPage / MyBetsPanel → Portfolio"
+            summary="我的注单不再是注单记录中心，而是持仓管理中心。卖出能力依赖 Portfolio。"
+            before={<OldMyBetsPreview />}
+            after={<NewPortfolioPreview />}
+            notes={['展示当前持仓、可卖份额、平均成本、当前价格和市值。', '区分已实现 / 未实现盈亏。', '提供卖出入口、历史成交和已结算市场。']}
           />
-          <DeltaCard
-            title="价格格式切换"
-            before="赔率格式偏向欧洲盘、分数盘、美式盘，影响投注单展示。"
-            after="全局切换概率价格 / 欧洲赔率。概率价格为系统主价格，欧洲赔率为 1 / probability 的展示换算。交易确认中两者都要展示。"
-            note="切换不能改变 quote 请求字段，也不能让用户误解为平台承诺赔率。"
+
+          <ChangeComparisonRow
+            index="05"
+            title="冠军与晋级详情页"
+            scope="SoccerFuturesPage"
+            summary="系列赛对象、阶段分组和 11 个市场保持不变，只把平台报价按钮换成 AMM outcome 交易。"
+            before={<OldFuturesMarketPreview />}
+            after={<NewAmmFuturesMarketPreview />}
+            notes={['世界杯、欧冠、英超等对象不新增、不删除、不重排。', '每个长期市场仍展示关闭时间、预计结算和官方来源。', '长期市场同样支持买入、部分卖出、全部卖出。']}
           />
-          <DeltaCard
-            title="异常状态"
-            before="盘口封盘、赔率变化、投注单提交失败、串关互斥。"
-            after="关键事件暂停、外部流动性不足、报价过期、价格影响超阈值、void 退款、结算争议等待官方确认。"
-            note="v6.0 不展示 CLOB 订单簿、限价单、挂单、撤单或部分成交挂起。"
+
+          <ChangeComparisonRow
+            index="06"
+            title="价格格式切换和异常反馈"
+            scope="全局偏好 / 市场卡 / 交易确认 / Portfolio"
+            summary="赔率格式设置变成概率价格 / 欧洲赔率切换；异常从下单拒单转向 AMM quote、流动性和市场暂停反馈。"
+            before={<OldSettingsAndErrorPreview />}
+            after={<NewPriceAndRiskPreview />}
+            notes={['交易确认中同时展示概率价格和欧洲赔率。', '报价过期、流动性不足、价格影响过高时整笔交易失败并重新询价。', '关键事件暂停同时影响买入和卖出。']}
           />
         </div>
       </BoardSection>
@@ -658,24 +690,271 @@ function CoverageList({ items, compact }: { items: string[][]; compact?: boolean
   )
 }
 
-function DeltaCard({ title, before, after, note }: { title: string; before: string; after: string; note: string }) {
+function ChangeComparisonRow({
+  index,
+  title,
+  scope,
+  summary,
+  before,
+  after,
+  notes,
+}: {
+  index: string
+  title: string
+  scope: string
+  summary: string
+  before: React.ReactNode
+  after: React.ReactNode
+  notes: string[]
+}) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-      <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3">
-          <p className="mb-1 text-[10px] font-semibold text-red-300">之前</p>
-          <p className="text-xs leading-5 text-[var(--text-secondary)]">{before}</p>
+    <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[10px] font-semibold text-[#2DD4BF]">{index}</span>
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
+          </div>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">{scope}</p>
         </div>
-        <div className="rounded-lg border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-3">
-          <p className="mb-1 text-[10px] font-semibold text-[#2DD4BF]">现在</p>
-          <p className="text-xs leading-5 text-[var(--text-secondary)]">{after}</p>
+        <span className="rounded-lg bg-[var(--bg-control)] px-3 py-1.5 text-[10px] text-[var(--text-secondary)]">UI 变更对比</span>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{summary}</p>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+          <p className="mb-3 text-xs font-semibold text-red-300">原来的 UI</p>
+          {before}
+        </div>
+        <div className="rounded-xl border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-4">
+          <p className="mb-3 text-xs font-semibold text-[#2DD4BF]">更改后的 UI</p>
+          {after}
         </div>
       </div>
-      <p className="mt-3 rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px] leading-5 text-[var(--text-secondary)]">
-        设计备注：{note}
-      </p>
+
+      <div className="mt-4 rounded-xl bg-[var(--bg-control)] p-3">
+        <p className="mb-2 text-[10px] font-semibold text-[var(--text-primary)]">设计标注</p>
+        <div className="grid gap-2 md:grid-cols-3">
+          {notes.map((note) => (
+            <p key={note} className="rounded-lg bg-[var(--bg-card)] px-3 py-2 text-[10px] leading-5 text-[var(--text-secondary)]">{note}</p>
+          ))}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function UiPanel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3">
+      <p className="mb-3 text-xs font-semibold text-[var(--text-primary)]">{title}</p>
+      {children}
     </div>
+  )
+}
+
+function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'green' | 'pink' | 'amber' }) {
+  const cls = {
+    neutral: 'bg-[var(--bg-control)] text-[var(--text-secondary)]',
+    green: 'bg-[#2DD4BF]/10 text-[#2DD4BF]',
+    pink: 'bg-[#E85A7E]/10 text-[#E85A7E]',
+    amber: 'bg-amber-500/10 text-amber-300',
+  }[tone]
+  return <span className={`rounded-full px-2 py-0.5 text-[10px] ${cls}`}>{children}</span>
+}
+
+function OldMarketListPreview() {
+  return (
+    <UiPanel title="比赛列表 · 传统赔率列">
+      <div className="space-y-2">
+        <div className="grid grid-cols-[1fr_160px_110px] gap-2 text-[9px] text-[var(--text-secondary)]">
+          <span>比赛</span><span className="text-center">胜平负</span><span className="text-center">大小球</span>
+        </div>
+        <div className="rounded-lg bg-[var(--bg-control)] p-3">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="text-[var(--text-primary)]">RJ博塔弗戈 vs 米拉索尔</span>
+            <span className="text-[var(--text-secondary)]">+56 盘口</span>
+          </div>
+          <div className="grid grid-cols-5 gap-1">
+            {['主 1.83', '平 3.40', '客 4.20', '大 2.05', '小 1.78'].map((item) => (
+              <div key={item} className="rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-1 text-center text-[10px] font-mono text-[var(--text-primary)]">{item}</div>
+            ))}
+          </div>
+        </div>
+        <p className="text-[10px] leading-5 text-[var(--text-secondary)]">数字含义：欧洲赔率，点击后进入投注单语义。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewAmmMarketListPreview() {
+  return (
+    <UiPanel title="比赛列表 · AMM 价格列">
+      <div className="space-y-2">
+        <div className="flex justify-end"><Pill tone="green">概率价格 / 欧洲赔率切换</Pill></div>
+        <div className="rounded-lg bg-[var(--bg-control)] p-3">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="text-[var(--text-primary)]">RJ博塔弗戈 vs 米拉索尔</span>
+            <span className="text-[#2DD4BF]">AMM +56 市场</span>
+          </div>
+          <div className="grid grid-cols-5 gap-1">
+            {['主 55%', '平 29%', '客 24%', '大 49%', '小 56%'].map((item) => (
+              <div key={item} className="rounded border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-2 py-1 text-center text-[10px] font-mono text-[var(--text-primary)]">{item}</div>
+            ))}
+          </div>
+        </div>
+        <p className="text-[10px] leading-5 text-[var(--text-secondary)]">数字含义：outcome 当前 AMM 概率价格，可切换为欧洲赔率展示。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function OldOutcomeButtonsPreview() {
+  return (
+    <UiPanel title="盘口卡片 · 赔率按钮">
+      <div className="rounded-lg bg-[var(--bg-control)] p-3">
+        <p className="mb-2 text-xs font-semibold text-[var(--text-primary)]">胜平负</p>
+        <div className="grid grid-cols-3 gap-2">
+          {['RJ博塔弗戈 @1.83', '平局 @3.40', '米拉索尔 @4.20'].map((item) => (
+            <button key={item} className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2 py-3 text-center text-[10px] text-[var(--text-primary)]">{item}</button>
+          ))}
+        </div>
+        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">点击：加入投注单。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewAmmOutcomeButtonsPreview() {
+  return (
+    <UiPanel title="市场卡片 · AMM outcome">
+      <div className="rounded-lg bg-[var(--bg-control)] p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">胜平负</p>
+          <Pill tone="green">总概率 108.0%</Pill>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            ['RJ博塔弗戈', '55%', '深度 18k'],
+            ['平局', '29%', '深度 12k'],
+            ['米拉索尔', '24%', '深度 9k'],
+          ].map(([label, price, depth]) => (
+            <button key={label} className="rounded-lg border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 px-2 py-2 text-left">
+              <span className="block text-[10px] text-[var(--text-primary)]">{label}</span>
+              <span className="mt-1 block font-mono text-sm font-semibold text-[#2DD4BF]">{price}</span>
+              <span className="block text-[9px] text-[var(--text-secondary)]">{depth}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </UiPanel>
+  )
+}
+
+function OldBetSlipPanelPreview() {
+  return <BetSlipPreview title="右栏投注单" lines={['多笔单注 / 串关', '胜平负 · 主胜 @1.83', '投注金额 100 USDT', '可能返还 183.00 USDT']} footer="确认投注" />
+}
+
+function NewAmmTradePanelPreview() {
+  return (
+    <UiPanel title="右栏 AMM 交易面板">
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <span className="rounded-lg bg-[#2DD4BF]/15 px-3 py-2 text-center text-xs text-[#2DD4BF]">买入份额</span>
+          <span className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-center text-xs text-[var(--text-secondary)]">卖出份额</span>
+        </div>
+        {[
+          ['预估成交均价', '54.8% / 欧赔 1.82'],
+          ['价格影响', '1.2%'],
+          ['手续费', '0.30 USDT'],
+          ['最大亏损', '50.30 USDT'],
+        ].map(([label, value]) => (
+          <div key={label} className="flex justify-between rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px]">
+            <span className="text-[var(--text-secondary)]">{label}</span><span className="font-mono text-[var(--text-primary)]">{value}</span>
+          </div>
+        ))}
+        <div className="rounded-lg bg-[#2DD4BF] px-3 py-2 text-center text-xs font-semibold text-black">确认买入</div>
+      </div>
+    </UiPanel>
+  )
+}
+
+function OldMyBetsPreview() {
+  return <BetSlipPreview title="我的注单" lines={['待结算 / 已结算 / 提前结清', '胜平负 · 主胜 @1.83', '本金 100 USDT', 'Cash Out 参考价 92.00']} footer="查看注单详情" />
+}
+
+function NewPortfolioPreview() {
+  return (
+    <UiPanel title="Portfolio / 我的持仓">
+      <div className="space-y-2">
+        <div className="flex justify-between rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px]">
+          <span className="text-[var(--text-secondary)]">持仓市值</span><span className="font-mono text-[var(--text-primary)]">52.40 USDT</span>
+        </div>
+        <div className="rounded-lg bg-[var(--bg-control)] p-3">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">胜平负 · RJ博塔弗戈</p>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
+            <span>份额 84.00</span><span>均价 52%</span><span className="text-emerald-400">未实现 +4.20</span>
+          </div>
+          <p className="mt-2 text-right text-[10px] text-[#2DD4BF]">部分卖出 / 全部卖出</p>
+        </div>
+      </div>
+    </UiPanel>
+  )
+}
+
+function OldFuturesMarketPreview() {
+  return (
+    <UiPanel title="冠军与晋级 · 平台报价">
+      <div className="space-y-2">
+        <Pill tone="pink">世界杯 2026 · 冠军</Pill>
+        {['法国 @5.80', '巴西 @6.20', '阿根廷 @7.40'].map((item) => (
+          <div key={item} className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>
+        ))}
+        <p className="text-[10px] text-[var(--text-secondary)]">作为多笔单注提交，不支持串关。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewAmmFuturesMarketPreview() {
+  return (
+    <UiPanel title="冠军与晋级 · 长期 AMM 市场">
+      <div className="space-y-2">
+        <Pill tone="green">世界杯 2026 · AMM 可交易 outcome</Pill>
+        {['法国 17% · 深度 24k', '巴西 16% · 深度 22k', '阿根廷 14% · 深度 19k'].map((item) => (
+          <div key={item} className="rounded-lg bg-[#2DD4BF]/5 px-3 py-2 text-xs text-[var(--text-primary)]">{item}</div>
+        ))}
+        <p className="text-[10px] text-[var(--text-secondary)]">买入后形成长期持仓，可部分卖出、全部卖出或等待官方结算。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function OldSettingsAndErrorPreview() {
+  return (
+    <UiPanel title="赔率设置 + 下单反馈">
+      <div className="space-y-2">
+        <div className="flex gap-1.5">{['欧洲盘', '分数盘', '美式盘'].map((item) => <Pill key={item}>{item}</Pill>)}</div>
+        <BetSlipPreview title="提交失败" lines={['赔率已变化', '盘口已封盘', '不可同场串关']} footer="移除后重试" tone="warning" />
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewPriceAndRiskPreview() {
+  return (
+    <UiPanel title="价格切换 + AMM 风险反馈">
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <span className="rounded-lg bg-[#2DD4BF]/15 px-3 py-2 text-center text-xs text-[#2DD4BF]">概率价格</span>
+          <span className="rounded-lg bg-[var(--bg-control)] px-3 py-2 text-center text-xs text-[var(--text-secondary)]">欧洲赔率</span>
+        </div>
+        {['报价已过期，请重新询价', '流动性不足，整笔交易失败', '关键事件暂停，买入和卖出均不可用'].map((item) => (
+          <div key={item} className="rounded-lg bg-amber-500/10 px-3 py-2 text-[10px] text-amber-300">{item}</div>
+        ))}
+      </div>
+    </UiPanel>
   )
 }
 
