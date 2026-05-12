@@ -81,6 +81,12 @@ export default function SoccerDesignBoardPage() {
         <p className="mt-3 max-w-4xl text-sm leading-6 text-[var(--text-secondary)]">
           本展板只覆盖 v6.0 AMM 预测市场：市场问题、outcome、预测份额、交易面板、部分卖出、Portfolio、外部流动性和结算异常。不展示 CLOB、挂单、限价单、订单簿、传统投注单或串关。
         </p>
+        <a
+          href={`${import.meta.env.BASE_URL}soccer/design-board/v6.0-amm-delta`}
+          className="mt-4 inline-flex rounded-full border border-[#2DD4BF]/40 bg-[#2DD4BF]/15 px-3 py-1.5 text-xs font-semibold text-[#2DD4BF]"
+        >
+          查看 v6.0 变更对比板
+        </a>
       </header>
 
       <nav className="sticky top-0 z-10 mb-6 flex flex-wrap gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/95 p-3 backdrop-blur">
