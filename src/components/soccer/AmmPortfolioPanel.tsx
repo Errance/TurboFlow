@@ -24,7 +24,7 @@ export default function AmmPortfolioPanel({ compact = false }: { compact?: boole
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Portfolio / 我的持仓</h3>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">持仓可通过反向 RFQ 部分卖出、全部卖出或等待结算</p>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">持仓可获取退出报价后部分卖出、全部卖出或等待结算</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-[var(--text-secondary)]">持仓市值</p>

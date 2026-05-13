@@ -201,13 +201,13 @@ export default function SoccerPage() {
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             {view === 'matches' && (
               <p className="max-w-2xl text-xs leading-5 text-[var(--text-secondary)]">
-                近期单场比赛结果和内容预测。v7.0 起底层为 RFQ 预测交易，用户交易前获取做市商短时有效报价。
+                近期单场比赛结果和内容预测。用户交易前获取短时有效报价，确认后成交并形成持仓。
               </p>
             )}
             {view === 'futures' && (
               <p className="max-w-2xl text-xs leading-5 text-[var(--text-secondary)]">
                 <span className="text-[var(--text-primary)] font-medium">冠军与晋级｜</span>
-                先选择系列赛或赛季，再进入查看该对象下的小组赛、淘汰赛、冠军等 RFQ 可交易市场。
+                先选择系列赛或赛季，再进入查看该对象下的小组赛、淘汰赛、冠军等可交易市场。
               </p>
             )}
             <SoccerPriceFormatToggle />
@@ -275,13 +275,13 @@ export default function SoccerPage() {
                           <span className="text-[10px] text-[var(--text-secondary)]">{item.group}</span>
                         </div>
                         <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">
-                          {item.market.options.slice(0, 2).map((option) => `${option.label} · RFQ`).join(' / ')}
+                          {item.market.options.slice(0, 2).map((option) => `${option.label} · 报价`).join(' / ')}
                         </p>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[10px] text-[var(--text-secondary)]">
-                    <span>RFQ 即时询价 · 关闭：{formatCloseTime(competition.markets[0]?.subject.closesAt)}</span>
+                    <span>即时询价 · 关闭：{formatCloseTime(competition.markets[0]?.subject.closesAt)}</span>
                     <span className="text-[#2DD4BF]">进入系列赛 &gt;</span>
                   </div>
                 </button>

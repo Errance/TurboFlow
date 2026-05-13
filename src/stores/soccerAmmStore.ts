@@ -130,7 +130,7 @@ export const useSoccerAmmStore = create<SoccerAmmState>((set, get) => ({
             ]
         return { positions, trades: [trade, ...state.trades] }
       })
-      useToastStore.getState().addToast({ type: 'success', message: 'RFQ 买入已成交，持仓已更新' })
+      useToastStore.getState().addToast({ type: 'success', message: '买入已成交，持仓已更新' })
       return true
     }
 
@@ -159,7 +159,7 @@ export const useSoccerAmmStore = create<SoccerAmmState>((set, get) => ({
       })
       return { positions: nextPositions, trades: [trade, ...state.trades] }
     })
-    useToastStore.getState().addToast({ type: 'success', message: 'RFQ 卖出已成交，资金已回到可用余额' })
+    useToastStore.getState().addToast({ type: 'success', message: '卖出已成交，资金已回到可用余额' })
     return true
   },
 
