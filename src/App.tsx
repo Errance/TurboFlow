@@ -1,25 +1,47 @@
 import { lazy, Suspense } from 'react'
+import type { ComponentType } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AppShell from './layouts/AppShell'
 
-const EventsPage = lazy(() => import('./pages/EventsPage'))
-const EventDetailPage = lazy(() => import('./pages/EventDetailPage'))
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage'))
-const SportsGamePage = lazy(() => import('./pages/SportsGamePage'))
-const ContractDetailPage = lazy(() => import('./pages/ContractDetailPage'))
-const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'))
-const EventContractPage = lazy(() => import('./pages/EventContractPage'))
-const CopyTradingPage = lazy(() => import('./pages/CopyTradingPage'))
-const CopyTraderDetailPage = lazy(() => import('./pages/CopyTraderDetailPage'))
-const MyCopyPage = lazy(() => import('./pages/MyCopyPage'))
-const SoccerPage = lazy(() => import('./pages/SoccerPage'))
-const SoccerMatchPage = lazy(() => import('./pages/SoccerMatchPage'))
-const SoccerFuturesPage = lazy(() => import('./pages/SoccerFuturesPage'))
-const SoccerMyBetsPage = lazy(() => import('./pages/SoccerMyBetsPage'))
-const SoccerDesignBoardPage = lazy(() => import('./pages/SoccerDesignBoardPage'))
-const SoccerV47DeltaBoardPage = lazy(() => import('./pages/SoccerV47DeltaBoardPage'))
-const ClobPage = lazy(() => import('./pages/ClobPage'))
-const ClobMatchPage = lazy(() => import('./pages/ClobMatchPage'))
+const CHUNK_RELOAD_KEY = 'turboFlowChunkReloaded'
+
+function lazyWithReload<T extends ComponentType<unknown>>(loader: () => Promise<{ default: T }>) {
+  return lazy(() =>
+    loader()
+      .then((module) => {
+        window.sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+        return module
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error)
+        const isChunkLoadFailure = message.includes('Failed to fetch dynamically imported module') || message.includes('Importing a module script failed')
+        if (isChunkLoadFailure && window.sessionStorage.getItem(CHUNK_RELOAD_KEY) !== '1') {
+          window.sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+          window.location.reload()
+        }
+        throw error
+      }),
+  )
+}
+
+const EventsPage = lazyWithReload(() => import('./pages/EventsPage'))
+const EventDetailPage = lazyWithReload(() => import('./pages/EventDetailPage'))
+const PortfolioPage = lazyWithReload(() => import('./pages/PortfolioPage'))
+const SportsGamePage = lazyWithReload(() => import('./pages/SportsGamePage'))
+const ContractDetailPage = lazyWithReload(() => import('./pages/ContractDetailPage'))
+const LeaderboardPage = lazyWithReload(() => import('./pages/LeaderboardPage'))
+const EventContractPage = lazyWithReload(() => import('./pages/EventContractPage'))
+const CopyTradingPage = lazyWithReload(() => import('./pages/CopyTradingPage'))
+const CopyTraderDetailPage = lazyWithReload(() => import('./pages/CopyTraderDetailPage'))
+const MyCopyPage = lazyWithReload(() => import('./pages/MyCopyPage'))
+const SoccerPage = lazyWithReload(() => import('./pages/SoccerPage'))
+const SoccerMatchPage = lazyWithReload(() => import('./pages/SoccerMatchPage'))
+const SoccerFuturesPage = lazyWithReload(() => import('./pages/SoccerFuturesPage'))
+const SoccerMyBetsPage = lazyWithReload(() => import('./pages/SoccerMyBetsPage'))
+const SoccerDesignBoardPage = lazyWithReload(() => import('./pages/SoccerDesignBoardPage'))
+const SoccerV47DeltaBoardPage = lazyWithReload(() => import('./pages/SoccerV47DeltaBoardPage'))
+const ClobPage = lazyWithReload(() => import('./pages/ClobPage'))
+const ClobMatchPage = lazyWithReload(() => import('./pages/ClobMatchPage'))
 
 function RouteFallback() {
   return (
