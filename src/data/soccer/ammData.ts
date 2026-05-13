@@ -60,9 +60,13 @@ export interface SoccerAmmTrade {
 }
 
 export interface SoccerAmmQuote {
+  quoteId: string
+  providerId: string
+  providerQuoteId: string
   avgPrice: number
   endPrice: number
   priceImpact: number
+  providerSpread: number
   fee: number
   shares: number
   collateral: number
@@ -105,7 +109,7 @@ export function formatProbability(probability: number): string {
 }
 
 export function formatImpliedProbability(probability: number): string {
-  return `${formatProbability(probability)} implied`
+  return `${formatProbability(probability)} 隐含概率`
 }
 
 function slug(value: string): string {
@@ -255,22 +259,31 @@ export function quoteAmmTrade(
   const signed = side === 'buy' ? 1 : -1
   const basePrice = outcome.probability
   const rawShares = mode === 'shares' ? value : value / basePrice
-  const depthRatio = Math.min(0.28, rawShares / Math.max(outcome.liquidity, 1))
-  const priceImpact = +(depthRatio * (side === 'buy' ? 1 : -0.85)).toFixed(4)
-  const endPrice = Math.min(0.96, Math.max(0.03, basePrice + signed * Math.abs(priceImpact)))
+  const providerLimitRatio = Math.min(0.18, rawShares / Math.max(outcome.liquidity, 1))
+  const providerSpread = +(providerLimitRatio * (side === 'buy' ? 0.75 : -0.6)).toFixed(4)
+  const endPrice = Math.min(0.96, Math.max(0.03, basePrice + signed * Math.abs(providerSpread)))
   const avgPrice = +((basePrice + endPrice) / 2).toFixed(4)
   const shares = mode === 'shares' ? rawShares : value / avgPrice
   const collateral = shares * avgPrice
   const fee = +(collateral * SOCCER_AMM_FEE_RATE).toFixed(2)
+  const quoteNonce = `${Date.now().toString(36)}-${Math.abs(hashString(outcome.id)).toString(36)}`
   return {
+    quoteId: `rfq-${side}-${quoteNonce}`,
+    providerId: 'mm-main-01',
+    providerQuoteId: `pq-${quoteNonce}`,
     avgPrice,
     endPrice,
-    priceImpact: Math.abs(priceImpact),
+    priceImpact: Math.abs(providerSpread),
+    providerSpread: Math.abs(providerSpread),
     fee,
     shares: +shares.toFixed(4),
     collateral: +collateral.toFixed(2),
     expiresAt: Date.now() + SOCCER_AMM_QUOTE_TTL_MS,
   }
+}
+
+function hashString(value: string): number {
+  return value.split('').reduce((sum, char) => ((sum << 5) - sum + char.charCodeAt(0)) | 0, 0)
 }
 
 export const seedAmmPositions: SoccerAmmPosition[] = [

@@ -55,12 +55,12 @@ export default function AmmTradePanel() {
   if (!selectedOutcome) {
     return (
       <aside className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
-        <p className="text-sm font-semibold text-[var(--text-primary)]">AMM 交易面板</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)]">RFQ 交易面板</p>
         <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-          选择任一 outcome 后，可按 AMM 即时报价买入预测份额；已有持仓可在这里部分卖出或全部卖出。
+          选择任一 outcome 后，可向外部做市商请求 RFQ 报价并买入预测份额；已有持仓可通过反向 RFQ 部分卖出或全部卖出。
         </p>
         <div className="mt-3 rounded-lg bg-[var(--bg-control)] p-3 text-[10px] leading-5 text-[var(--text-secondary)]">
-          平台只提供交易、结算和展示，不作为用户交易对手方。默认同时展示概率和份额价格，欧洲赔率仅为展示换算。
+          页面默认同时展示概率和份额价格，欧洲赔率仅为展示换算；成交以短时有效的 RFQ 报价为准。
         </div>
       </aside>
     )
@@ -74,8 +74,8 @@ export default function AmmTradePanel() {
     <aside className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-[var(--text-primary)]">AMM 交易面板</p>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">Quote 有效 30 秒，成交按份额价格执行</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">RFQ 交易面板</p>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">Quote 有效 30 秒，成交锁定本次做市商报价</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-[var(--text-secondary)]">可用余额</p>
@@ -159,9 +159,10 @@ export default function AmmTradePanel() {
 
       <div className="mt-4 space-y-2 rounded-lg border border-[var(--border)] p-3 text-xs">
         <QuoteRow label="当前概率 / 份额价格" value={`${formatProbability(selectedOutcome.probability)} / Buy Yes ${formatAmmPrice(selectedOutcome.probability, 'probability')} / 欧赔 ${europeanOddsFromProbability(selectedOutcome.probability).toFixed(2)}`} />
-        <QuoteRow label="预估成交均价" value={currentQuote ? `${formatImpliedProbability(currentQuote.avgPrice)} / ${formatAmmPrice(currentQuote.avgPrice, 'probability')} / 欧赔 ${europeanOddsFromProbability(currentQuote.avgPrice).toFixed(2)}` : '--'} />
+        <QuoteRow label={side === 'buy' ? 'RFQ 买入报价' : 'RFQ 退出报价'} value={currentQuote ? `${formatImpliedProbability(currentQuote.avgPrice)} / ${formatAmmPrice(currentQuote.avgPrice, 'probability')} / 欧赔 ${europeanOddsFromProbability(currentQuote.avgPrice).toFixed(2)}` : '--'} />
         <QuoteRow label={side === 'buy' ? '预估获得份额' : '预计收回金额'} value={currentQuote ? (side === 'buy' ? `${currentQuote.shares.toFixed(4)} 份` : `${Math.max(0, currentQuote.collateral - currentQuote.fee).toFixed(2)} USDT`) : '--'} />
-        <QuoteRow label="价格影响" value={currentQuote ? formatProbability(currentQuote.priceImpact) : '--'} warning={!!currentQuote && currentQuote.priceImpact > 0.05} />
+        <QuoteRow label="做市商报价偏移" value={currentQuote ? formatProbability(currentQuote.providerSpread) : '--'} warning={!!currentQuote && currentQuote.providerSpread > 0.05} />
+        <QuoteRow label="Provider Quote" value={currentQuote ? currentQuote.providerQuoteId : '--'} />
         <QuoteRow label="手续费" value={currentQuote ? `${currentQuote.fee.toFixed(2)} USDT` : '--'} />
         {side === 'buy' && <QuoteRow label="最大亏损" value={currentQuote ? `${maxLoss.toFixed(2)} USDT` : '--'} />}
         {side === 'sell' && position && currentQuote && (
@@ -183,11 +184,11 @@ export default function AmmTradePanel() {
         disabled={!currentQuote}
         className="mt-4 w-full rounded-lg bg-[#2DD4BF] px-4 py-2.5 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {side === 'buy' ? '确认买入' : '确认卖出'}
+        {side === 'buy' ? '确认 RFQ 买入' : '确认 RFQ 卖出'}
       </button>
 
       <p className="mt-3 text-[10px] leading-5 text-[var(--text-secondary)]">
-        结算规则：正确 outcome 每份兑付 1 USDT，错误 outcome 兑付 0；void 按规则退款。
+        结算规则：正确 outcome 每份兑付 1 USDT，错误 outcome 兑付 0；买入成交赔率锁定，卖出需重新请求退出报价。
       </p>
     </aside>
   )

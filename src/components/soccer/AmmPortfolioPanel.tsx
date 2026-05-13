@@ -24,7 +24,7 @@ export default function AmmPortfolioPanel({ compact = false }: { compact?: boole
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Portfolio / 我的持仓</h3>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">持仓可部分卖出、全部卖出或等待结算</p>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">持仓可通过反向 RFQ 部分卖出、全部卖出或等待结算</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] text-[var(--text-secondary)]">持仓市值</p>
@@ -80,7 +80,7 @@ export default function AmmPortfolioPanel({ compact = false }: { compact?: boole
               <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
                 <Metric label="份额" value={position.shares.toFixed(2)} />
                 <Metric label="均价" value={formatAmmPrice(position.avgPrice, priceFormat)} />
-                <Metric label="现价" value={formatAmmPrice(position.currentProbability, priceFormat)} />
+                <Metric label="退出参考" value={formatAmmPrice(position.currentProbability, priceFormat)} />
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-[var(--border)]/50 pt-2">
                 <span className="text-[10px] text-[var(--text-secondary)]">

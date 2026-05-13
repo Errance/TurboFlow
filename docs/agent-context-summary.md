@@ -1,23 +1,54 @@
-# TurboFlow 足球 AMM v6.0 交接上下文
+# TurboFlow 足球 RFQ v7.0 交接上下文
 
-用于新 agent 快速接手当前工作。用户要求：始终中文回复；完成代码或文档改动后运行适当验证，验证通过后默认提交并 push 到 GitHub，除非遇到 secrets、验证失败或范围不清。
+用于新 agent 快速接手当前工作。用户要求：始终中文回复；完成代码或文档改动后运行适当验证。本轮用户明确要求不要 push，因此本轮只允许本地提交，不 push。
 
 ## 当前主线
 
 - 仓库：`/Users/errance/Documents/Turboflow_soccer`
 - 当前分支：`mvp`
-- 当前主文档：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球AMM预测市场产品需求文档_v6.0.md`
+- 当前主文档：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球RFQ预测交易市场产品需求文档_v7.0.md`
+- v6.0 基线文档：`Stake足球盘口研究/04_正式产品文档/TurboFlow足球AMM预测市场产品需求文档_v6.0.md`
+- v7.0 两份反馈：
+  - `Stake足球盘口研究/04_正式产品文档/T-下单域接口规范-v7.0_RFQ反馈-130526.md`
+  - `Stake足球盘口研究/04_正式产品文档/T-TurboFlow足球盘口技术方案v2.0-v7.0_RFQ反馈-130526.md`
 - 历史基线：
   - `Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v5.0.md`
   - `Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.7.md`
   - `Stake足球盘口研究/04_正式产品文档/TurboFlow足球盘口产品需求文档_v4.4.md`
   - `Stake足球盘口研究/04_正式产品文档/TurboFlow足球预测大赛产品需求文档_v4.5.md`
 
-v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘口升级为 AMM 足球预测市场。v5.0 只作为旧 UI 和产品语义基线，不是当前主流程。
+v7.0 是当前足球 tab 主线：底层从 v6.0 AMM 探索稿切换为外部做市商 RFQ。v7.0 不是 v5.0 回滚，也不是 v6.0 小修，而是新的交易底层。
+
+## 核心口径
+
+- 外部做市商提供赛事、盘口、赔率、状态、限额和可成交 quote。
+- 前端仍展示 outcome、概率、份额价格、欧洲赔率切换、trade、position、Portfolio、sell、settlement。
+- 页面价格是参考快照；成交以短时有效 RFQ quote 为准。
+- 买入成交后，本次 `accepted_odds` 锁定。
+- 用户买入后可以通过反向 RFQ 部分卖出或全部卖出。
+- 最终按比赛结果结算，正确 outcome 每份兑付 1 USDT，错误 outcome 兑付 0，void 按规则退款。
+
+## 历史能力处理原则
+
+以下能力本版本不作为 v7.0 RFQ 主交付项，但不得写成永久删除、永久不做或已替代：
+
+- 串关 / 多笔单注
+- Cash Out / 提前结清
+- 传统投注单
+- 传统我的注单 / 历史下注记录
+- 传统浮动投注条
+- 球员、角球、罚牌、分钟盘、同场扩展盘口等扩展盘口
+- v4.5 整届赛事预测大赛
+
+正确写法：
+
+- 当前 v7.0 RFQ 主路径暂不交付该能力。
+- 是否保留、迁移、RFQ 化、作为兼容入口或作为后续版本能力，需要产品确认。
+- 不允许因为当前 mock、Design Board 或交接文档暂未展示，就删除代码、删除文档、删除入口或下结论。
 
 ## 当前产品范围
 
-当前只做足球 tab AMM：
+当前做足球 tab RFQ：
 
 - `/soccer`
 - `/soccer/match/:matchId`
@@ -25,31 +56,27 @@ v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘�
 - `/soccer/mybets`
 - `/soccer/design-board`
 
-当前不做：
+当前不混入：
 
 - 平台作为用户交易对手方
-- 传统投注单主流程
-- 串关 / 多笔单注作为 v6 主流程
-- Cash Out / 提前结清
+- AMM pool / 曲线定价 / LP 流动性池
 - 用户挂单、限价单、订单簿、撤单、部分成交挂起
 - 足球 CLOB
-- 球员、角球、罚牌、分钟盘、同场扩展盘口等 P2 扩展
-- v4.5 整届赛事预测大赛
 
-`/clob` 相关页面和组件可作为未来大版本或其他产品线存在，但不能混入足球 AMM v6.0 的 `/soccer` 主流程或 Design Board。
+`/clob` 相关页面和组件可作为独立产品线存在，但不能混入足球 RFQ v7.0 的 `/soccer` 主流程或 Design Board。
 
-## v6.0 产品口径
+## 交易模型
 
-### 交易模型
+- 用户选择 outcome。
+- 用户输入买入金额，请求 RFQ quote。
+- quote 返回 `quote_id`、`provider_id`、`provider_quote_id`、`accepted_odds`、`share_price`、`implied_probability`、`shares`、`fee`、`quote_expires_at`。
+- 用户确认后生成 trade，并创建或更新 position。
+- 用户可从 Portfolio 对 position 发起 sell quote。
+- sell quote 返回退出报价、预计收回金额、手续费、已实现盈亏和剩余 shares。
+- 用户确认 sell trade 后扣减或关闭 position。
+- quote 过期、做市商拒单、做市商超时、赔率变化、市场暂停时整笔交易失败并要求重新询价。
 
-- 用户买入 outcome 预测份额，形成 position。
-- 用户可以继续买入、部分卖出、全部卖出或等待结算。
-- 部分卖出是用户主动输入少于当前持仓的 shares 并即时成交，不是部分成交挂起。
-- AMM 交易通过 quote 即时执行，不展示订单等待、挂单、撤单或订单簿。
-- quote 过期、流动性不足、价格影响过高、市场暂停时整笔交易失败并要求重新询价。
-- 正确 outcome 每份兑付 1 USDT，错误 outcome 兑付 0；void 按规则退款。
-
-### 市场范围
+## 市场范围
 
 单场市场保持 7/7：
 
@@ -75,80 +102,60 @@ v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘�
 - 获得欧冠资格
 - 降级球队
 
-市场目录、入口、分组和数量不扩张。所有当前可见市场必须 AMM 化，不能只改胜平负示例。
+市场目录、入口、分组和数量不扩张。所有当前可见市场必须接入 RFQ outcome，不只改胜平负示例。
 
-### 价格和盘口卡
+## 价格和盘口卡
 
 默认价格展示是“概率 + 份额价格”：
 
 - 示例：`55%` + `Buy Yes 55¢`
-- 欧洲赔率是展示换算，通过小齿轮弹框切换，不是成交承诺。
-- 切换价格格式只影响展示，不改变交易请求、quote 计算和结算字段。
+- 欧洲赔率是展示换算，通过小齿轮弹框切换。
+- 切换价格格式只影响展示，不改变交易请求、quote 确认和结算字段。
+- 列表和卡片价格是做市商参考快照；交易面板 RFQ quote 才是本次成交价。
 
-盘口 / outcome 卡片只展示这些辅助指标：
+盘口 / outcome 卡片辅助指标：
 
 - `24h Vol.`：该盘口最近 24 小时交易量。
-- 24h 涨跌幅
+- 24h 涨跌幅。
 
-盘口 / outcome 卡片不展示：
-
-- 流动性
-- implied probability
-- “可交易”文本
-- 做市商状态
-- 内部 quote 状态
-
-开放、暂停、关闭、已结算、void 等状态通过卡片可点击 / 禁用、透明度、状态色和暂停提示表达。流动性不足、价格影响和 quote 过期属于交易执行反馈，放在交易面板或异常提示里。
-
-### 交易面板
-
-足球 AMM 主交易面板：`src/components/soccer/AmmTradePanel.tsx`
-
-- 支持买入份额。
-- 支持卖出份额。
-- 支持部分卖出和全部卖出。
-- 买入金额输入框尾部有 `Max`。
-- 买入金额输入框下方有固定快捷金额：`50 / 100 / 200 / 500`。
-- 卖出侧有 `Max` / 全部卖出能力，填入当前 position 全部可卖份额。
-- quote 信息展示当前概率 / 份额价格、预估成交均价、预估获得份额或预计收回金额、价格影响、手续费、最大亏损、本次已实现盈亏和卖出后剩余。
-
-为保持全站下单体验一致，以下非足球 AMM 或历史组件也已同步快捷金额 / Max：
-
-- `src/components/QuickOrderPanel.tsx`
-- `src/components/TradePanel.tsx`
-- `src/components/LimitOrderPanel.tsx`
-- `src/components/ParlaySlip.tsx`
-- `src/components/clob/TradingPanel.tsx`
-- `src/components/ec/OrderPanel.tsx`
-- `src/components/soccer/SoccerBetSlip.tsx`
-- `src/components/soccer/AmmMarketComponents.tsx`
-- `src/components/ui/Input.tsx`
+开放、暂停、关闭、已结算、void 等状态通过卡片可点击 / 禁用、透明度、状态色和暂停提示表达。provider reject、timeout、odds changed、quote expired 属于交易执行反馈，放在交易面板或异常提示里。
 
 ## 关键页面和文件
 
 - `src/pages/SoccerPage.tsx`
   - 足球首页。
   - 保留“单场预测 / 冠军与晋级”。
-  - 比赛列表使用 AMM 价格展示。
+  - 比赛列表使用 RFQ 参考价格展示。
 
 - `src/components/soccer/MatchListCard.tsx`
   - 比赛列表卡。
   - 展示概率 + Buy 份额价格或欧洲赔率切换。
   - 展示 `24h Vol.`。
-  - 更多市场入口显示 `More`，不要再使用 `AMM +N`。
+  - 更多市场入口显示 `More`。
 
 - `src/pages/SoccerMatchPage.tsx`
   - 比赛详情。
   - 使用 `AmmMarketRenderer` 渲染 7/7 单场市场。
-  - 右栏顺序包括价格设置、赛事信息、AMM 交易面板、Portfolio 摘要。
+  - 右栏顺序包括价格设置、赛事信息、RFQ 交易面板、Portfolio 摘要。
 
 - `src/components/soccer/AmmMarketRenderer.tsx`
-  - 正式路由中的 AMM outcome 卡片。
-  - 卡片指标行只保留 `24h Vol.` 和 24h 涨跌幅。
+  - 正式路由中的 RFQ outcome 卡片。
+  - 卡片指标行保留 `24h Vol.` 和 24h 涨跌幅。
 
 - `src/components/soccer/AmmTradePanel.tsx`
-  - 正式足球 AMM 交易面板。
+  - 正式足球 RFQ 交易面板。
+  - 文件名仍保留 `Amm`，避免一次性重命名带来大范围风险。
   - 已有快捷金额 `50 / 100 / 200 / 500` 和 `Max`。
+  - 买入展示 RFQ 买入报价；卖出展示 RFQ 退出报价。
+
+- `src/data/soccer/ammData.ts`
+  - 仍是当前 mock 数据和 quote 工具。
+  - quote 已补充 `quoteId`、`providerId`、`providerQuoteId`、`providerSpread`。
+  - 文件名和类型名仍保留 `Amm`，后续若要重命名需要单独做迁移。
+
+- `src/stores/soccerAmmStore.ts`
+  - Zustand store 仍沿用当前结构。
+  - mock trade / position id 已切到 `rfq-*`。
 
 - `src/components/soccer/SoccerPriceFormatToggle.tsx`
   - 小齿轮价格设置入口。
@@ -156,73 +163,62 @@ v6.0 是足球 tab 的主线版本：把 `/soccer` 从平台报价型传统盘�
 
 - `src/pages/SoccerFuturesPage.tsx`
   - 冠军与晋级详情。
-  - 使用 11/11 赛事级 AMM 市场。
+  - 使用 11/11 赛事级 RFQ 市场。
 
 - `src/pages/SoccerMyBetsPage.tsx`
   - Portfolio / 我的持仓。
-  - 不再是传统我的注单中心。
+  - 当前主视图不是传统我的注单中心；传统注单兼容形态后续待确认。
 
 - `src/components/soccer/AmmPortfolioPanel.tsx`
-  - 持仓、可卖份额、均价、现价、市值、盈亏、最近成交和卖出入口。
+  - 持仓、可卖份额、均价、退出参考价、市值、盈亏、最近成交和卖出入口。
 
 - `src/pages/SoccerDesignBoardPage.tsx`
   - `/soccer/design-board`
   - 两个页内 tab：
-    - `v6.0 完整 Design Board`
-    - `v5.0 → v6.0 UI 变更对比`
-  - 对比 tab 只展示纯 UI 变化：旧 UI / 新 UI / 可见变化点。
-  - 不应展示代码路径、store、PRD 引用、git 命令、scope、技术实现细节或未来 CLOB 边界。
-  - 必须覆盖页面 5/5、单场市场 7/7、赛事级市场 11/11、状态、术语和移除项。
+    - `v6.0 AMM 基线`
+    - `v6.0 → v7.0 RFQ 对比`
+  - 对比 tab 展示 AMM quote 到 RFQ quote、AMM sell 到反向 RFQ sell、AMM 风险到 provider reject / timeout / odds changed。
+  - 必须覆盖页面 5/5、单场市场 7/7、赛事级市场 11/11、状态、术语和历史能力边界。
 
-## Design Board 当前要求
+## turbo-contract 参考
 
-Design Board 是产品 / 设计签收页，不是 v6.0 PRD 正文内容，也不是技术审计页。
+`turbo-contract` 中重点参考 `surf_prep_v2` 的 Prediction 模块：
 
-完整 v6 tab 必须展示：
+- `prediction_place_order`
+- `PredictionOrder`
+- `prediction_settle_v3`
+- `cashbook`
+- `odds_e8`
+- `ORDER_KEEPER_ROLE`
 
-- `/soccer` 首页
-- `/soccer/match/:matchId`
-- `/soccer/futures/:competitionId`
-- `/soccer/mybets`
-- 所有 7 个单场市场
-- 所有 11 个赛事级市场
-- 状态、异常、结算、void、暂停、关闭
-- 价格设置齿轮
-- 交易面板快捷金额和 Max
+可复用点：
 
-v5→v6 UI 变更 tab 必须只展示变化项：
+- 下单锁本金。
+- 订单 PDA / trade id 幂等。
+- 成交时锁定赔率。
+- 到期按结果结算。
+- cashbook 资金流水审计。
 
-- 顶部导航和足球 tab 心智变化
-- 首页比赛列表价格列变化
-- outcome 卡片变化
-- 7/7 单场市场 AMM 化
-- 比赛详情右栏从投注单变交易面板
-- 交易面板状态矩阵
-- 我的注单变 Portfolio
-- 冠军与晋级 11/11 赛事级市场 AMM 化
-- 价格格式切换齿轮
-- 异常反馈从赔率变化 / 拒单变 quote / 风险反馈
-- 移除传统浮动投注条、Cash Out、串关入口等
-- 术语从投注项 / 注单 / 串关切到 outcome / shares / trade / position / sell / settlement
+主要缺口：
 
-## 最近完成的提交
+- 没有 provider quote 生命周期字段。
+- 没有 sell quote / exit quote。
+- 没有 position 部分卖出。
+- 没有足球 match / market / outcome 链上结构。
 
-- `ef0f99f feat: add quick order amount controls`
-  - 所有下单面板加入 `50 / 100 / 200 / 500` 快捷金额和 `Max`。
-- `8e89138 feat(soccer): sync design board market metrics`
-  - Design Board 同步盘口卡指标为 `24h Vol.` + 24h 涨跌幅。
-- `625a5d5 feat(soccer): simplify AMM market card metrics`
-  - 实际 AMM outcome 卡片移除流动性、implied 和可交易文本。
-- `136a3b6 feat(soccer): complete pure UI design board delta`
-  - 完成纯 UI 变更对比页。
+建议第一阶段链下管理 RFQ、position 和 sell quote，链上只记录买入与最终结算；第二阶段如需要再扩展链上 sell / position 指令。
 
 ## 验证方式
 
+文档改动：
+
+- 使用 `ReadLints` 检查相关 Markdown。
+- 运行 `git diff --check` 检查空白错误。
+
 代码改动：
 
-- 目标文件先用 `ReadLints` 检查。
+- 对目标文件先用 `ReadLints` 检查。
 - 运行 `npm run lint && npm run build`。
-- 当前本机 Node 已更新到 `v22.22.2`，不应再有 Vite Node 版本警告。
 
 本地验证：
 
@@ -232,10 +228,10 @@ v5→v6 UI 变更 tab 必须只展示变化项：
 ## Git 和提交规则
 
 - 当前分支：`mvp`
-- 默认完成改动并验证通过后提交和 push。
-- 不要 revert 用户改动。
+- 本轮用户明确要求不要 push。
 - 只提交当前任务相关文件。
-- 如果 GitHub push 因网络超时失败，稍后重试；之前多次出现 `github.com:443` 短时不可达，重试后可成功。
+- 不要 revert 用户改动。
+- 注意 `turbo-contract/` 可能以未跟踪目录出现，除非用户明确要求，否则不要纳入提交。
 
 ## 用户偏好
 
@@ -243,4 +239,4 @@ v5→v6 UI 变更 tab 必须只展示变化项：
 - 用户非常重视 Design Board 和文档与实现一致。
 - 用户不喜欢“只口头确认”，需要真实检查代码 / 文档后给结论。
 - 文案要正式产品化，不要临时、口语或内部代号。
-- 用户经常要求“100% 覆盖”，回答前应先审计是否真的覆盖页面、组件、状态、术语和移除项。
+- 用户尤其反感未经确认就把历史能力写成“移除 / 不做 / 不进入版本”。必须使用“本版本暂不交付 / 后续待确认”口径。

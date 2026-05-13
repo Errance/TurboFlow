@@ -158,7 +158,7 @@ export function AmmTradePanel({
     return (
       <aside className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">交易面板</h2>
-        <p className="mt-3 text-xs text-[var(--text-secondary)]">选择一个 outcome 后查看 AMM 即时报价。</p>
+        <p className="mt-3 text-xs text-[var(--text-secondary)]">选择一个 outcome 后查看 RFQ 做市商报价。</p>
       </aside>
     )
   }
@@ -171,7 +171,7 @@ export function AmmTradePanel({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">交易面板</h2>
-          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">AMM 即时报价，确认后立即成交。</p>
+          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">RFQ 做市商报价，确认后锁定本次成交价。</p>
         </div>
         <AmmStatusBadge market={market} />
       </div>
@@ -251,7 +251,7 @@ export function AmmTradePanel({
           <QuoteRow label={side === 'buy' ? '预计获得 shares' : '卖出 shares'} value={quote.shares.toFixed(2)} />
           <QuoteRow label="预估成交均价" value={`${Math.round(quote.avgPrice * 100)}% / ${decimalOdds(quote.avgPrice).toFixed(2)}`} />
           <QuoteRow label={side === 'buy' ? '预计支付' : '预计收回'} value={`${quote.collateral.toFixed(2)} USDT`} />
-          <QuoteRow label="价格影响" value={`${quote.priceImpact.toFixed(2)}%`} warning={quote.priceImpact > 4} />
+          <QuoteRow label="做市商报价偏移" value={`${quote.priceImpact.toFixed(2)}%`} warning={quote.priceImpact > 4} />
           <QuoteRow label="手续费" value={`${quote.fee.toFixed(2)} USDT`} />
           <QuoteRow label="交易后价格" value={`${Math.round(quote.nextPrice * 100)}%`} />
         </div>
@@ -278,7 +278,7 @@ export function AmmTradePanel({
       </button>
 
       <p className="mt-3 text-[10px] leading-4 text-[var(--text-secondary)]">
-        Quote 有效期 {market.quoteTtlSeconds} 秒；成交失败可能由流动性不足、价格保护或关键事件暂停触发。
+        Quote 有效期 {market.quoteTtlSeconds} 秒；成交失败可能由做市商拒单、价格保护或关键事件暂停触发。
       </p>
     </aside>
   )

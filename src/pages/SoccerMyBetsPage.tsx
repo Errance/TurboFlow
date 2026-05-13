@@ -23,7 +23,7 @@ export default function SoccerMyBetsPage() {
         <div>
           <h1 className="text-xl font-semibold text-[var(--text-primary)]">Portfolio / 我的持仓</h1>
           <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--text-secondary)]">
-            v6.0 中不再展示传统注单。这里展示 AMM 持仓、可卖份额、平均成本、当前价格、已实现和未实现盈亏。
+            v7.0 主视图展示 RFQ 持仓、可卖份额、平均成本、退出参考价、已实现和未实现盈亏；传统注单历史兼容形态后续待确认。
           </p>
         </div>
         <SoccerPriceFormatToggle />

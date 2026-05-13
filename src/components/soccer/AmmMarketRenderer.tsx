@@ -31,9 +31,9 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
     <MarketCard title={displayTitle}>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-secondary)]">
-          <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[#2DD4BF]">AMM 即时成交</span>
+          <span className="rounded-full bg-[#2DD4BF]/10 px-2 py-0.5 text-[#2DD4BF]">RFQ 做市商报价</span>
           <span>总隐含概率 {formatProbability(totalProbability)}</span>
-          <span>默认展示概率 + 份额价格，可切换欧洲赔率</span>
+          <span>默认展示概率 + 份额价格，可切换欧洲赔率；成交以 RFQ quote 为准</span>
         </div>
 
         {groups.length > 1 && groups.some(Boolean) ? (

@@ -235,7 +235,7 @@ export const ammMarkets: AmmMarket[] = [
     group: '球队表现',
     eventLabel: `${manUnited.homeTeam.name} vs ${manUnited.awayTeam.name}`,
     questionTitle: '曼联本场是否零封对手？',
-    description: '二元球队表现市场，展示 AMM 对低流动性盘口的价格影响。',
+    description: '二元球队表现市场，展示 RFQ 对小众盘口的报价偏移。',
     status: 'paused',
     closesAt: isoPlus(3),
     expectedResolutionTime: '全场结束并经官方比分确认后',
