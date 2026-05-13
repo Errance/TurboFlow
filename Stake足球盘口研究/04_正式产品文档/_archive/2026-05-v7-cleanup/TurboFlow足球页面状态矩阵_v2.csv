@@ -1,0 +1,56 @@
+页面,场景,赛事状态,市场状态,是否可参与,主提示文案,次提示文案,是否显示规则入口,是否显示结果反馈,备注
+足球入口页,未开赛,scheduled,unknown,yes,查看可参与的足球预测市场,进入赛事列表查看核心问题,yes,no,入口页不直接承载市场状态细节
+足球入口页,可参与,scheduled,open,yes,进入足球赛事并选择比赛,首期以 pre-match 主市场为主,yes,no,入口页只做引导
+足球入口页,已开始但首期市场关闭,live,suspended,no,比赛已开始，首期市场暂不可参与,可进入赛事详情查看状态与规则,yes,no,不跳转到完整 live 页
+足球入口页,比赛中断,interrupted,suspended,no,部分比赛暂不可参与,可查看规则说明了解中断处理,yes,no,入口页只做概览提示
+足球入口页,比赛被放弃或当日未能完成,abandoned,void,no,部分比赛异常结束,请进入详情查看最终结果处理,yes,yes,前台不单独暴露 abandoned 术语
+足球入口页,48h 内恢复,live,open,no,比赛状态已更新,请进入赛事详情查看最新状态,yes,no,入口层不展示细结果
+足球入口页,48h 外未恢复,cancelled,void,no,部分比赛已按规则结束处理,相关问题可能作废,yes,no,入口页不展示单问题结果
+足球入口页,已结束,completed,settled,no,比赛已结束,可进入详情查看结果反馈,yes,yes,入口页可提供结果入口
+足球入口页,void,completed,void,no,部分问题已作废,详情页可查看具体原因,yes,yes,入口页只给弱提示
+足球入口页,cancelled,cancelled,cancelled,no,部分问题已取消,详情页可查看异常说明,yes,yes,入口页只给弱提示
+足球入口页,corrected,corrected,corrected,no,部分结果已修正,详情页可查看最终结果,yes,yes,入口页只给弱提示
+赛事列表页 / 卡片层,未开赛,scheduled,upcoming,yes,比赛尚未开始,可进入单场页查看问题与规则,yes,no,卡片显示预览信息
+赛事列表页 / 卡片层,可参与,scheduled,open,yes,当前可参与,可预览核心问题并进入单场页,yes,no,卡片层只做轻预览
+赛事列表页 / 卡片层,已开始但首期市场关闭,live,suspended,no,比赛已开始，首期市场关闭,仍可进入详情页查看状态与规则,yes,no,卡片保持详情页入口但不提供参与
+赛事列表页 / 卡片层,比赛中断,interrupted,suspended,no,比赛中断，暂不可参与,可进入详情页查看后续状态,yes,no,卡片不展示复杂规则条文
+赛事列表页 / 卡片层,比赛被放弃或当日未能完成,abandoned,void,no,比赛异常结束,进入详情页查看作废或最终结果,yes,yes,前台不单独暴露 abandoned 术语
+赛事列表页 / 卡片层,48h 内恢复,live,open,no,比赛状态已恢复,进入详情页查看是否继续结算,yes,no,列表层只做简提示
+赛事列表页 / 卡片层,48h 外未恢复,cancelled,void,no,比赛未在规则窗口内恢复,相关问题可能作废,yes,yes,可进入详情查看结果
+赛事列表页 / 卡片层,已结束,completed,settled,no,比赛已结束,可进入详情查看结果反馈,yes,yes,卡片显示已结束
+赛事列表页 / 卡片层,void,completed,void,no,部分问题作废,进入详情查看具体说明,yes,yes,作废不等于正常输赢
+赛事列表页 / 卡片层,cancelled,cancelled,cancelled,no,部分问题已取消,进入详情查看异常说明,yes,yes,取消与作废区分
+赛事列表页 / 卡片层,corrected,corrected,corrected,no,结果已修正,进入详情查看最终结果,yes,yes,需避免误解为系统错误
+单场详情页,未开赛,scheduled,upcoming,yes,比赛尚未开始,可查看首期问题与规则摘要,yes,no,正常 pre-match 场景
+单场详情页,可参与,scheduled,open,yes,当前可参与,请选择要回答的核心问题,yes,no,P0 问题完整展示
+单场详情页,已开始但首期市场关闭,live,suspended,no,比赛已开始，首期市场当前不可参与,本页保留状态说明与规则入口,yes,no,问题区显示只读关闭态
+单场详情页,比赛中断,interrupted,suspended,no,比赛中断，相关问题暂不可用,按规则等待恢复或后续处理,yes,no,顶部展示赛事级提示
+单场详情页,比赛被放弃或当日未能完成,abandoned,void,no,比赛异常结束,请查看本页结果反馈与规则说明,yes,yes,用户看到异常结束与市场最终处理
+单场详情页,48h 内恢复,live,open,no,比赛已恢复，相关问题按规则继续处理,请关注最终结果反馈,yes,no,如无参与能力则仅展示状态
+单场详情页,48h 外未恢复,cancelled,void,no,本问题已作废,未在规则窗口内恢复完成,yes,yes,结果区显示作废反馈
+单场详情页,已结束,completed,settled,no,比赛已结束,可查看最终结果与结算反馈,yes,yes,对应问题区展示结果
+单场详情页,void,completed,void,no,本问题作废,该结果不按正常输赢路径处理,yes,yes,需突出与 cancelled 区别
+单场详情页,cancelled,cancelled,cancelled,no,本问题已取消,通常由异常窗口或错误比分触发,yes,yes,显示异常说明
+单场详情页,corrected,corrected,corrected,no,结果已修正,请以当前展示结果为准,yes,yes,必要时保留规则说明入口
+规则说明层,未开赛,scheduled,upcoming,yes,查看规则说明,当前为首期 pre-match 主规则,yes,no,规则层始终可进入
+规则说明层,可参与,scheduled,open,yes,查看规则说明,帮助理解时间范围与结算边界,yes,no,规则层不承载参与动作
+规则说明层,已开始但首期市场关闭,live,suspended,no,查看当前规则说明,首期不开放该场景参与动作,yes,no,仍可解释关闭原因
+规则说明层,比赛中断,interrupted,suspended,no,查看中断与48h规则说明,当前问题暂不可参与,yes,no,规则层用于承接说明
+规则说明层,比赛被放弃或当日未能完成,abandoned,void,no,查看异常结束说明,说明为何进入作废或异常终态,yes,no,解释用途
+规则说明层,48h 内恢复,live,open,no,查看恢复后的规则说明,相关问题按规则继续处理,yes,no,规则层不展示结果主反馈
+规则说明层,48h 外未恢复,cancelled,void,no,查看作废规则说明,未决问题按规则作废,yes,no,结果主反馈在结果区
+规则说明层,已结束,completed,settled,no,查看结果相关规则说明,可返回详情页查看结果,yes,no,规则层不替代结果区
+规则说明层,void,completed,void,no,查看作废说明,说明为何不是正常输赢结果,yes,no,解释用途
+规则说明层,cancelled,cancelled,cancelled,no,查看取消说明,说明异常取消原因,yes,no,解释用途
+规则说明层,corrected,corrected,corrected,no,查看修正说明,说明结果已更新,yes,no,解释用途
+结果反馈区,未开赛,scheduled,upcoming,no,暂无结果反馈,比赛结束后显示结果,yes,no,未开赛不显示结果
+结果反馈区,可参与,scheduled,open,no,暂无结果反馈,当前为进行前可参与阶段,yes,no,结果区可占位但不展示结果
+结果反馈区,已开始但首期市场关闭,live,suspended,no,结果待定,比赛已开始且当前不开放首期参与,yes,no,不展示完整 live 结算信息
+结果反馈区,比赛中断,interrupted,suspended,no,结果待定,比赛中断，等待后续处理,yes,no,等待后续状态
+结果反馈区,比赛被放弃或当日未能完成,abandoned,void,no,结果待定或异常结束,请以最终作废或结算结果为准,yes,yes,前台承接为异常结束说明
+结果反馈区,48h 内恢复,live,open,no,结果待定,比赛恢复后将继续按规则处理,yes,no,不提前给最终结果
+结果反馈区,48h 外未恢复,cancelled,void,no,本问题作废,未在规则窗口内恢复完成,yes,yes,展示 void 结果
+结果反馈区,已结束,completed,settled,no,已结束,显示最终结果与结算反馈,yes,yes,正常结果展示场景
+结果反馈区,void,completed,void,no,本问题作废,该结果不按正常输赢路径处理,yes,yes,需清楚区别于取消
+结果反馈区,cancelled,cancelled,cancelled,no,本问题已取消,因异常窗口或规则触发取消,yes,yes,异常结果展示场景
+结果反馈区,corrected,corrected,corrected,no,结果已修正,请以当前结果为准,yes,yes,展示修正后的最终信息
