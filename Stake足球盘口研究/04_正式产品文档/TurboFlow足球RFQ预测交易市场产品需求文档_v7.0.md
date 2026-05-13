@@ -7,14 +7,14 @@
 
 ## 0. 文档说明
 
-本文是 TurboFlow 足球 tab v7.0 的完整产品需求文档。v7.0 将足球交易底层从 v6.0 的纯 AMM 探索稿调整为外部做市商 RFQ 模式：外部做市商提供比赛数据和赔率，用户交易前请求短时有效报价，确认后锁定本次成交赔率并形成 position；买入后可通过反向 RFQ 部分卖出或全部卖出，最终按比赛结果结算。
+本文是 TurboFlow 足球 tab v7.0 的完整产品需求文档。v7.0 将足球交易底层从 v6.0 的纯 AMM 探索稿调整为外部报价源 RFQ 模式：外部报价源提供比赛数据和赔率，用户交易前请求短时有效报价，确认后锁定本次成交赔率并形成 position；买入后可获取退出报价并部分卖出或全部卖出，最终按比赛结果结算。
 
 本文遵循以下约定：
 
 - v7.0 不是 v5.0 传统投注单回滚，也不是 v6.0 AMM 小修，而是新的 RFQ 底层交易模式。
-- 用户侧继续使用 outcome、shares、quote、trade、position、Portfolio、sell、settlement 作为主语言。
+- 技术侧继续使用 outcome、shares、quote、trade、position、Portfolio、sell、settlement 等模型；用户侧文案使用“结果选项、份额、最新报价、交易、持仓、我的持仓、卖出、结算”等产品语言，不直接暴露 RFQ / provider / 做市商内部术语。
 - 页面继续默认展示“概率 + 份额价格”，并保留小齿轮切换欧洲赔率。
-- 页面价格是做市商赔率快照或后端换算后的参考展示；真正成交价以 RFQ 返回为准。
+- 页面价格是外部报价源赔率快照或后端换算后的参考展示；真正成交价以短时有效报价返回为准。
 - 买入成交后，本次成交赔率锁定；后续赔率变化只影响新 quote 和卖出 quote，不改变已成交 trade。
 - 用户可以继续买入、部分卖出、全部卖出或等待结算。
 - 串关、多笔单注、Cash Out、传统投注单、传统浮动投注条、扩展盘口、v4.5 预测大赛等历史能力，本版本不作为 v7.0 RFQ 主交付项；这不等于永久删除或不可回归，后续形态需产品确认。
@@ -28,9 +28,9 @@
 |------|----------|----------|--------------|----------|
 | v5.0 | 平台报价型传统盘口 | 平台或后台维护欧洲赔率 | 注单 / 我的注单 | 历史基线，可复用页面组织和部分校验资产 |
 | v6.0 | AMM 预测市场探索稿 | 内部 AMM 池或公式 quote | outcome shares / position | 已完成产品探索，但不再作为当前底层实现主线 |
-| v7.0 | 外部做市商 RFQ | 做市商赛事源和赔率 quote | RFQ trade + position + Portfolio | 当前目标版本 |
+| v7.0 | 外部报价源 RFQ | 外部赛事源和可成交报价 | quote trade + position + Portfolio | 当前目标版本 |
 
-v7.0 的核心变化不是页面大改，而是底层成交方式变化：我们不再自建 AMM 定价引擎，也不把页面赔率理解为长期承诺价格，而是在每次交易前向做市商或后端 RFQ 网关请求可成交报价。
+v7.0 的核心变化不是页面大改，而是底层成交方式变化：我们不再自建 AMM 定价引擎，也不把页面赔率理解为长期承诺价格，而是在每次交易前向外部报价源或后端 RFQ 网关请求可成交报价。
 
 ### 1.2 为什么采用 RFQ
 
@@ -51,8 +51,8 @@ v7.0 后端重点从“计算 AMM 价格”转为：
 | 业务目标 | 将足球 tab 从 AMM 探索稿切换为 RFQ 预测交易 | 产品文档、前端 mock、Design Board、接口反馈和技术反馈均以 RFQ 为主线 |
 | 业务目标 | 复用外部做市商赛事与赔率能力 | 后端能从 provider 同步比赛、盘口、赔率、状态和限额 |
 | 业务目标 | 保留 position 生命周期 | 用户可以买入、继续买入、部分卖出、全部卖出或等待结算 |
-| 用户目标 | 用户能理解页面价格与成交报价关系 | 页面展示参考概率 / 份额价格 / 欧洲赔率，交易面板明确“以 RFQ 成交报价为准” |
-| 用户目标 | 用户买入后可以退出风险 | Portfolio 中可对 position 发起卖出 RFQ，查看退出报价后确认卖出 |
+| 用户目标 | 用户能理解页面价格与成交报价关系 | 页面展示参考概率 / 份额价格 / 欧洲赔率，交易面板明确“以最新成交报价为准” |
+| 用户目标 | 用户买入后可以退出风险 | Portfolio 中可对 position 获取退出报价，确认后卖出 |
 | 技术目标 | 降低自建 AMM 后端复杂度 | 不要求 AMM pool、曲线定价、内部 liquidity state 和 price impact 引擎 |
 | 设计目标 | 最小改动同步前端 | 保留当前页面结构、市场目录、概率/赔率切换和交易面板结构 |
 
@@ -64,7 +64,7 @@ v7.0 后端重点从“计算 AMM 价格”转为：
 |------|------|
 | 单场预测 | 近期比赛的核心市场：胜平负、开球权、让球、让球 0:1、总进球数、大小球、波胆 |
 | 冠军与晋级 | 世界杯、欧冠、英超等系列赛 / 赛季对象下的长期结果预测 |
-| 做市商赛事源 | 做市商提供比赛、市场、选项、状态、赔率和限额 |
+| 外部报价源 | 外部报价源提供比赛、市场、选项、状态、赔率和限额 |
 | 内部映射 | 后端将 provider ID 映射为内部 match / market / outcome |
 | RFQ 买入 | 用户输入金额后获取短时有效买入报价，确认后成交 |
 | RFQ 卖出 | 用户输入 shares 后获取短时有效退出报价，确认后部分卖出或全部卖出 |
@@ -78,7 +78,7 @@ v7.0 后端重点从“计算 AMM 价格”转为：
 | 能力 | v7.0 当前处理 |
 |------|---------------|
 | 串关 / 多笔单注 | 本版本不作为 RFQ 主交付项；未来可设计为组合 RFQ 或独立模块 |
-| Cash Out / 平台买断式提前结清 | 不按传统 Cash Out 恢复；当前退出能力通过反向 RFQ 卖出 position 实现 |
+| Cash Out / 平台买断式提前结清 | 本版本不交付传统 Cash Out；当前退出能力通过获取退出报价后卖出 position 实现，是否作为独立能力回归待产品确认 |
 | 传统投注单 | 不作为当前主交易面板；历史组件可保留，不默认删除 |
 | 传统我的注单 / 历史下注记录 | 当前主视图为 Portfolio；历史记录兼容展示待产品确认 |
 | 传统浮动投注条 | 不作为当前 v7 主交易入口；是否保留兼容入口待确认 |
@@ -96,19 +96,19 @@ flowchart TB
   soccer --> portfolio["Portfolio / 我的持仓"]
   soccer --> designBoard["Design Board"]
 
-  provider["外部做市商"] --> providerFeed["赛事 / 盘口 / 赔率 / 状态"]
+  provider["外部报价源"] --> providerFeed["赛事 / 盘口 / 赔率 / 状态"]
   providerFeed --> mapping["后端映射 internal match / market / outcome"]
   mapping --> single
   mapping --> futures
 
   single --> matchDetail["比赛详情"]
   futures --> futureDetail["对象详情"]
-  matchDetail --> rfqPanel["RFQ 交易面板"]
+  matchDetail --> rfqPanel["报价交易面板"]
   futureDetail --> rfqPanel
   rfqPanel --> trade["Trade"]
   trade --> position["Position"]
   position --> portfolio
-  portfolio --> sellQuote["反向 RFQ 卖出"]
+  portfolio --> sellQuote["获取退出报价后卖出"]
 ```
 
 ## 5. 核心用户流程
@@ -119,7 +119,7 @@ flowchart TB
 flowchart TD
   selectOutcome["选择 outcome"] --> inputAmount["输入买入金额"]
   inputAmount --> requestQuote["请求 RFQ quote"]
-  requestQuote --> providerQuote["做市商返回可成交报价"]
+  requestQuote --> providerQuote["返回可成交报价"]
   providerQuote --> review["复核成交赔率、份额、手续费、过期时间"]
   review --> confirm["用户确认买入"]
   confirm --> trade["生成 trade"]
@@ -147,7 +147,7 @@ flowchart TD
   confirmSell --> updatePosition["扣减 shares，保留剩余 position"]
 ```
 
-部分卖出是用户主动输入少于当前可卖持仓的 shares，并通过做市商退出报价即时成交。它不是 CLOB 部分成交，也不产生挂单。
+部分卖出是用户主动输入少于当前可卖持仓的 shares，并通过退出报价即时成交。它不是 CLOB 部分成交，也不产生挂单。
 
 ### 5.3 全部卖出 RFQ
 
@@ -164,18 +164,19 @@ flowchart TD
 
 | 场景 | 前端提示 | 用户动作 |
 |------|----------|----------|
-| quote 过期 | 报价已过期，请重新询价 | 重新获取 quote |
-| 做市商拒单 | 做市商暂不接受该交易 | 调整金额或稍后再试 |
-| 做市商超时 | 报价请求超时 | 重试 |
-| 赔率变化 | 赔率已变化，请按最新报价确认 | 重新询价 |
+| quote 过期 | 报价已过期，请重新获取 | 重新获取报价 |
+| 报价不可用 | 报价暂不可用，请调整金额或稍后再试 | 调整金额或稍后再试 |
+| 报价服务超时 | 报价请求超时 | 重试 |
+| 赔率变化 | 报价已变化，请按最新报价确认 | 重新获取报价 |
 | 市场暂停 | 市场暂停，恢复后重新询价 | 等待恢复 |
 | 卖出报价不可用 | 当前暂无法提供退出报价 | 稍后重试或等待结算 |
+| 持仓变化 | 持仓已变化，请重新获取退出报价 | 刷新持仓并重新获取报价 |
 
 ### 5.5 结算
 
 ```mermaid
 flowchart TD
-  marketClosed["市场关闭"] --> result["等待官方结果或做市商结果源"]
+  marketClosed["市场关闭"] --> result["等待官方结果或外部结果源"]
   result --> resolve["确认 winning outcome"]
   resolve --> won["正确 outcome 按规则兑付"]
   resolve --> lost["错误 outcome 兑付 0"]
@@ -186,6 +187,13 @@ flowchart TD
   refund --> portfolio
 ```
 
+结算权威源规则：
+
+- 官方赛事结果是最终权威。
+- provider settlement feed 可作为自动化输入，但不得覆盖官方结果。
+- provider 结果与官方结果冲突时，进入 dispute / manual review，暂停相关 position 的结算和卖出。
+- void 时保留原始 trade、cashbook 和 position 审计链路，不删除历史记录。
+
 ## 6. 价格与展示口径
 
 ### 6.1 默认展示
@@ -195,7 +203,7 @@ v7.0 前端仍默认展示：
 - 概率，例如 `55.0%`。
 - 份额价格，例如 `Buy 55¢`。
 
-这些值由做市商欧洲赔率换算或后端聚合后的参考报价生成，不再来自内部 AMM pool。
+这些值由外部报价源赔率换算或后端聚合后的参考报价生成，不再来自内部 AMM pool。
 
 ### 6.2 欧洲赔率切换
 
@@ -217,20 +225,20 @@ v7.0 前端仍默认展示：
 - 保留“单场预测 / 冠军与晋级”两个入口。
 - 保留比赛列表、`24h Vol.`、More 入口。
 - 价格列保留概率 + 份额价格 / 欧洲赔率切换。
-- 文案从 AMM 价格改为 RFQ 参考报价或做市商参考价。
+- 文案从 AMM 价格改为参考报价、最新报价或报价有效期，不直接展示 RFQ / provider / 做市商内部术语。
 
 ### 7.2 `/soccer/match/:matchId`
 
 - 保留 7 个核心市场。
 - outcome 卡点击后选中交易对象。
-- 右栏展示 RFQ 交易面板、赛事信息、Portfolio 摘要。
+- 右栏展示报价交易面板、赛事信息、Portfolio 摘要。
 - 暂停、关闭、结算、void 通过卡片禁用和状态提示表达。
 
 ### 7.3 `/soccer/futures/:competitionId`
 
 - 保留 11 个赛事级市场。
-- 长期市场也使用 RFQ 买入和卖出。
-- 必须展示关闭时间、官方来源、结算规则和 provider 状态。
+- 长期市场也使用获取报价后买入、获取退出报价后卖出。
+- 必须展示关闭时间、官方来源和结算规则；provider 状态由后端映射为市场可交易 / 暂停 / 关闭等产品状态。
 
 ### 7.4 `/soccer/mybets`
 
@@ -241,9 +249,9 @@ v7.0 前端仍默认展示：
 ### 7.5 `/soccer/design-board`
 
 - 保留完整 v7 展板。
-- 差异 tab 改为 v6.0 AMM 与 v7.0 RFQ 对比。
+- 差异 tab 改为 v6.0 AMM 与 v7.0 报价交易对比。
 - 不做 v5 / v6 / v7 三代大矩阵。
-- 必须覆盖：页面、市场、价格、买入、卖出、Portfolio、异常、结算、术语变化。
+- 必须覆盖：页面、市场、价格、买入、卖出、Portfolio、异常、结算、术语变化、首页冠军与晋级入口、全局旧浮动条隔离和实现文件覆盖核对。
 
 ## 8. 后端领域模型
 
@@ -277,6 +285,8 @@ v7.0 前端仍默认展示：
 
 建议第一阶段链下管理 RFQ、position 和 sell quote，链上只记录买入和最终结算；第二阶段如需更强链上证明，再扩展 sell / position 指令。
 
+第一阶段必须明确：链上 `PredictionOrder.status` 只表达 `Pending / Finish`，是业务状态机的子集。链下 quote、trade、sell、failed、disputed、void_refunded 等状态由 RFQ 交易域和 Position Service 维护，不能误认为 Prediction 合约可承载完整 RFQ 生命周期。
+
 ## 10. 接口方向
 
 建议接口资源：
@@ -294,6 +304,8 @@ GET  /api/v1/soccer/rfq/trades
 GET  /api/v1/soccer/rfq/settlements
 ```
 
+账户级价格展示偏好不列为 v7.0 P0 接口。小齿轮切换默认只影响前端展示；如后续需要跨端同步，可作为 P2 增补 `PUT /api/v1/soccer/rfq/price_preference`。
+
 核心字段：
 
 - `provider_id`
@@ -304,6 +316,7 @@ GET  /api/v1/soccer/rfq/settlements
 - `quote_id`
 - `quote_expires_at`
 - `display_decimal_odds`
+- `quoted_odds`
 - `implied_probability`
 - `share_price`
 - `accepted_odds`
@@ -313,12 +326,35 @@ GET  /api/v1/soccer/rfq/settlements
 - `provider_trade_id`
 - `sell_quote_id`
 - `net_collateral_out`
+- `client_quote_id`
+- `idempotency_key`
+- `position_version`
+
+接口约束：
+
+- quote 阶段返回 `quoted_odds`，trade 成交后才写 `accepted_odds`。
+- 买入 / 卖出 quote 使用 `account_id + client_quote_id` 幂等。
+- 买入 / 卖出 trade 使用 `account_id + client_trade_id` 幂等。
+- sell trade 阶段必须再次校验 `available_shares` 和 `position_version`，防止并发卖出超卖。
+- `provider_match_id`、`provider_market_id`、`provider_selection_id` 必须落库或通过 mapping 表可追溯，用于上架、交易、结算和对账。
+
+## 10A. 安全、资金和对账底线
+
+| 主题 | 要求 |
+|------|------|
+| 认证鉴权 | 用户接口必须使用登录态和账户权限校验，不能只信任请求体 `account_id` |
+| 防重放 | quote / trade confirm 必须校验幂等键、quote 状态和有效期 |
+| 资金原子性 | trade confirm 必须原子处理余额、provider accept、trade ledger、position 和 cashbook |
+| provider 回调 | trade callback、settlement feed 和 webhook 需要签名校验或 mTLS |
+| 并发卖出 | sell trade 使用 position version / CAS 防止同一份额被重复卖出 |
+| 审计日志 | 保存用户请求、provider 响应、赔率、金额、shares、correlation id 和人工处理记录 |
+| 补偿机制 | provider accept 成功但内部落账失败，或内部扣款成功但 provider 失败，都必须进入 Reconciliation / cashbook 补偿 |
 
 ## 11. 上新比赛流程
 
 ```mermaid
 flowchart TD
-  provider["做市商赛事源"] --> ingest["后端同步赛事和盘口"]
+  provider["外部赛事源"] --> ingest["后端同步赛事和盘口"]
   ingest --> whitelist["联赛 / 市场白名单"]
   whitelist --> mapping["生成内部 match / market / outcome"]
   mapping --> publish["发布到前端列表"]
@@ -327,7 +363,7 @@ flowchart TD
 
 规则：
 
-- 前端不直接接做市商 API。
+- 前端不直接接外部报价源 API。
 - 前端不决定比赛是否上架。
 - 后端负责白名单、映射、状态归一化和异常过滤。
 - 前端只消费内部 API 返回的比赛、市场和状态。
@@ -341,10 +377,11 @@ v7.0 Design Board 必须证明：
 - 赛事级市场 11/11 仍覆盖。
 - 概率 + 份额价格默认展示仍保留。
 - 欧洲赔率切换仍保留。
-- 交易面板已从 AMM quote 改为 RFQ quote。
-- 卖出已从 AMM sell 改为反向 RFQ sell。
-- 异常从 AMM liquidity / price impact 改为 provider reject / timeout / odds changed / quote expired。
+- 交易面板已从 AMM quote 改为最新报价 / 报价有效期。
+- 卖出已从 AMM sell 改为获取退出报价后卖出。
+- 异常从 AMM liquidity / price impact 改为报价过期、报价变化、报价暂不可用、市场暂停。
 - 历史能力没有被写成永久删除。
+- 当前展板需覆盖 17/17 差异项，包括首页冠军与晋级入口、全局旧浮动条隔离和实现文件覆盖核对。
 
 ## 13. 验收标准
 
@@ -363,8 +400,8 @@ v7.0 Design Board 必须证明：
 
 | 问题 | 当前建议 |
 |------|----------|
-| 做市商是否支持卖出 / 退出报价 | 必须确认；若不支持，卖出能力需由内部风险或二级方案承接 |
+| 外部报价源是否支持卖出 / 退出报价 | 必须确认；若不支持，卖出能力需由内部风险账户、二级流动性方案或产品降级承接 |
 | shares 是否完全链上记录 | 第一阶段链下记录，链上记录成交和结算即可 |
 | 串关是否进入后续 v7.x | 本版本不交付，后续以组合 RFQ 单独定义 |
-| Cash Out 是否恢复 | 不恢复传统 Cash Out，当前以反向 RFQ 卖出表达退出 |
-| provider 结果和官方结果冲突 | 进入 dispute 状态，暂停结算，按产品规则处理 |
+| Cash Out 是否恢复 | 本版本不交付传统 Cash Out；是否作为独立能力回归待产品确认，当前以退出报价卖出表达退出 |
+| provider 结果和官方结果冲突 | 进入 dispute 状态，暂停结算和卖出，按产品规则处理 |

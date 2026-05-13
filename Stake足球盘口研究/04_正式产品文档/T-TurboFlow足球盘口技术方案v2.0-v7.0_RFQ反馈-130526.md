@@ -32,9 +32,9 @@ Provider Feed
 | AMM pool reserve | 不需要 |
 | 曲线定价 | 不需要 |
 | liquidity provider | 当前不需要 |
-| price impact | 替换为做市商价差、quote 变化和拒单 |
+| price impact | 技术侧替换为 provider spread / quote 变化；用户侧展示为报价变化、报价有效期或报价暂不可用 |
 | pool imbalance | 替换为 provider limit / suspension |
-| AMM sell | 替换为反向 RFQ sell |
+| AMM sell | 替换为 sell quote / sell trade；用户侧表达为获取退出报价后卖出 |
 
 ### 2.2 仍然需要的交易能力
 
@@ -47,6 +47,7 @@ Provider Feed
 | 结算 | 需要 | 按比赛结果兑付 |
 | 对账 | 需要 | provider 成交、内部账、链上订单和资金流水要一致 |
 | 反向卖出 | 需要 | 用户买入后可退出部分或全部持仓 |
+| 安全与防重放 | 需要 | quote / trade confirm / provider callback 都是资金敏感操作 |
 
 ## 3. 推荐系统架构
 
@@ -87,7 +88,7 @@ flowchart TB
 |------|------|----------|
 | Provider Adapter | 接入 provider 赛事、盘口、赔率、quote、trade、结果 | provider 字段不稳定、超时、拒单 |
 | Feed Normalizer | 标准化赛事、盘口、选项和状态 | 映射错误导致交易错位 |
-| Market Mapping | 保存 provider ID 到内部 ID 的关系 | ID 变更、合并、取消、重赛 |
+| Market Mapping | 保存 provider ID 到内部 ID 的关系，并受联赛 / 市场白名单约束 | ID 变更、合并、取消、重赛、错误上架 |
 | RFQ Gateway | 统一买入和卖出 quote 请求 | quote TTL、重复确认、provider 异常 |
 | Quote Ledger | 记录全部 quote 请求和响应 | 缺少审计链路 |
 | Trade Service | 确认 quote，生成 trade | 幂等、重复扣款 |
@@ -95,6 +96,8 @@ flowchart TB
 | Settlement Service | 根据结果结算 position | 结果争议和 void |
 | Reconciliation | 对账 provider、内部账、链上、资金 | 漏单、错账、重复成交 |
 | Contract Adapter | 对接 Prediction 合约或后续扩展指令 | 链上能力与 RFQ 生命周期不完全匹配 |
+
+前端不直接消费 provider ID，也不因为 provider 同步了更多盘口就自动扩张可见范围；所有新比赛和盘口必须经过内部白名单、映射和状态归一化。
 
 ## 5. RFQ 状态机
 
@@ -106,11 +109,13 @@ stateDiagram-v2
   requested --> quoted
   requested --> rejected
   requested --> failed
-  quoted --> accepted
+  quoted --> trade_pending
   quoted --> expired
-  accepted --> consumed
-  accepted --> failed
+  trade_pending --> consumed
+  trade_pending --> failed
 ```
+
+`trade_pending` 表示用户已确认，系统正在执行 provider accept、资金记账和 trade 落库。只有生成 trade 后才写入 `accepted_odds`；quote 阶段只能保存 `quoted_odds`。
 
 ### 5.2 卖出 quote
 
@@ -120,11 +125,13 @@ stateDiagram-v2
   requested --> quoted
   requested --> unavailable
   requested --> failed
-  quoted --> accepted
+  quoted --> trade_pending
   quoted --> expired
-  accepted --> consumed
-  accepted --> failed
+  trade_pending --> consumed
+  trade_pending --> failed
 ```
+
+sell quote 在 `trade_pending` 后仍需重新校验 `available_shares` 和 position version，避免并发卖出导致超卖。
 
 ### 5.3 position
 
@@ -159,7 +166,7 @@ sequenceDiagram
   FE->>BE: POST /rfq/quote
   BE->>MM: requestQuote(buy)
   MM-->>BE: provider_quote_id, odds, expires_at
-  BE-->>FE: quote_id, accepted_odds, shares, ttl
+  BE-->>FE: quote_id, quoted_odds, shares, ttl
   U->>FE: 确认买入
   FE->>TS: POST /rfq/trade
   TS->>MM: acceptQuote(provider_quote_id)
@@ -171,9 +178,10 @@ sequenceDiagram
 
 关键要求：
 
-- `quote_id` 和 `client_trade_id` 都必须幂等。
+- `quote_id`、`client_quote_id` 和 `client_trade_id` 都必须幂等。
 - 确认时如果 quote 过期或 provider 返回赔率变化，不得静默成交。
 - 成交写入 `accepted_odds`，不可被后续价格刷新覆盖。
+- quote 阶段不应命名或展示 `accepted_odds`，避免把“可报价”误读为“已成交锁价”。
 
 ## 7. 卖出流程
 
@@ -215,6 +223,45 @@ if sold_shares == available_shares:
   position.available_shares = 0
 ```
 
+并发卖出建议：
+
+```text
+sell_quote 阶段：校验 available_shares，可选择软锁或仅返回预估。
+sell_trade 阶段：使用 position.version / CAS 再次校验。
+if position_changed:
+  reject with POSITION_CHANGED
+  require new sell quote
+```
+
+如果 provider 不支持 sell quote，产品与后端必须在上线前选择降级策略：不开放卖出入口、由内部风险账户承接退出报价，或接入二级流动性方案。不能在技术方案中默认 provider 一定支持退出报价。
+
+## 7A. 幂等、资金原子性与安全
+
+### 7A.1 幂等与二次确认
+
+| 操作 | 幂等键 | 预期行为 |
+|------|--------|----------|
+| quote | `account_id + client_quote_id` | 重试返回同一 quote 或最终失败状态 |
+| trade | `account_id + client_trade_id` | 重试返回同一 trade，不重复扣款 |
+| sell quote | `account_id + client_quote_id` | 重试返回同一 sell quote 或最终失败状态 |
+| sell trade | `account_id + client_trade_id` | 重试返回同一 sell trade，不重复扣减 shares |
+
+同一 quote 被消费后再次确认，应返回原 trade 的最终状态；已过期、已失败、账户不匹配或 position 已变化时必须明确拒绝。
+
+### 7A.2 资金原子性
+
+- quote 阶段默认不冻结资金，只做余额和限额预校验。
+- trade confirm 必须原子执行余额校验、provider accept、cashbook、trade ledger 和 position update。
+- provider accept 成功但内部落账失败，必须进入 Reconciliation 补偿队列。
+- 内部扣款成功但 provider 失败，必须回滚资金或写冲正流水。
+
+### 7A.3 安全与防重放
+
+- 用户请求必须通过登录态和账户鉴权，不能只信任请求体 `account_id`。
+- provider trade callback、settlement feed 和 webhook 需要签名校验或 mTLS。
+- quote / trade confirm 需要保存请求摘要、provider 响应摘要、幂等键和 correlation id。
+- 管理后台人工处理必须写审计日志，保留操作者、原因、前后资金和 position 差异。
+
 ## 8. Settlement
 
 ### 8.1 结果来源
@@ -222,9 +269,11 @@ if sold_shares == available_shares:
 建议优先级：
 
 1. 官方赛事结果源。
-2. 做市商 settlement feed。
+2. provider settlement feed。
 3. 内部运营确认。
 4. 争议仲裁流程。
+
+官方结果应作为最终权威。provider settlement feed 可作为自动化输入，但当 provider 结果与官方结果冲突时，不得自动结算，应进入 `disputed` / `manual_review`。
 
 ### 8.2 状态
 
@@ -277,9 +326,10 @@ void 时不得简单删除 trade，应保留完整审计链路：
 #### 第一阶段
 
 - RFQ quote、provider 交互、position 和 sell 全部链下管理。
-- 买入成交可根据需要同步为 Prediction order。
-- 最终 settlement 可复用 `prediction_settle_v3` 或链下清算后写 cashbook。
+- 买入成交如需链上记录，应同步为 Prediction order，并保存业务 `trade_id` 与链上 `PredictionOrder.trade_id: u64` 的映射。
+- 最终 settlement 可复用 `prediction_settle_v3` 或链下清算后写 cashbook，但必须声明资金与持仓的 source of truth。
 - 重点保证用户资产、provider 成交和内部账一致。
+- 链上 `PredictionOrder.status` 仅表达 `Pending / Finish`，是业务状态机的子集，不能承载 quote、sell、disputed、failed 等完整状态。
 
 #### 第二阶段
 
@@ -301,7 +351,9 @@ void 时不得简单删除 trade，应保留完整审计链路：
 | provider timeout | 熔断或降级 |
 | odds jump | 大幅赔率变化时暂停确认 |
 | market suspended | provider 暂停时前端禁用交易 |
-| sell liquidity | 做市商无法提供退出报价时明确提示 |
+| sell liquidity | provider 无法提供退出报价时，用户侧提示“当前暂无法提供退出报价” |
+| replay attack | 幂等键、签名和请求摘要防止重复确认 |
+| concurrent sell | position version / CAS 防止超卖 |
 
 ## 11. Reconciliation
 
@@ -314,6 +366,7 @@ void 时不得简单删除 trade，应保留完整审计链路：
 - Prediction order 与内部 trade。
 - settlement payout 与结果源。
 - void / refund / manual adjustment。
+- reversed / adjustment 如后续引入，必须单独对齐 provider 事件、cashbook 冲销和 position 回滚。
 
 建议对账结果状态：
 
@@ -343,21 +396,23 @@ void 时不得简单删除 trade，应保留完整审计链路：
 
 调整：
 
-- AMM 文案改为 RFQ。
-- `price impact` 改为做市商价差、报价偏移或报价有效期。
-- 买入按钮语义改为获取 / 确认 RFQ 报价。
-- 卖出语义改为获取退出报价 / 反向 RFQ。
-- 错误提示改为 provider reject / timeout / odds changed / quote expired。
+- 用户可见文案从 AMM 池、价格影响、流动性池改为最新报价、报价有效期、退出报价和报价暂不可用。
+- 技术字段可以保留 RFQ、provider、quote、provider spread，但不直接展示给用户。
+- 买入按钮语义改为获取报价 / 确认买入。
+- 卖出语义改为获取退出报价 / 确认卖出。
+- 错误提示用产品语言表达：报价已过期、报价已变化、报价暂不可用、报价请求超时、市场暂停。
 
 ### 12.2 Design Board 对比重点
 
-| v6.0 AMM | v7.0 RFQ |
+| v6.0 AMM | v7.0 报价交易 |
 |----------|----------|
-| 内部 pool quote | 外部做市商 RFQ quote |
-| price impact | quote TTL / provider spread / odds changed |
-| AMM liquidity | provider limit / market suspension |
-| AMM sell | reverse RFQ sell |
-| pool reserve / liquidity state | Provider Adapter / Quote Ledger / Reconciliation |
+| 内部 pool quote | 最新报价 / 报价有效期 |
+| price impact | 报价变化 / 报价暂不可用 |
+| AMM liquidity | 市场暂停 / 限额 / 退出报价不可用 |
+| AMM sell | 获取退出报价后卖出 |
+| pool reserve / liquidity state | 技术侧由 Provider Adapter / Quote Ledger / Reconciliation 承接 |
+
+Design Board 必须覆盖当前 17/17 差异项：页面、单场市场、赛事级市场、买入、卖出、Portfolio、异常、结算、术语、首页冠军与晋级入口、全局旧浮动条隔离和实现文件覆盖核对。串关、Cash Out、传统投注单、传统浮动条等历史能力只能写成本版本暂不交付 / 后续待确认，不能写成永久删除。
 
 ## 13. 迁移步骤
 
@@ -367,7 +422,8 @@ void 时不得简单删除 trade，应保留完整审计链路：
 2. 定义内部 match / market / outcome 映射。
 3. 新增 RFQ quote / trade / sell quote / sell trade API。
 4. 建立 Quote Ledger、Trade Ledger、Position Service。
-5. 前端 mock 切换到 v7.0 RFQ 文案和字段。
+5. 前端 mock 切换到 v7.0 报价交易文案和字段，用户侧不暴露 RFQ / provider / 做市商术语。
+6. 补齐幂等、资金原子性、provider 签名、并发卖出和 position version 规则。
 
 ### P1
 
@@ -375,6 +431,7 @@ void 时不得简单删除 trade，应保留完整审计链路：
 2. 接入 Prediction 合约买入记录和结算。
 3. 建立 provider / internal / chain 对账。
 4. 完善 void、dispute、manual review。
+5. 明确 provider 不支持 sell quote 时的产品降级方案。
 
 ### P2
 
