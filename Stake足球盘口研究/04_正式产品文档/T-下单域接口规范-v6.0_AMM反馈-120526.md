@@ -124,6 +124,7 @@ POST /api/v1/soccer/amm/trade
 GET  /api/v1/soccer/amm/positions
 GET  /api/v1/soccer/amm/trades
 GET  /api/v1/soccer/amm/portfolio
+GET  /api/v1/soccer/amm/market_liquidity
 GET  /api/v1/soccer/amm/settlements
 GET  /api/v1/soccer/amm/price_preference
 PUT  /api/v1/soccer/amm/price_preference
@@ -152,13 +153,30 @@ PUT  /api/v1/soccer/amm/price_preference
 | `order_group_id` | 不进入 v6 主流程 | 无多笔单注 / 串关组 |
 | `order_type` | 不进入 v6 主流程 | 移除 single / parlay |
 | `action` | `side` | buy / sell |
-| `notional_dollars` | `collateral_amount` | 买入投入或卖出收回金额 |
+| `notional_dollars` | `collateral_amount` / `net_collateral_out` | 买入输入用 `collateral_amount`；卖出输入用 `shares`，响应返回预计或实际收回金额 |
 | `decimal_odds` | `display_decimal_odds` | 只展示换算 |
 | `yes_price_dollars` | `share_price` | 份额价格 |
 | `max_payout_dollars` | `settlement_payout` | 仅结算后返回 |
 | `legs` | `outcome_id` | 一次 trade 针对一个 outcome |
 | `status` | `trade_status` / `position_status` | 成交状态和持仓状态分离 |
 | `outcome` | `settlement_outcome` | 结算结果，不是交易选项 |
+
+### 4.4 状态机与资金 / 持仓一致性
+
+接口规范需要明确 quote、trade、position 三类状态不能混用：
+
+| 对象 | 状态建议 | 说明 |
+|------|----------|------|
+| Quote | `ready / expired / invalidated / consumed / failed` | quote 是临时价格承诺，过期或失效后不能成交 |
+| Trade | `filled / failed` | v6 AMM 只接受整笔成交或整笔失败，不引入挂起订单状态 |
+| Position | `active / reduced / closed / settled_won / settled_lost / void_refunded` | position 是用户资产视图，随买入、卖出和结算更新 |
+
+资金和持仓一致性建议：
+
+- 买入 trade 必须在同一事务或同一账本批次内完成资金扣减、手续费入账、份额增加和 trade 记录落库。
+- 卖出 trade 必须在同一事务或同一账本批次内完成份额扣减、收回金额入账、已实现盈亏计算和 trade 记录落库。
+- 任一环节失败时，整笔 trade 失败，不生成半完成 position。
+- 对外返回的 `position_shares`、`available_shares`、`realized_pnl` 必须来自成交后的同一份 position snapshot。
 
 ## 5. v6.0 接口示例
 
@@ -244,7 +262,7 @@ Content-Type: application/json
     "estimated_collateral_out": "27.40",
     "fee": "0.16",
     "net_collateral_out": "27.24",
-    "realized_pnl": "2.05",
+    "realized_pnl": "-0.56",
     "remaining_shares": "129.8561",
     "remaining_position_value": "70.64",
     "quote_expires_at": "2026-05-13T09:35:45+08:00"
@@ -352,13 +370,14 @@ GET /api/v1/soccer/amm/portfolio?account_id=1001
 | 42002 | OUTCOME_NOT_FOUND | outcome 不存在 | 刷新市场 |
 | 42003 | QUOTE_EXPIRED | quote 过期 | 重新询价 |
 | 42004 | MARKET_PAUSED | 市场暂停 | 展示暂停提示 |
-| 42005 | INSUFFICIENT_BALANCE | 余额不足 | 降低金额或充值 |
-| 42006 | INSUFFICIENT_SHARES | 可卖份额不足 | 降低卖出份额 |
-| 42007 | INSUFFICIENT_LIQUIDITY | 流动性不足 | 降低金额或稍后再试 |
-| 42008 | PRICE_IMPACT_TOO_HIGH | 价格影响超阈值 | 降低金额 |
-| 42009 | SLIPPAGE_EXCEEDED | 成交滑点超保护 | 重新 quote |
-| 42010 | DUST_POSITION | 卖出后剩余价值过低 | 提示全部卖出 |
-| 42011 | DUPLICATE_CLIENT_TRADE_ID | 幂等键重复 | 返回原 trade 或提示重复 |
+| 42005 | MARKET_CLOSED | 市场已关闭 | 禁用交易入口 |
+| 42006 | INSUFFICIENT_BALANCE | 余额不足 | 降低金额或充值 |
+| 42007 | INSUFFICIENT_SHARES | 可卖份额不足 | 降低卖出份额 |
+| 42008 | INSUFFICIENT_LIQUIDITY | 流动性不足 | 降低金额或稍后再试 |
+| 42009 | PRICE_IMPACT_TOO_HIGH | 价格影响超阈值 | 降低金额 |
+| 42010 | SLIPPAGE_EXCEEDED | 成交滑点超保护 | 重新 quote |
+| 42011 | DUST_POSITION | 卖出后剩余价值过低 | 提示全部卖出 |
+| 42012 | DUPLICATE_CLIENT_TRADE_ID | 幂等键重复 | 返回原 trade 或提示重复 |
 | 50001 | INTERNAL_ERROR | 系统错误 | 稍后重试 |
 
 ## 7. 兼容层建议

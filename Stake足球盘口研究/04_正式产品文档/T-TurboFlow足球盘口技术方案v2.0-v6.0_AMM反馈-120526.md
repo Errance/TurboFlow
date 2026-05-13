@@ -315,7 +315,51 @@ sequenceDiagram
   Trade-->>Frontend: trade filled + updated position
 ```
 
-### 5.3 失败处理
+### 5.3 部分卖出流程
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Pricing
+  participant Trade
+  participant Position
+  participant Account
+
+  User->>Frontend: 输入少于 available_shares 的 shares
+  Frontend->>Pricing: POST /quote side=sell shares
+  Pricing->>Position: 校验 shares < available_shares
+  Pricing-->>Frontend: quote(net_out, realized_pnl, remaining_shares)
+  User->>Frontend: 确认部分卖出
+  Frontend->>Trade: POST /trade quote_id
+  Trade->>Position: 扣减 shares，保留剩余 position
+  Trade->>Account: 增加 net collateral
+  Trade-->>Frontend: trade filled + reduced position snapshot
+```
+
+### 5.4 全部卖出流程
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Pricing
+  participant Trade
+  participant Position
+  participant Account
+
+  User->>Frontend: 点击 Max / 全部卖出
+  Frontend->>Position: 读取 available_shares
+  Frontend->>Pricing: POST /quote side=sell shares=available_shares
+  Pricing-->>Frontend: quote(net_out, realized_pnl, remaining_shares=0)
+  User->>Frontend: 确认全部卖出
+  Frontend->>Trade: POST /trade quote_id
+  Trade->>Position: 扣减全部 shares，关闭 position
+  Trade->>Account: 增加 net collateral
+  Trade-->>Frontend: trade filled + closed position snapshot
+```
+
+### 5.5 失败处理
 
 ```mermaid
 flowchart TD
@@ -379,6 +423,18 @@ stateDiagram-v2
 | `settled_won` | 正确 outcome |
 | `settled_lost` | 错误 outcome |
 | `void_refunded` | 市场 void 后退款 |
+
+### 6.5 Settlement 状态
+
+| 状态 | 说明 |
+|------|------|
+| `pending_result` | 市场已关闭，等待官方结果 |
+| `resolving` | 正在确认 winning outcome、void 或争议状态 |
+| `settled` | 已完成正确 outcome 兑付和错误 outcome 归零 |
+| `voided` | 已按 void 规则完成退款 |
+| `disputed` | 官方结果争议、改判或数据源冲突，暂停兑付 |
+
+Settlement 状态变更必须触发 position 和 portfolio 刷新，不能只更新 market 状态。
 
 ## 7. 链上 / 链下边界方案
 
