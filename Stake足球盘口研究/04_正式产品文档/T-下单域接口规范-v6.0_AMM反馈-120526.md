@@ -1,307 +1,401 @@
-# T-下单域接口规范 v6.0 AMM 反馈
+# T-下单域接口规范 v6.0 AMM 适配审计报告
 
-## 反馈结论
+审计对象：`T-下单域接口规范-120526-015505.pdf`
 
-当前《下单域接口规范》不能作为足球 v6.0 AMM 主流程接口规范直接进入开发。
+适配目标：`TurboFlow足球AMM预测市场产品需求文档_v6.0.md`
 
-该文档的核心模型仍是传统体育下注域：`Order`、`OrderLeg`、`single / parlay`、`decimal_odds`、`notional_dollars`、`max_payout_dollars`、撤单窗口、赔率 CAS、注单结算和链上派奖。它适合 v5.0 平台报价型传统盘口，或作为历史兼容接口保留，但与当前足球 v6.0 AMM 预测市场的交易模型不一致。
+审计视角：产品经理、资深前端开发、资深后端开发
 
-足球 v6.0 的接口主线应改为 `quote / trade / positions / trades / portfolio / settlement / price_preference`，并以 `outcome / shares / position / avg_price / price_impact / fee / quote_expires_at` 为核心字段。欧洲赔率只能作为展示换算，不能再作为下单权威字段。
+## 1. 总体结论
 
-## 与当前 v6.0 口径冲突的关键点
+原《下单域接口规范》不适合作为足球 v6.0 AMM 主流程接口规范直接实施。它的核心模型是传统下注域：`Order`、`OrderLeg`、`single / parlay`、`decimal_odds`、`notional_dollars`、撤单、赔率 CAS、注单结算和链上派奖。该模型适合 v5.0 平台报价型传统盘口，不能承载 v6.0 的 outcome 份额交易和 position 生命周期。
 
-### 1. 资源模型仍是注单，不是 AMM position
+v6.0 主接口应从 `order / bet` 域切换为 AMM 交易域：
 
-原规范以 `/api/v1/portfolio/orders` 为主入口，返回 `OrderView[]`，并围绕 `order_id`、`order_group_id`、`legs`、`status`、`outcome` 管理生命周期。
+- 交易前：`quote`
+- 交易执行：`trade`
+- 持仓管理：`positions`
+- 成交记录：`trades`
+- 资产聚合：`portfolio`
+- 市场状态：`markets` / `market_liquidity`
+- 结算兑付：`settlement`
+- 展示偏好：`price_preference`
 
-v6.0 中用户不是提交传统注单，而是买入 outcome 预测份额并形成 position。用户后续可以继续买入、部分卖出、全部卖出或等待结算。接口层必须能表达：
+旧接口可以保留为 v5 兼容层或非足球历史能力，但不能继续作为 `/soccer` v6 主流程的调用契约。
 
-- 当前持仓份额。
-- 平均成本。
-- 当前份额价格。
-- 持仓市值。
-- 已实现盈亏。
-- 未实现盈亏。
-- 可卖份额。
-- 卖出后剩余份额。
+## 2. 产品经理视角审计
 
-原规范只描述注单的 `won / lost / refunded / cancelled / rejected`，无法表达 position 的连续生命周期。
+### 2.1 用户心智不一致
 
-### 2. `decimal_odds` 被设计为权威字段，违反 v6.0 价格主口径
+原接口的用户心智是“用户提交注单，平台按赔率结算”。v6.0 的用户心智是“用户买入 outcome 份额，形成 position，可继续买入、部分卖出、全部卖出或等待结算”。
 
-原规范明确 `decimal_odds` 是权威字段，`yes_price_dollars = 1 / decimal_odds` 只是派生字段，并建议生产环境直接传 `decimal_odds`。
+必须从产品术语上切换：
 
-v6.0 的主价格是“概率 + 份额价格”，例如 `55% + Buy Yes 55¢`。欧洲赔率只是展示换算，不是成交承诺，也不能参与 quote、trade、settlement 的权威计算。
+| 原接口术语 | v6.0 术语 | 处理建议 |
+|------------|-----------|----------|
+| Order / 注单 | Trade + Position | 用户成交形成持仓，不再以注单为中心 |
+| Leg / 注单腿 | Outcome | 一个市场下的可交易结果 |
+| Stake / 押注金额 | Collateral Amount | 买入投入或卖出收回的 USDT |
+| Decimal Odds | Display Decimal Odds | 仅展示换算，不能作为权威交易字段 |
+| Max Payout | Settlement Payout | 仅结算后产生，不能作为买入时承诺 |
+| Cancel | Sell Trade | 成交后退出风险只能通过卖出份额 |
+| Parlay | 不进入 v6 主流程 | 不出现在 `/soccer` AMM 主流程 |
 
-需要调整为：
+### 2.2 页面体验缺口
 
-- `probability` 和 `share_price` 是展示口径。
-- `avg_price`、`end_price`、`price_impact`、`fee` 来自 AMM quote。
-- `decimal_odds` 只允许作为 response 中的展示换算字段。
-- request 不应要求客户端提交 `decimal_odds` 做 CAS。
+原接口只支持“创建 / 撤单 / 查询订单”，无法满足 v6.0 页面：
 
-### 3. `single / parlay / legs` 不属于 v6 主流程
+- `/soccer` 首页需要展示概率 + 份额价格、`24h Vol.`、价格格式偏好。
+- `/soccer/match/:matchId` 需要点击 outcome 后生成 quote。
+- `/soccer/futures/:competitionId` 需要长期市场的关闭时间、官方来源、position 管理。
+- `/soccer/mybets` 已变成 Portfolio / 我的持仓，需要 position、盈亏、成交历史。
+- `/soccer/design-board` 要证明页面 5/5、单场 7/7、赛事级 11/11、状态和移除项已覆盖。
 
-原规范支持：
+### 2.3 产品验收口径
 
-- 单笔单注。
-- 多笔单注。
-- 串关。
-- `OrderLeg[]`。
-- `order_type = single / parlay`。
-- 串关同场互斥矩阵。
+接口改造后的验收应围绕以下用户结果：
 
-当前足球 v6.0 明确不把传统投注单、串关、多笔单注作为主流程。市场覆盖只保留单场 7/7 和冠军与晋级 11/11，但交易语义全部改为 AMM outcome。接口规范不应再以 `legs` 和 `parlay` 组织用户交易。
+| 验收项 | 应满足 |
+|--------|--------|
+| 买入 | 用户选择 outcome，输入金额，看到 quote 后成交并生成 position |
+| 部分卖出 | 用户输入少于可卖份额的 shares，成交后剩余 position 更新 |
+| 全部卖出 | 用户点击 Max / 全部卖出，position 关闭或归零 |
+| quote 失败 | quote 过期、流动性不足、价格影响过高、市场暂停时整笔失败 |
+| Portfolio | 展示份额、均价、现价、市值、已实现 / 未实现盈亏和成交历史 |
+| 价格展示 | 默认概率 + 份额价格；欧洲赔率仅展示换算 |
 
-建议处理：
+## 3. 前端视角审计
 
-- 将 `single / parlay / legs` 从 v6 足球 AMM 主接口移除。
-- 如需保留，应放入“v5 传统投注兼容接口”或“非足球历史接口”。
-- 不要在 `/soccer` v6 客户端调用链路中暴露 parlay 概念。
+### 3.1 前端不应再消费 OrderView 作为主数据
 
-### 4. `action=buy` 单向下注不支持 v6 卖出能力
+原 `OrderView[]` 对前端不够用。v6.0 前端至少需要四类数据：
 
-原规范 Phase 1 只支持 `action=buy`，并说明没有二级市场、平台坐庄、没有 SELL 场景。
+| 页面 / 组件 | 需要的数据 |
+|-------------|------------|
+| `MatchListCard` | outcome 概率、份额价格、24h Vol.、价格格式偏好 |
+| `AmmMarketRenderer` | market、outcome、状态、24h Vol.、24h 涨跌幅 |
+| `AmmTradePanel` | selected outcome、quote、余额、position、错误状态 |
+| `AmmPortfolioPanel` | positions、trades、portfolio summary、settlement records |
+| `SoccerPriceFormatToggle` | price preference |
 
-v6.0 明确要求：
+### 3.2 前端状态消费建议
 
-- 买入份额。
-- 卖出份额。
-- 部分卖出。
-- 全部卖出。
-- 卖出 quote 展示预计收回金额、本次已实现盈亏、卖出后剩余份额。
+前端应以 quote / trade / position 状态驱动 UI：
 
-因此接口必须支持 `side = buy | sell`，并区分买入输入金额与卖出输入份额。卖出不是撤单，也不是 Cash Out，而是用户通过 AMM 即时报价主动卖出 position。
+| 状态 | 前端表现 |
+|------|----------|
+| `quote.ready` | 展示成交均价、份额、价格影响、手续费、过期时间 |
+| `quote.expired` | 主按钮禁用或提示重新询价 |
+| `market.paused` | outcome 卡禁用，交易面板提示暂停 |
+| `trade.submitting` | 按钮 loading，防重复提交 |
+| `trade.filled` | toast 成功，刷新 position 和 portfolio |
+| `trade.failed` | toast 错误，保留用户输入，要求重新 quote |
+| `position.active` | Portfolio 展示卖出入口 |
+| `position.settled` | Portfolio 展示兑付结果 |
+| `position.void_refunded` | Portfolio 展示退款结果 |
 
-### 5. 撤单接口不应进入 v6 AMM 主流程
+### 3.3 前端错误提示建议
 
-原规范提供 `/api/v1/portfolio/orders/cancel`，支持按订单 ID、客户端幂等键、订单组撤单，并设置 60 秒撤单窗口。
+接口错误码应能直接映射用户文案：
 
-v6.0 是 AMM 即时 quote 交易。交易确认后即成交并更新 position，不展示订单等待、挂单、撤单或部分成交挂起。用户想退出风险，应通过卖出份额实现，而不是撤单。
+| 错误码 | 前端文案 | 用户动作 |
+|--------|----------|----------|
+| `QUOTE_EXPIRED` | 报价已过期，请重新询价 | 重新 quote |
+| `MARKET_PAUSED` | 市场暂停，恢复后需重新询价 | 等待恢复 |
+| `MARKET_CLOSED` | 市场已关闭 | 不可交易 |
+| `INSUFFICIENT_LIQUIDITY` | 当前流动性不足，请调整金额或稍后再试 | 降低金额 |
+| `PRICE_IMPACT_TOO_HIGH` | 价格影响过高，请降低金额或调整保护设置 | 降低金额 |
+| `INSUFFICIENT_BALANCE` | 余额不足 | 充值或降低金额 |
+| `INSUFFICIENT_SHARES` | 可卖份额不足 | 降低卖出份额 |
+| `DUST_POSITION` | 剩余持仓价值过低，建议全部卖出 | 点击全部卖出 |
 
-建议：
+## 4. 后端视角审计
 
-- v6 足球 AMM 主接口不提供 cancel。
-- quote 过期、市场暂停、价格影响过高、流动性不足时，trade 应整笔失败并要求重新询价。
-- 成交后只允许通过 sell trade 管理持仓。
+### 4.1 API 资源边界
 
-### 6. 状态机仍围绕链上注单回流，不符合当前前端体验
+建议不要复用 `/api/v1/portfolio/orders` 作为 v6 主入口。新接口应放在 AMM soccer 域下，避免前后端继续沿用订单语义。
 
-原规范对外状态是 `resting / canceled / executed`，内部状态是 `biz_state + chain_state`。这会把用户体验带回“注单已受理、等待链上确认、派奖回流”的传统下注心智。
+建议路径：
 
-v6.0 前端主体验应是：
+```http
+GET  /api/v1/soccer/amm/markets
+POST /api/v1/soccer/amm/quote
+POST /api/v1/soccer/amm/trade
+GET  /api/v1/soccer/amm/positions
+GET  /api/v1/soccer/amm/trades
+GET  /api/v1/soccer/amm/portfolio
+GET  /api/v1/soccer/amm/settlements
+GET  /api/v1/soccer/amm/price_preference
+PUT  /api/v1/soccer/amm/price_preference
+```
 
-- quote 生成。
-- quote 有效期。
-- trade 成交或失败。
-- position 更新。
-- settlement 兑付。
-- void 退款。
+### 4.2 幂等与一致性
 
-如果底层仍有链上交易或异步确认，也应对前端封装为 trade / position 状态，不能要求 `/soccer` 主流程展示注单状态。
+原 `client_order_id` 可迁移为：
 
-## 建议的新接口边界
+- `client_quote_id`：用于 quote 请求追踪，不保证价格永久有效。
+- `client_trade_id`：用于 trade 幂等，防重复成交。
 
-### 1. 询价接口
+规则建议：
 
-建议新增：
+- 同一账户下 `client_trade_id` 唯一。
+- 重复提交相同 `client_trade_id`，如果已成交，返回同一 `trade_id` 和 position 结果。
+- quote 过期后，即便 `client_quote_id` 相同，也必须重新生成 quote。
+- trade 必须校验 `quote_id`、`quote_expires_at`、market status、余额或 shares。
+
+### 4.3 字段映射
+
+| 原字段 | v6 字段 | 说明 |
+|--------|---------|------|
+| `order_id` | `trade_id` / `position_id` | 成交和持仓分离 |
+| `client_order_id` | `client_trade_id` | 成交幂等键 |
+| `order_group_id` | 不进入 v6 主流程 | 无多笔单注 / 串关组 |
+| `order_type` | 不进入 v6 主流程 | 移除 single / parlay |
+| `action` | `side` | buy / sell |
+| `notional_dollars` | `collateral_amount` | 买入投入或卖出收回金额 |
+| `decimal_odds` | `display_decimal_odds` | 只展示换算 |
+| `yes_price_dollars` | `share_price` | 份额价格 |
+| `max_payout_dollars` | `settlement_payout` | 仅结算后返回 |
+| `legs` | `outcome_id` | 一次 trade 针对一个 outcome |
+| `status` | `trade_status` / `position_status` | 成交状态和持仓状态分离 |
+| `outcome` | `settlement_outcome` | 结算结果，不是交易选项 |
+
+## 5. v6.0 接口示例
+
+### 5.1 买入 quote
+
+请求：
 
 ```http
 POST /api/v1/soccer/amm/quote
+Content-Type: application/json
 ```
-
-请求字段建议：
 
 ```json
 {
   "account_id": "1001",
-  "market_id": "match_100123_result_1x2",
-  "outcome_id": "home",
+  "client_quote_id": "quote_cli_20260513_001",
+  "market_id": "match_botafogo_mirassol_result_1x2",
+  "outcome_id": "home_win",
   "side": "buy",
-  "collateral_amount": "100",
-  "shares": null,
-  "max_slippage": "0.03",
-  "client_quote_id": "quote_..."
+  "collateral_amount": "100.00",
+  "max_slippage": "0.0300"
 }
 ```
 
-买入时使用 `collateral_amount`，卖出时使用 `shares`。接口应返回：
+响应：
 
-- `quote_id`
-- `side`
-- `outcome_id`
-- `probability`
-- `share_price`
-- `avg_price`
-- `end_price`
-- `price_impact`
-- `fee`
-- `shares`
-- `collateral_amount`
-- `min_shares_out`
-- `min_collateral_out`
-- `quote_expires_at`
-- `risk_warnings`
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "quote_id": "q_7283901020001",
+    "side": "buy",
+    "market_id": "match_botafogo_mirassol_result_1x2",
+    "outcome_id": "home_win",
+    "probability": "0.5520",
+    "share_price": "0.5520",
+    "display_decimal_odds": "1.81",
+    "collateral_amount": "100.00",
+    "estimated_shares": "179.8561",
+    "avg_price": "0.5560",
+    "end_price": "0.5600",
+    "price_impact": "0.0080",
+    "fee": "0.60",
+    "max_loss": "100.60",
+    "min_shares_out": "174.4604",
+    "quote_expires_at": "2026-05-13T09:35:30+08:00"
+  }
+}
+```
 
-### 2. 成交接口
+### 5.2 卖出 quote
 
-建议新增：
+请求：
+
+```json
+{
+  "account_id": "1001",
+  "client_quote_id": "quote_cli_20260513_002",
+  "market_id": "match_botafogo_mirassol_result_1x2",
+  "outcome_id": "home_win",
+  "side": "sell",
+  "position_id": "pos_9001",
+  "shares": "50.0000",
+  "max_slippage": "0.0300"
+}
+```
+
+响应：
+
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "quote_id": "q_7283901020002",
+    "side": "sell",
+    "position_id": "pos_9001",
+    "outcome_id": "home_win",
+    "shares": "50.0000",
+    "avg_price": "0.5480",
+    "end_price": "0.5440",
+    "estimated_collateral_out": "27.40",
+    "fee": "0.16",
+    "net_collateral_out": "27.24",
+    "realized_pnl": "2.05",
+    "remaining_shares": "129.8561",
+    "remaining_position_value": "70.64",
+    "quote_expires_at": "2026-05-13T09:35:45+08:00"
+  }
+}
+```
+
+### 5.3 执行 trade
+
+请求：
 
 ```http
 POST /api/v1/soccer/amm/trade
+Content-Type: application/json
 ```
-
-请求字段建议：
 
 ```json
 {
   "account_id": "1001",
-  "quote_id": "quote_...",
-  "client_trade_id": "trade_...",
-  "max_slippage": "0.03"
+  "quote_id": "q_7283901020001",
+  "client_trade_id": "trade_cli_20260513_001"
 }
 ```
 
-返回字段建议：
+响应：
 
-- `trade_id`
-- `position_id`
-- `side`
-- `outcome_id`
-- `shares`
-- `avg_price`
-- `fee`
-- `collateral_delta`
-- `realized_pnl`
-- `remaining_shares`
-- `position_market_value`
-- `created_at`
-
-失败场景必须明确区分：
-
-- `QUOTE_EXPIRED`
-- `MARKET_PAUSED`
-- `MARKET_CLOSED`
-- `INSUFFICIENT_LIQUIDITY`
-- `PRICE_IMPACT_TOO_HIGH`
-- `INSUFFICIENT_BALANCE`
-- `INSUFFICIENT_SHARES`
-
-### 3. 持仓与成交查询
-
-建议新增：
-
-```http
-GET /api/v1/soccer/amm/positions
-GET /api/v1/soccer/amm/trades
-GET /api/v1/soccer/amm/portfolio
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "trade_id": "tr_7283901021001",
+    "position_id": "pos_9001",
+    "side": "buy",
+    "market_id": "match_botafogo_mirassol_result_1x2",
+    "outcome_id": "home_win",
+    "shares": "179.8561",
+    "avg_price": "0.5560",
+    "fee": "0.60",
+    "collateral_delta": "-100.60",
+    "position_shares": "179.8561",
+    "position_avg_price": "0.5560",
+    "created_at": "2026-05-13T09:35:02+08:00"
+  }
+}
 ```
 
-position 必须返回：
-
-- `position_id`
-- `market_id`
-- `outcome_id`
-- `outcome_label`
-- `shares`
-- `available_shares`
-- `avg_price`
-- `current_price`
-- `market_value`
-- `realized_pnl`
-- `unrealized_pnl`
-- `settlement_status`
-
-### 4. 市场与结算接口
-
-建议新增或补齐：
+### 5.4 Portfolio 查询
 
 ```http
-GET /api/v1/soccer/amm/markets
-GET /api/v1/soccer/amm/market_liquidity
-GET /api/v1/soccer/amm/settlements
+GET /api/v1/soccer/amm/portfolio?account_id=1001
 ```
 
-每个 market 需要具备 v6.0 PRD 要求的解释字段：
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "summary": {
+      "portfolio_value": "318.42",
+      "realized_pnl": "12.35",
+      "unrealized_pnl": "8.74",
+      "open_positions": 3
+    },
+    "positions": [
+      {
+        "position_id": "pos_9001",
+        "subject_label": "RJ博塔弗戈 vs 米拉索尔",
+        "market_title": "胜平负",
+        "outcome_label": "RJ博塔弗戈",
+        "shares": "179.8561",
+        "available_shares": "179.8561",
+        "avg_price": "0.5560",
+        "current_price": "0.5720",
+        "display_decimal_odds": "1.75",
+        "market_value": "102.88",
+        "realized_pnl": "0.00",
+        "unrealized_pnl": "2.88",
+        "status": "active"
+      }
+    ],
+    "recent_trades": [
+      {
+        "trade_id": "tr_7283901021001",
+        "side": "buy",
+        "outcome_label": "RJ博塔弗戈",
+        "shares": "179.8561",
+        "avg_price": "0.5560",
+        "fee": "0.60",
+        "created_at": "2026-05-13T09:35:02+08:00"
+      }
+    ]
+  }
+}
+```
 
-- `question_title`
-- `outcomes`
-- `resolution_rule`
-- `resolution_source`
-- `expected_resolution_time`
-- `void_rule`
-- `delay_or_dispute_policy`
-- `status`
-- `status_reason`
+## 6. 错误码建议
 
-## 与原规范的保留建议
+建议保留统一响应封装，但错误语义从下注域改为 AMM trade 域。
 
-原规范中仍有可复用内容，但应降级为基础设施或兼容层：
+| Code | Key | 触发场景 | 前端处理 |
+|------|-----|----------|----------|
+| 0 | OK | 成功 | 正常渲染 |
+| 42001 | MARKET_NOT_OPEN | market 非 open | 禁用交易 |
+| 42002 | OUTCOME_NOT_FOUND | outcome 不存在 | 刷新市场 |
+| 42003 | QUOTE_EXPIRED | quote 过期 | 重新询价 |
+| 42004 | MARKET_PAUSED | 市场暂停 | 展示暂停提示 |
+| 42005 | INSUFFICIENT_BALANCE | 余额不足 | 降低金额或充值 |
+| 42006 | INSUFFICIENT_SHARES | 可卖份额不足 | 降低卖出份额 |
+| 42007 | INSUFFICIENT_LIQUIDITY | 流动性不足 | 降低金额或稍后再试 |
+| 42008 | PRICE_IMPACT_TOO_HIGH | 价格影响超阈值 | 降低金额 |
+| 42009 | SLIPPAGE_EXCEEDED | 成交滑点超保护 | 重新 quote |
+| 42010 | DUST_POSITION | 卖出后剩余价值过低 | 提示全部卖出 |
+| 42011 | DUPLICATE_CLIENT_TRADE_ID | 幂等键重复 | 返回原 trade 或提示重复 |
+| 50001 | INTERNAL_ERROR | 系统错误 | 稍后重试 |
 
-- `client_order_id` 的幂等思想可迁移为 `client_quote_id`、`client_trade_id`。
-- 认证分阶段方案可保留，但应适配 AMM trade 域。
-- 统一业务错误码可保留，但错误语义要从 bet/order 改为 quote/trade/position。
-- 账户镜像、链上回流、对账能力可作为底层资金基础设施。
-- ticker 的三段式定位可参考，但 v6 主字段应优先使用 `market_id + outcome_id`。
+## 7. 兼容层建议
 
-## 需要从 v6 主规范移除或隔离的内容
+原 `/api/v1/portfolio/orders` 可以保留，但必须隔离：
 
-以下内容不应出现在足球 v6 AMM 主接口中：
+- 标记为 v5 传统下注域兼容接口。
+- 不被 `/soccer` v6 页面调用。
+- 不向 v6 Design Board 证明主流程能力。
+- 不在 v6 接口规范中作为主路径。
+- 如历史数据需要展示，应转换为历史记录，不混入 AMM position。
 
-- `/api/v1/portfolio/orders` 作为主入口。
-- `/api/v1/portfolio/orders_bulk` 作为主交易能力。
-- `/api/v1/portfolio/orders/cancel` 作为退出风险能力。
-- `order_type = single / parlay`。
-- `legs`。
-- `decimal_odds` 作为权威请求字段。
-- `max_payout_dollars`。
-- `payout_dollars`。
-- `accepted_at` 表达“接受最新赔率”。
-- 赔率 CAS。
-- 串关同场互斥矩阵。
-- `action=buy` 单向下单限制。
-- “平台坐庄、没有 SELL 场景”的差异说明。
-
-## 修订优先级
+## 8. 修订优先级
 
 ### P0 必须修改
 
-- 将主接口从 order 改为 quote / trade / position。
+- 主接口从 order 改为 quote / trade / position。
 - 移除 v6 主流程中的 parlay、legs、撤单。
-- 将 `decimal_odds` 从权威字段降级为展示换算字段。
-- 增加 sell、部分卖出、全部卖出的接口能力。
-- 增加 position 查询与 portfolio 聚合接口。
+- 将 `decimal_odds` 从权威字段降级为 `display_decimal_odds`。
+- 增加 buy / sell / partial sell / sell all。
+- 增加 Portfolio 聚合接口。
 
 ### P1 必须补齐
 
-- quote 过期、流动性不足、价格影响过高、市场暂停的错误码和可恢复建议。
-- market 状态字段与暂停原因。
-- outcome 的结算规则、void 规则和争议处理字段。
-- dust threshold 处理。
-- 价格偏好接口，支持概率 + 份额价格 / 欧洲赔率展示切换。
+- quote TTL、滑点保护、价格影响阈值。
+- market pause / resume 和暂停原因。
+- position 状态机。
+- settlement / void 字段。
+- price preference 接口。
 
-### P2 可后续细化
+### P2 后续细化
 
-- 外部流动性方契约。
-- AMM 曲线或外部报价驱动方案。
-- 链上结算与链下镜像的一致性细节。
+- 外部流动性 SLA。
+- 链上 / 链下边界。
+- 长期市场资金效率。
 - 成交历史导出。
-- 长期市场的结算争议流程。
 
-## 建议文档处理方式
+## 9. 最终建议
 
-建议将原《下单域接口规范》改名或标注为“传统下注域 / v5 兼容接口规范”，不要继续作为 v6.0 足球 AMM 的主接口设计。
-
-建议新增一份《足球 AMM 交易域接口规范 v1.0》，专门覆盖：
-
-- 单场 7/7 AMM 市场。
-- 冠军与晋级 11/11 AMM 市场。
-- quote。
-- trade。
-- position。
-- portfolio。
-- settlement。
-- market liquidity。
-- price preference。
-
-这样可以保留原下单域资产，同时避免 v6.0 开发继续沿用传统投注单语义。
+建议将原《下单域接口规范》标注为“传统下注域 / v5 兼容接口规范”，并新增《足球 AMM 交易域接口规范 v1.0》。新规范应围绕 v6.0 的五个用户动作组织：发现市场、询价、成交、管理持仓、等待结算。
