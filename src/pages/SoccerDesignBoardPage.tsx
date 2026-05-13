@@ -115,7 +115,7 @@ export default function SoccerDesignBoardPage() {
         </p>
         {activeBoardTab === 'v6' ? (
           <div className="mt-4 grid gap-2 md:grid-cols-6">
-            <Metric label="变更对比项" value="15" />
+            <Metric label="变更对比项" value="17" />
             <Metric label="v6 激活项" value={String(v6ActiveCoverage.length)} />
             <Metric label="历史对照项" value={String(legacyCoverage.length)} />
             <Metric label="本期盘口" value="7" />
@@ -124,7 +124,7 @@ export default function SoccerDesignBoardPage() {
           </div>
         ) : (
           <div className="mt-4 grid gap-2 md:grid-cols-6">
-            <Metric label="报价交易变更项" value="15/15" />
+            <Metric label="报价交易变更项" value="17/17" />
             <Metric label="页面区域" value="5/5" />
             <Metric label="单场市场" value="7/7" />
             <Metric label="赛事级市场" value="11/11" />
@@ -185,7 +185,7 @@ export default function SoccerDesignBoardPage() {
         <div className="rounded-2xl border border-[#2DD4BF]/25 bg-[#2DD4BF]/5 p-4">
           <div className="grid gap-3 md:grid-cols-3">
             <SmallState title="读法" text="从左到右看：v6 AMM 基线 → v7 报价交易目标状态。" />
-            <SmallState title="覆盖" text="页面 5/5、单场市场 7/7、赛事级市场 11/11、状态 8/8、边界说明 5/5。" />
+            <SmallState title="覆盖" text="页面 5/5、单场市场 7/7、赛事级市场 11/11、状态 8/8、边界说明 5/5、全局入口 2/2。" />
             <SmallState title="只看 UI" text="只展示按钮、文案、面板、状态、入口和价格显示等可见变化。" />
           </div>
         </div>
@@ -370,6 +370,49 @@ export default function SoccerDesignBoardPage() {
             statusTags={['术语全覆盖', '文案验收']}
             notes={['v6 基线可以保留 AMM 词作为对照。', 'v7 目标侧必须展示最新报价、报价有效期、退出报价和成交价锁定。', '欧洲赔率只能作为展示换算。']}
           />
+
+          <ChangeComparisonRow
+            index="16"
+            title="足球首页冠军与晋级入口文案"
+            scope="SoccerPage / futures competition cards"
+            summary="首页不仅有比赛列表价格列，也有冠军与晋级卡片；v7 需要把该入口的交易说明同步为报价有效期、即时询价和可交易市场。"
+            before={<V6SoccerHomeEntryCopyPreview />}
+            after={<NewSoccerHomeEntryCopyPreview />}
+            paths={['src/pages/SoccerPage.tsx', 'src/data/soccer/futuresData.ts']}
+            statusTags={['首页入口', '冠军与晋级', '文案覆盖']}
+            notes={['单场与长期市场入口都要显示同一套报价交易心智。', '卡片中的 option 标签不再使用实现术语。', '关闭时间、系列赛入口和 More 入口保留。']}
+          />
+
+          <ChangeComparisonRow
+            index="17"
+            title="全局浮动入口与旧交易条隔离"
+            scope="AppShell / ParlaySlip / SoccerBetSlipFloat"
+            summary="v6 历史浮动投注条可能因持久化旧数据在足球页出现；v7 足球路由必须只展示报价交易面板，不再显示旧串单条或足球投注单浮条。"
+            before={<V6GlobalSlipEntryPreview />}
+            after={<NewGlobalSlipEntryPreview />}
+            paths={['src/layouts/AppShell.tsx', 'src/components/soccer/SoccerBetSlipFloat.tsx', 'src/components/ParlaySlip.tsx']}
+            statusTags={['全局入口', '持久化旧数据', '足球路由隔离']}
+            notes={['进入 /soccer、/soccer/match、/soccer/futures、/soccer/mybets 时隐藏旧浮动条。', '旧组件不删除，避免越权移除历史能力。', 'v7 足球主交易入口只保留右栏交易面板和 Portfolio。']}
+          />
+
+          <StateCard title="实现文件覆盖核对" description="把最近 v7 前端改动逐一映射到上方差异行，避免只展示部分变化。">
+            <CoverageList
+              compact
+              status="covered"
+              items={[
+                ['SoccerPage', '01 / 16', '比赛列表价格列、冠军与晋级入口、即时询价和报价标签。'],
+                ['SoccerMatchPage', '02 / 03 / 04 / 11', '7 个单场市场、结果选择、右栏交易面板和持仓摘要。'],
+                ['SoccerFuturesPage', '08 / 14', '11 个赛事级市场、长期持仓、关闭时间和结算来源。'],
+                ['SoccerMyBetsPage', '06 / 07 / 13', '我的页面从注单中心改为 Portfolio 持仓管理。'],
+                ['AmmTradePanel', '04 / 05 / 09 / 11 / 12 / 15', '买入、卖出、退出报价、报价有效期、报价失败和按钮文案。'],
+                ['AmmMarketRenderer', '02 / 03 / 15', '市场卡片价格说明、即时报价和成交以最新报价为准。'],
+                ['AmmPortfolioPanel', '06 / 07 / 13', '可卖份额、退出参考价、已实现和未实现盈亏。'],
+                ['soccerAmmStore', '05 / 12', '报价过期、买入成交、卖出成交和交易历史状态提示。'],
+                ['ammMarkets / ammData', '03 / 08 / 09 / 14 / 15', '市场覆盖、报价有效期、价格换算和状态数据。'],
+                ['AppShell', '10 / 17', '旧串单条和足球投注单浮条在足球路由隔离。'],
+              ]}
+            />
+          </StateCard>
         </div>
       </BoardSection>
 
@@ -1115,6 +1158,82 @@ function NewV6TerminologyPreview() {
     <UiPanel title="v7 预测交易词">
       <div className="flex flex-wrap gap-1.5">
         {['最新报价', '报价有效期', '成交价锁定', 'outcome', 'shares', 'position', '退出报价', 'settlement', 'reconciliation'].map((item) => <Pill key={item} tone="green">{item}</Pill>)}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V6SoccerHomeEntryCopyPreview() {
+  return (
+    <UiPanel title="v6 首页入口语境">
+      <div className="space-y-2">
+        {[
+          ['单场比赛', 'AMM 参考价格列 + More 入口'],
+          ['冠军与晋级', 'AMM 可交易市场，按系列赛进入长期结果份额'],
+          ['长期市场标签', '概率 + 份额价格，关闭时间和结算来源保留'],
+        ].map(([title, text]) => (
+          <div key={title} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+            <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
+            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{text}</p>
+          </div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewSoccerHomeEntryCopyPreview() {
+  return (
+    <UiPanel title="v7 首页入口语境">
+      <div className="space-y-2">
+        {[
+          ['单场比赛', '短时有效报价，确认后成交并形成持仓'],
+          ['冠军与晋级', '可交易市场 + 即时询价 + 关闭时间'],
+          ['长期市场标签', '选项 · 报价，不暴露内部实现术语'],
+        ].map(([title, text]) => (
+          <div key={title} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
+            <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
+            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{text}</p>
+          </div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V6GlobalSlipEntryPreview() {
+  return (
+    <UiPanel title="v6 全局浮动入口风险">
+      <div className="space-y-2">
+        {[
+          ['足球浮动投注条', '本地已有旧投注项时，离开比赛详情仍可能浮出'],
+          ['串单浮动条', '通用串单条可与足球页面同时出现'],
+          ['底部留白', '根据浮动条数量动态增加页面底部空间'],
+        ].map(([title, text]) => (
+          <div key={title} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+            <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
+            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{text}</p>
+          </div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function NewGlobalSlipEntryPreview() {
+  return (
+    <UiPanel title="v7 足球路由全局入口">
+      <div className="space-y-2">
+        {[
+          ['/soccer*', '隐藏旧浮动投注条和串单条'],
+          ['比赛详情', '只使用右栏交易面板和 Portfolio 摘要'],
+          ['历史能力', '旧组件保留在代码中，后续形态待确认'],
+        ].map(([title, text]) => (
+          <div key={title} className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
+            <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
+            <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{text}</p>
+          </div>
+        ))}
       </div>
     </UiPanel>
   )
