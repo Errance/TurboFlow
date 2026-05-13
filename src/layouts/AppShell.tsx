@@ -18,11 +18,12 @@ const navItems = [
 
 export default function AppShell() {
   const location = useLocation()
-  const hasLegs = useParlayStore((s) => s.slip.length > 0)
+  const isSoccerRoute = location.pathname.startsWith('/soccer')
+  const hasLegs = useParlayStore((s) => s.slip.length > 0) && !isSoccerRoute
   const soccerItemsCount = useSoccerBetSlipStore((s) => s.items.length)
-  // 只有在非 SoccerMatchPage 时浮动条才显示，需要给 main 底部留白避免遮挡
+  // v7 soccer pages use the quote trade panel; legacy floating slips stay available outside soccer.
   const hasSoccerFloat =
-    soccerItemsCount > 0 && !location.pathname.startsWith('/soccer/match/')
+    soccerItemsCount > 0 && !isSoccerRoute
   const { theme, toggleTheme } = useThemeStore()
 
   // 移动端底部浮动条累积高度：ParlayBar ~40px + SoccerBetSlipBar ~40px，基础 tab bar 56px
@@ -139,8 +140,8 @@ export default function AppShell() {
         })}
       </nav>
 
-      <ParlaySlip />
-      <SoccerBetSlipFloat />
+      {!isSoccerRoute && <ParlaySlip />}
+      {!isSoccerRoute && <SoccerBetSlipFloat />}
       <ToastContainer />
     </div>
   )

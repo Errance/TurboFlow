@@ -279,7 +279,7 @@ export default function SoccerDesignBoardPage() {
             index="08"
             title="冠军与晋级详情页"
             scope="SoccerFuturesPage"
-            summary="系列赛对象、阶段分组和 11 个市场保持不变，只把平台报价按钮换成 AMM outcome 交易。"
+            summary="系列赛对象、阶段分组和 11 个市场保持不变；左侧是 v6 AMM 长期 outcome，右侧是 v7 长期报价交易。"
             before={<OldFuturesMarketPreview />}
             after={<NewAmmFuturesMarketPreview />}
             paths={['src/pages/SoccerFuturesPage.tsx', 'src/data/soccer/futuresData.ts']}
@@ -966,13 +966,13 @@ function NewPriceAndRiskPreview() {
 
 function OldGlobalResidualPreview() {
   return (
-    <UiPanel title="历史传统入口">
+    <UiPanel title="v6 待确认历史能力边界">
       <div className="space-y-2">
         {[
-          ['浮动投注条', '底部常驻，可继续添加投注项'],
-          ['右栏投注单', '比赛详情和长期市场共用投注入口'],
-          ['预测玩法入口', '与足球交易主流程混在同一设计语境中'],
-          ['订单簿玩法', '独立入口展示挂单和限价交易心智'],
+          ['浮动投注条', '不作为 AMM 主交易入口，后续形态需确认'],
+          ['传统投注单', '历史能力保留为边界说明，不作为 v6 AMM 基线主流程'],
+          ['预测玩法入口', '与足球交易主流程分离，后续形态需确认'],
+          ['订单簿玩法', '独立产品线，不作为 AMM 基线主流程'],
         ].map(([title, text]) => (
           <div key={title} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
             <p className="text-[10px] font-semibold text-[var(--text-primary)]">{title}</p>
