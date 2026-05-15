@@ -1,694 +1,575 @@
-# TurboFlow 足球 RFQ 后端 v3.0 方案与前端接口反馈
+# TurboFlow 足球 RFQ 后端接口冲突与修改清单
 
-版本：v1.0
+版本：v1.1
 日期：2026-05-15
-对象：
+依据：
 
+- `前端下单接口规范 v1.0.doc`
+- `前端行情接口规范 v1.0.doc`
 - `TurboFlow 足球盘口技术方案 v3.0 设计`
-- `T-前端行情接口规范 v1.0`
-- `T-前端下单接口规范 v1.0`
+- 当前 v7.0 RFQ 前端产品口径
 
-## 1. 总体结论
+## 1. 需要先修正的结论
 
-后端 v3.0 技术方案方向基本可用，可以作为 RFQ 后端架构设计和 skeleton 开发依据，但当前三份材料还不能直接冻结为前端联调接口契约。
+Word 版 `前端下单接口规范 v1.0.doc` 已可读，因此旧反馈中的“下单接口规范不可用 / PDF 为空”应删除。
 
-核心原因：
+但 Word 版下单接口仍不能直接冻结为联调合同。主要原因不是缺文档，而是下单接口、行情接口、技术方案和当前前端产品口径之间仍存在以下冲突。
 
-- 技术方案的交易主线、持仓模型、卖出流程、CAS 并发控制、结算和对账方向与当前 v7.0 RFQ 产品目标一致。
-- 行情接口的 `Match -> Market -> Outcome` 分层、`scope / group` 模型、参考价与 WebSocket 推送方向基本可用。
-- 下单接口规范文件当前不可读或导出异常，无法作为前端接入依据。
-- quote TTL、状态枚举、下单响应字段、链上 sell 支持边界、DB 与链上原子性等关键点仍需统一。
+## 2. P0 阻塞级冲突
 
-建议：后端方案可以继续推进，但必须补一版“前端可联调接口合同”，明确 request / response / error / 状态 / 幂等 / TTL / 字段精度后再进入前端正式接入。
+### 2.1 用户身份来源冲突
 
-## 2. 已确认可用的设计
-
-### 2.1 RFQ 主交易模型正确
-
-v3.0 方案中以下判断是正确的：
-
-- 价格由外部报价源主导，不再自建 AMM 池或内部 odds evaluator。
-- 页面行情价格只是参考快照，不能直接用于下单。
-- 买入必须经过 `quote -> trade -> position`。
-- 卖出必须经过 `sell_quote -> sell_trade`。
-- 用户资产视图是 position，而不是传统注单。
-- RFQ 下不存在挂单、撤单、部分成交挂起。
-- `trade` 只有 `filled / failed`，符合当前 RFQ 全成或全拒绝模型。
-- position 使用 `version CAS` 防止并发卖出导致 over-sell。
-- 市场级批量结算符合足球赛果集中产生的业务特点。
-
-这些点与当前 v7.0 PRD 一致。
-
-### 2.2 行情模型方向正确
-
-行情接口中 `Match -> Market -> Outcome` 分层是正确的：
-
-- `Match` 对应单场比赛或赛事对象。
-- `Market` 对应具体玩法，如胜平负、让球、大小球、冠军等。
-- `Outcome` 是用户实际买入的结果选项。
-- 前端展示价格、份额价格、欧洲赔率和 24h 指标都应基于 Outcome。
-
-`scope` 设计也基本可用：
-
-- `match`：单场比赛级市场。
-- `competition`：整届赛事级市场。
-- `season`：赛季级市场。
-- `tie`：淘汰赛对阵级市场。
-
-这能覆盖当前足球 v7.0 的单场预测、冠军与晋级、赛季结果和两回合系列赛。
-
-### 2.3 行情 WebSocket 方向正确
-
-以下 WS 事件方向可用：
-
-- `rfq.odds_refreshed`
-- `rfq.market_suspended`
-- `rfq.market_reopened`
-- `rfq.market_closed`
-- `rfq.market_settled`
-- `rfq.trade_filled`
-
-并且行情文档明确写到：
-
-> `display_decimal_odds` 是参考价，不能用于下单。下单必须重新走 `/soccer/rfq/quote` 拿带签名的 `quote_id`。
-
-这个约束非常重要，应保留并放到接口文档的高优先级说明中。
-
-## 3. 当前阻塞项
-
-### 3.1 下单接口规范不可用
-
-`T-前端下单接口规范 v1.0-150526-083945.pdf` 当前只有 1 页，文件大小约 3KB，普通文本抽取为空，PDF 解析也无正文内容。
-
-因此当前无法确认以下关键接口的正式 request / response：
-
-- `POST /api/v1/soccer/rfq/quote`
-- `POST /api/v1/soccer/rfq/trade`
-- `POST /api/v1/soccer/rfq/sell_quote`
-- `POST /api/v1/soccer/rfq/sell_trade`
-- `GET /api/v1/soccer/rfq/portfolio`
-
-请重新导出为可复制文本的 PDF、Markdown 或 Word。建议优先给 Markdown，避免 PDF 导出丢失内容。
-
-### 3.2 前端不能只根据技术方案猜接口
-
-技术方案中有流程和表结构，但这不足以替代前端接口规范。
-
-前端联调需要每个接口明确：
-
-- HTTP method 与 path。
-- 鉴权要求。
-- request body。
-- response body。
-- 字段类型与精度。
-- 错误码。
-- 幂等键规则。
-- quote TTL。
-- quote / trade / position 状态变化。
-- 哪些字段仅展示、哪些字段参与计算、哪些字段禁止前端自行计算。
-
-如果没有这些内容，前端容易自行推断字段，后续联调成本会很高。
-
-## 4. 必须修订的问题
-
-### 4.1 quote TTL 必须统一
-
-当前资料中存在不一致：
-
-- 技术方案写 quote TTL 默认 5 秒。
-- 之前产品和前端 mock 中曾使用更长的报价有效期表达。
-- 行情缓存又是 10s / 30s / 60s，不应与 quote TTL 混淆。
-
-建议：
-
-- 行情快照 TTL 与交易 quote TTL 分开定义。
-- `quote.expires_at` 由后端返回，前端只按该字段倒计时。
-- 如果最终采用 5 秒 TTL，需要产品确认，因为用户确认时间会明显更紧。
-- 无论 TTL 是 5 秒还是 30 秒，文档中只能保留一个口径。
-
-建议接口字段：
+当前下单接口在 request 和 query 中显式传：
 
 ```json
 {
-  "quote_id": "q_123",
+  "account_id": 1001
+}
+```
+
+例如：
+
+- `POST /api/v1/soccer/rfq/quote`
+- `POST /api/v1/soccer/rfq/sell_quote`
+- `POST /api/v1/soccer/rfq/trade`
+- `GET /api/v1/soccer/rfq/portfolio?account_id=1001`
+
+需要修改：
+
+- 如果线上有 JWT / session，`account_id` 应以后端鉴权主体为准，不能信任前端传入的 account_id。
+- 前端 request 中的 `account_id` 应删除，或明确仅用于 mock / internal debug。
+- 幂等键应按鉴权 account 维度隔离，不能只依赖前端传参。
+
+### 2.2 `trade` 成功与链上异步状态冲突
+
+下单文档写：
+
+> 接口返回 200 即视为下单成功；链上确认是异步的。
+
+同时又有错误码：
+
+```text
+RFQ_CHAIN_SUBMIT_FAILED
+```
+
+这会造成语义冲突：如果 200 已经视为成功，链上提交失败时用户到底看到成功、失败、回滚中，还是持仓已生效？
+
+需要修改：
+
+- 明确 `trade` 返回成功时，资金、持仓、链上交易分别处于什么状态。
+- 明确链上失败后的补偿规则：资金回退、position 回滚、trade 状态更新、前端通知方式。
+- 如果前端只看到 `filled / failed`，后端内部仍需写清楚 `pending / chain_submitted / filled / failed` 等内部状态如何流转。
+- 不要把 DB 事务和链上交易写成一个 ACID 事务。
+
+### 2.3 成交 WS 无法准确匹配当前用户
+
+行情文档的 `rfq.trade_filled` payload 当前只有：
+
+```json
+{
+  "trade_id": "tr_8826361129472100",
+  "market_id": "rfq_mkt_match_winner_20260601_arg_bra",
+  "outcome_id": "home_win",
+  "side": "buy",
+  "shares": "21.500000",
+  "accepted_odds": "2.150000",
+  "at": "2026-05-15T08:30:01Z"
+}
+```
+
+文档又写“前端需要自己保存最近发起的 client_trade_id 做匹配”，但 payload 里没有 `client_trade_id`，因此前端无法按 client_trade_id 匹配。
+
+需要修改，二选一：
+
+- v1.0 明确 `rfq.trade_filled` 不做用户匹配，前端收到就刷新 portfolio。
+- 或在 payload 中补充 `account_id`、`client_trade_id`，并只允许用户本人通过鉴权频道收到自己的私人成交事件。
+
+建议补充：
+
+```json
+{
+  "account_id": "1001",
+  "client_trade_id": "tr-1001-q_8826361129472001"
+}
+```
+
+### 2.4 外部报价源 / provider 文案会泄露到用户侧
+
+当前文档在错误码推荐文案中出现：
+
+- “做市商拒绝该单”
+- “做市商响应超时”
+- “做市商不可达”
+
+行情文档中也出现 `provider_closed`、`provider_id`、`provider_match_id`、`provider_market_id`、`provider_selection_id` 等字段。
+
+需要修改：
+
+- `provider_*` 可以保留为内部字段，但不应要求前端直接展示。
+- 用户侧文案不要出现 `provider`、`做市商`、`RFQ`。
+- 推荐用户文案改成：
+  - “暂无报价，请稍后重试”
+  - “报价暂不可用”
+  - “报价响应超时，请重试”
+  - “市场已暂停”
+- `provider_closed` 作为内部 reason 可以保留，但前端展示应映射为“市场已暂停 / 已关盘”。
+
+## 3. P1 接口字段冲突
+
+### 3.1 quote 过期字段命名不统一
+
+当前下单文档使用：
+
+```json
+{
+  "quote_expires_at": "2026-05-15T08:30:05Z"
+}
+```
+
+旧反馈和部分接口建议使用：
+
+```json
+{
   "expires_at": "2026-05-15T08:30:05Z",
   "ttl_seconds": 5
 }
 ```
 
-### 4.2 状态枚举必须统一
+需要修改：
 
-当前文档中存在多套相近状态：
+- 统一为一种字段名。
+- 如果保留 `quote_expires_at`，建议同时返回 `ttl_seconds`，方便前端倒计时和埋点。
+- 所有 buy quote、sell quote 必须使用同一命名。
 
-- `paused` / `suspended`
-- `void` / `voided`
-- `finished` / `closed` / `settled`
-- `official_pending`
-- `settled_won / settled_lost / void_refunded`
+### 3.2 quote TTL 需要产品确认
 
-前端会直接依赖状态控制：
+下单文档明确 TTL 默认 5s。
 
-- outcome 是否可点击。
-- 买入按钮是否可用。
-- 卖出按钮是否可用。
-- 是否显示等待结算。
-- 是否显示 void / refund。
-- 是否刷新 Portfolio。
+需要修改：
 
-建议明确统一枚举：
+- 5s 可以作为后端默认值，但需要产品确认是否适合前端确认流程。
+- 行情缓存 TTL 与交易 quote TTL 必须分开，不要混用。
+- 前端只按 quote response 返回的过期时间倒计时。
 
-Market status：
+### 3.3 buy quote 缺少当前 UI 所需字段
 
-```text
-upcoming | open | paused | closed | official_pending | settled | voided
+当前 buy quote 返回：
+
+```json
+{
+  "quoted_odds": "2.150000",
+  "implied_probability": "0.465116",
+  "display_decimal_odds": "2.150000",
+  "fee": "0.060000",
+  "collateral_amount": "10.000000",
+  "estimated_shares": "21.500000",
+  "max_loss": "10.060000",
+  "min_shares_out": "20.855000"
+}
 ```
 
-Outcome status：
-
-```text
-open | paused | closed | settled | void
-```
-
-Quote status：
-
-```text
-pending | accepted | expired | rejected
-```
-
-Trade status：
-
-```text
-filled | failed
-```
-
-Position status：
-
-```text
-active | reduced | closed | settled_won | settled_lost | void_refunded
-```
-
-同时需要说明：前端是否应把 `market.status` 向下覆盖到 `outcome.status`，还是以后端返回的 outcome status 为准。
-
-### 4.3 链上 sell 支持边界必须明确
-
-技术方案写到：
-
-- 买入调用 `chain.SubmitPredictionTrade`。
-- 卖出调用 `chain.SubmitPredictionTrade(side=sell)`。
-- position 份额 burn，资金入账，position reduced / closed。
-
-但当前 `turbo-contract` 的 Prediction 模块更接近买入和最终结算模型，不确定是否已经支持：
-
-- position 部分卖出。
-- sell quote 对应的链上 burn。
-- sell trade 资金即时返还。
-- position version 链上同步。
-
-请后端明确第一阶段采用哪种方案：
-
-1. **扩展合约支持 sell**：需要给出合约接口、账户结构、事件和失败回滚规则。
-2. **第一阶段 sell 只链下记账**：链上只保留买入与最终结算，sell 通过后端 position ledger 对冲。
-3. **暂不支持真实 sell**：仅保留前端 mock 或延后。
-
-如果采用方案 2，接口仍可保留 `sell_quote / sell_trade`，但文档必须明确链上真源和链下镜像的对账边界。
-
-### 4.4 DB 与链上不能写成一个 ACID 事务
-
-技术方案中写到：
-
-> 同事务：余额扣减 + 份额 mint + position upsert (CAS) + trade 落库
-
-同时又调用 `chain.SubmitPredictionTrade`。
-
-需要修正这里的表述。数据库事务和链上交易天然不能构成一个 ACID 事务。必须明确：
-
-- DB 先写 pending / submitted，链上确认后再变 filled。
-- 或链上先提交，扫块确认后写 DB。
-- 或采用 outbox pattern。
-- 链上失败时资金、quote、trade、position 如何补偿。
-- 用户前端看到的中间态是什么。
-
-建议至少增加：
-
-```text
-trade.status:
-pending_provider | provider_accepted | chain_submitted | filled | failed
-```
-
-如果后端仍希望前端只看到 `filled / failed`，也需要在内部状态机说明如何隐藏中间态。
-
-### 4.5 `accepted_odds == quoted_odds` 需要容忍精度规则
-
-技术方案写 `accepted_odds == quoted_odds`。
-
-建议明确：
-
-- 是字符串严格相等，还是 decimal 归一化后相等。
-- 精度是 4 位、6 位还是 provider 原始精度。
-- 如果 provider 返回 `2.15`，quote 存 `2.150000`，是否算一致。
-- 若出现微小舍入差异，是拒单还是按 quote 价锁定。
-
-建议统一：
-
-```text
-quoted_odds / accepted_odds 使用 decimal string，前端不做浮点计算。
-后端比较时按 Decimal 归一化到约定精度。
-```
-
-### 4.6 行情接口示例应收口到当前 v7 范围
-
-行情文档中出现了“首球时间”“MVP”等示例。后端可以保留扩展能力，但当前 v7.0 前端主交付范围是：
-
-单场 7 类：
-
-- 胜平负
-- 开球权
-- 让球
-- 让球 0:1
-- 总进球数
-- 大小球
-- 波胆
-
-冠军与晋级 11 类：
-
-- 小组第一
-- 小组出线
-- 进入 8 强
-- 进入决赛
-- 冠军
-- 欧冠冠军
-- 晋级决赛
-- 两回合系列赛赛果
-- 英超冠军
-- 欧冠资格
-- 降级球队
-
-建议 v1.0 接口示例只使用当前范围，扩展市场放到 future / extension 章节，避免前端和测试误认为本期要做。
-
-### 4.7 用户侧文案不要暴露 provider / 做市商 / RFQ
-
-后端字段可以使用 `provider_id`、`provider_quote_id`，但前端用户文案不能直接展示：
-
-- provider
-- 做市商
-- RFQ
-- price impact
-
-建议后端接口字段保持技术语义，但接口说明中明确：
-
-- `provider_*` 字段仅用于日志、对账、排查，不直接展示给用户。
-- 用户侧展示“最新报价”“成交报价”“退出报价”“报价已变化”“报价暂不可用”。
-- 不要要求前端展示 `price_impact`，如必须展示，建议改为 `quote_delta` 或 `quote_change`。
-
-## 5. 下单接口必须补齐的字段建议
-
-### 5.1 买入 quote response
-
-当前前端最终下单面板建议采用以下展示：
+当前前端下单面板口径是：
 
 ```text
 Share Price
-57¢
-
 Decimal Odds
-1.75
-
 Estimated Avg Price
-57.4¢
-
 Estimated Shares Received
-87.1080 Shares
-
 Trading Fee
-0.30 USDT
-
 Max Loss
-50.30 USDT
-
 Potential Payout
-87.1080 USDT
-
 Potential Profit
-36.8080 USDT
 ```
 
-因此买入 quote 建议后端直接返回这些可展示字段，避免前端自行计算：
+需要修改：
 
-```json
-{
-  "quote_id": "q_123",
-  "client_quote_id": "cq_123",
-  "market_id": "rfq_mkt_match_winner_20260601_arg_bra",
-  "outcome_id": "home_win",
-  "side": "buy",
-  "share_price": "0.570000",
-  "display_decimal_odds": "1.750000",
-  "estimated_avg_price": "0.574000",
-  "estimated_avg_decimal_odds": "1.742160",
-  "estimated_shares": "87.10801400",
-  "collateral_amount": "50.000000",
-  "fee": "0.300000",
-  "max_loss": "50.300000",
-  "potential_payout": "87.108014",
-  "potential_profit": "36.808014",
-  "expires_at": "2026-05-15T08:30:05Z",
-  "ttl_seconds": 5,
-  "status": "pending"
-}
-```
+- quote response 应直接返回 `share_price`，不要让前端把 `implied_probability` 当作份额价格展示。
+- 补充 `estimated_avg_price`，或明确它等于 `share_price` / `1 / quoted_odds`。
+- 补充 `potential_payout`、`potential_profit`，或明确前端计算公式。
+- 不建议让前端同时展示 `implied_probability` 和 `share_price`。
 
-说明：
+### 3.4 `estimated_shares` 计算公式表述不严谨
 
-- `share_price` 是当前参考份额价格。
-- `display_decimal_odds` 是参考欧洲赔率。
-- `estimated_avg_price` 是本次 quote 的预估成交份额均价。
-- `estimated_avg_decimal_odds` 可选，如果不给，前端可以只展示 `estimated_avg_price`。
-- `potential_payout = estimated_shares * 1 USDT`。
-- `potential_profit = potential_payout - max_loss`。
+文档写：
 
-### 5.2 买入 trade response
+> estimated_shares = collateral / (1 / odds) - fee 影响
 
-```json
-{
-  "trade_id": "tr_123",
-  "client_trade_id": "ct_123",
-  "quote_id": "q_123",
-  "market_id": "rfq_mkt_match_winner_20260601_arg_bra",
-  "outcome_id": "home_win",
-  "position_id": "pos_123",
-  "side": "buy",
-  "shares": "87.10801400",
-  "accepted_odds": "1.742160",
-  "accepted_share_price": "0.574000",
-  "fee": "0.300000",
-  "collateral_delta": "-50.300000",
-  "status": "filled",
-  "created_at": "2026-05-15T08:30:01Z"
-}
-```
-
-建议 trade response 必须返回 `position_id`，否则前端成交后无法稳定定位新持仓。
-
-### 5.3 卖出 quote response
-
-卖出面板建议展示：
+这个表述容易误解为直接从 shares 中扣 fee，但当前示例是：
 
 ```text
-Current Exit Price
-57¢
-
-Decimal Odds
-1.75
-
-Estimated Exit Price
-56.2¢
-
-Shares to Sell
-84.0000 Shares
-
-Estimated Proceeds
-47.21 USDT
-
-Trading Fee
-0.28 USDT
-
-Realized P&L
-+4.20 USDT
-
-Remaining Shares
-0.0000 Shares
+collateral_amount = 10
+quoted_odds = 2.15
+estimated_shares = 21.5
+fee = 0.06
+max_loss = 10.06
 ```
 
-建议卖出 quote 返回：
+也就是 fee 没有从 `estimated_shares` 中扣除，而是进入 `max_loss`。
+
+需要修改：
+
+- 明确 `estimated_shares = collateral_amount * quoted_odds`，还是 `net_collateral * quoted_odds`。
+- 明确 fee 是额外收取，还是从本金中扣除。
+- `max_loss = collateral_amount + fee` 已经写清楚，建议与 `estimated_shares` 公式保持一致。
+
+### 3.5 RFQ 锁价与 `min_shares_out / min_collateral_out` 存在语义冲突
+
+下单文档中 quote 是“短时有效锁定报价”，trade 阶段 `accepted_odds` 与 `quote.quoted_odds` 一致。
+
+但 quote response 又包含：
+
+- `min_shares_out`
+- `min_collateral_out`
+- “滑点保护下限”
+
+RFQ 模式不是 AMM 撮合，不应出现用户接受更差价格的滑点语义。
+
+需要修改：
+
+- 如果 RFQ 是锁价成交，trade 只能按 quote 价成交或失败，`min_*` 字段可以删除。
+- 如果保留 `min_*`，必须明确它只是风控保护字段，不表示前端接受滑点成交。
+- 不要让用户误解为 quote 之后仍可能用更差价格成交。
+
+### 3.6 sell quote 字段命名与买入展示口径不一致
+
+当前 sell quote 返回：
 
 ```json
 {
-  "quote_id": "q_sell_123",
-  "client_quote_id": "cq_sell_123",
-  "position_id": "pos_123",
-  "position_version": 7,
-  "market_id": "rfq_mkt_match_winner_20260601_arg_bra",
-  "outcome_id": "home_win",
-  "side": "sell",
-  "current_exit_price": "0.570000",
-  "display_decimal_odds": "1.750000",
-  "estimated_exit_price": "0.562000",
-  "shares_to_sell": "84.00000000",
-  "estimated_proceeds": "47.208000",
-  "fee": "0.280000",
-  "net_proceeds": "46.928000",
-  "realized_pnl": "4.200000",
-  "remaining_shares": "0.00000000",
-  "remaining_value": "0.000000",
-  "expires_at": "2026-05-15T08:30:05Z",
-  "ttl_seconds": 5,
-  "status": "pending"
+  "quoted_odds": "2.080000",
+  "estimated_collateral_out": "10.400000",
+  "net_collateral_out": "10.337600",
+  "fee": "0.062400",
+  "min_collateral_out": "10.027472",
+  "realized_pnl": "0.337600",
+  "remaining_shares": "16.500000",
+  "remaining_position_value": "34.270000"
 }
 ```
 
-说明：
+需要修改：
 
-- `position_version` 必须返回，供 `sell_trade` CAS 校验。
-- `estimated_proceeds` 与 `net_proceeds` 要明确是否含手续费。
-- 建议前端展示 `estimated_proceeds` 或 `net_proceeds` 时以接口说明为准，避免误差。
+- 明确卖出 UI 展示哪个金额：`estimated_collateral_out` 还是 `net_collateral_out`。
+- 建议字段名改成更直观的 `estimated_proceeds`、`net_proceeds`，或至少在文档中明确含义。
+- 补充 `current_exit_price` / `estimated_exit_price` 或说明 `quoted_odds` 如何换算成卖出份额价格。
+- `min_collateral_out` 如保留，需要同 3.5 一样说明它不是滑点成交承诺。
 
-### 5.4 卖出 trade response
+### 3.7 trade response 缺少状态字段
+
+当前 trade response 示例没有 `status`：
 
 ```json
 {
-  "trade_id": "tr_sell_123",
-  "client_trade_id": "ct_sell_123",
-  "quote_id": "q_sell_123",
-  "position_id": "pos_123",
-  "market_id": "rfq_mkt_match_winner_20260601_arg_bra",
-  "outcome_id": "home_win",
-  "side": "sell",
-  "shares": "84.00000000",
-  "accepted_odds": "1.779359",
-  "accepted_share_price": "0.562000",
-  "fee": "0.280000",
-  "collateral_delta": "46.928000",
-  "realized_pnl": "4.200000",
-  "remaining_shares": "0.00000000",
-  "position_status": "closed",
-  "status": "filled",
-  "created_at": "2026-05-15T08:30:01Z"
+  "trade_id": "tr_8826361129472100",
+  "position_id": "pos_8826361129488000",
+  "side": "buy",
+  "accepted_odds": "2.150000",
+  "tx_hash": "STUB-pred-buy-8826361129472100"
 }
 ```
 
-### 5.5 Portfolio response
+需要修改：
 
-`GET /api/v1/soccer/rfq/portfolio` 建议返回：
+- 补充 `status` 字段。
+- 如果 200 只代表已受理，status 不应直接叫 `filled`。
+- 如果 200 代表交易已成交，需说明链上异步失败不会影响用户持仓，或失败会通过补偿事件回滚。
+
+### 3.8 trade response 建议回传 quote / client id
+
+当前 trade response 没有 `quote_id`、`client_trade_id`。
+
+需要修改：
+
+- 建议回传 `quote_id` 和 `client_trade_id`，便于前端日志、排障、幂等结果复用。
+- sell trade 也应返回 `position_version` 或最新 `position_shares` / `position_status`。
+
+### 3.9 Portfolio 字段命名不统一
+
+当前 portfolio 使用：
 
 ```json
 {
-  "summary": {
-    "market_value": "1293.010000",
-    "unrealized_pnl": "590.330000",
-    "realized_pnl": "42.100000",
-    "open_positions_count": 3
-  },
-  "positions": [
-    {
-      "position_id": "pos_123",
-      "market_id": "rfq_mkt_match_total_20260601_arg_bra",
-      "outcome_id": "under_2_5",
-      "subject_label": "RJ博塔弗戈 vs 米拉索尔",
-      "market_title": "大小球",
-      "outcome_label": "小 2.5",
-      "shares": "2198.17000000",
-      "available_shares": "2198.17000000",
-      "avg_price": "0.296000",
-      "current_price": "0.562000",
-      "display_decimal_odds": "1.780000",
-      "market_value": "1234.930000",
-      "unrealized_pnl": "584.930000",
-      "realized_pnl": "0.000000",
-      "status": "active",
-      "version": 7,
-      "updated_at": "2026-05-15T08:30:01Z"
-    }
-  ],
-  "recent_trades": []
+  "portfolio_value": "53.310000",
+  "open_positions": 2,
+  "position_version": 13
 }
 ```
 
-说明：
+旧反馈和部分前端口径使用：
 
-- `current_price` 是当前退出参考价或最新参考份额价格，需定义清楚。
-- `display_decimal_odds` 是当前参考欧赔。
-- `available_shares` 是卖出上限。
-- `version` 必须返回，支撑卖出 CAS。
+```json
+{
+  "market_value": "53.310000",
+  "open_positions_count": 2,
+  "version": 13
+}
+```
 
-## 6. 错误码建议
+需要修改：
 
-下单接口至少需要以下错误码，并给出前端处理建议。
+- 统一 summary 字段名：建议使用 `portfolio_value` 或 `market_value` 二选一。
+- 统一持仓版本字段名：建议使用 `position_version`，不要一处叫 `version` 一处叫 `position_version`。
+- 统一 open position 数量字段：`open_positions` 或 `open_positions_count` 二选一。
+
+## 4. P1 状态与错误码冲突
+
+### 4.1 错误码命名不统一
+
+当前下单文档包含：
 
 ```text
-RFQ_MARKET_NOT_FOUND
-RFQ_OUTCOME_NOT_FOUND
-RFQ_MARKET_NOT_OPEN
-RFQ_MARKET_PAUSED
-RFQ_MARKET_CLOSED
-RFQ_QUOTE_EXPIRED
-RFQ_QUOTE_NOT_FOUND
-RFQ_QUOTE_ALREADY_ACCEPTED
-RFQ_QUOTE_REJECTED
-RFQ_ODDS_CHANGED
-RFQ_PROVIDER_TIMEOUT
-RFQ_PROVIDER_REJECTED
-RFQ_INSUFFICIENT_BALANCE
-RFQ_POSITION_NOT_FOUND
-RFQ_INSUFFICIENT_SHARES
-RFQ_POSITION_VERSION_STALE
-RFQ_DUST_POSITION
+RFQ_QUOTE_UNAVAILABLE
+RFQ_DUPLICATE_CLIENT_TRADE_ID
+RFQ_PROVIDER_UNREACHABLE
+RFQ_SELL_QUOTE_UNAVAILABLE
+RFQ_CHAIN_SUBMIT_FAILED
+```
+
+旧反馈中曾建议：
+
+```text
 RFQ_TRADE_DUPLICATED
 RFQ_CLIENT_QUOTE_DUPLICATED
-RFQ_SETTLEMENT_PENDING
+RFQ_PROVIDER_REJECTED
 RFQ_INTERNAL_ERROR
 ```
 
-前端处理原则：
+需要修改：
 
-- quote 过期、赔率变化、provider 超时：提示重新获取报价。
-- 市场暂停 / 关闭：禁用交易，提示等待恢复或等待结算。
-- 余额不足：提示充值或调低金额。
-- 份额不足 / position version stale：刷新持仓后重新询价。
-- dust position：引导全部卖出。
-- duplicated：返回原 quote / trade，不应创建新交易。
+- 以后端 Word 版为准也可以，但必须把所有文档统一到同一套错误码。
+- 幂等错误建议区分：
+  - `RFQ_DUPLICATE_CLIENT_QUOTE_ID`
+  - `RFQ_DUPLICATE_CLIENT_TRADE_ID`
+- `RFQ_PROVIDER_*` 错误码可以保留为技术 key，但用户文案不要出现 provider / 做市商。
 
-## 7. 行情接口修订建议
+### 4.2 market / match / position 状态需要统一
 
-### 7.1 `GET /matches/upcoming` 与 RFQ 市场可用性
+行情文档中 match status：
 
-行情文档写 Phase 1 中该接口不区分是否有 RFQ 市场，前端再调 markets 判断。
+```text
+scheduled / live / paused / finished
+```
 
-这可以接受，但建议增加轻量字段，减少首屏请求：
+market status：
+
+```text
+open / paused / closed / settled / voided
+```
+
+position status：
+
+```text
+active / reduced / closed / settled_won / settled_lost / void_refunded
+```
+
+需要修改：
+
+- 明确 match status 与 market status 是两套状态，不能混用。
+- 明确 `finished` 的 match 是否一定触发 market `closed`，以及何时进入 `settled`。
+- 明确 void 场景中 market 用 `voided`，position 用 `void_refunded`。
+
+### 4.3 `RFQ_MARKET_NOT_OPEN` 与 `RFQ_MARKET_PAUSED / CLOSED` 边界需说明
+
+当前错误码中同时有：
+
+- `RFQ_MARKET_NOT_OPEN`
+- `RFQ_MARKET_PAUSED`
+- `RFQ_MARKET_CLOSED`
+
+需要修改：
+
+- `not_open` 用于赛前未开盘。
+- `paused` 用于临时暂停。
+- `closed` 用于关盘等待结算。
+- 前端按钮状态、文案、是否自动重试需要分别说明。
+
+## 5. P1 行情接口冲突
+
+### 5.1 行情示例包含当前 v7 不交付的盘口
+
+行情文档示例出现：
+
+- 首球时间
+- MVP
+- 金靴
+- 净胜球
+
+当前 v7.0 前端主范围是单场预测、冠军与晋级、赛季结果、两回合系列赛，不应让测试或前端误以为这些扩展盘口本期交付。
+
+需要修改：
+
+- v1.0 示例收口到当前 v7 范围。
+- 首球时间、MVP、金靴、净胜球等放到 future / extension 章节。
+
+### 5.2 `/soccer/rfq/matches` 命名与实际含义冲突
+
+行情文档已注明：
+
+> 实际返回的是 `scope=match` 的全部 RFQ 市场，不是比赛列表。
+
+需要修改，二选一：
+
+- 改为 `GET /api/v1/soccer/rfq/markets?scope=match`。
+- 或保留现有 path，但文档标题和字段说明都明确它返回 `RfqMarketView[]`，不是 Match[]。
+
+### 5.3 `matches/:matchId/markets` 的 matchId 来源不清楚
+
+行情文档写：
+
+- path 是 `/soccer/rfq/matches/:matchId/markets`
+- 参数说明却出现 `provider_match_id`
+
+需要修改：
+
+- path 参数必须明确是内部 `match.id`，还是 `provider_match_id`。
+- 建议前端统一使用内部 `match.id`。
+- `provider_match_id` 只作为内部映射字段，不作为前端路由参数。
+
+### 5.4 `share_price` 与 `implied_probability` 同时返回容易影响 UI 口径
+
+行情文档同时返回：
 
 ```json
 {
-  "id": 100001,
-  "status": "scheduled",
-  "has_rfq_markets": true,
-  "rfq_market_count": 7
+  "implied_probability": "0.465116",
+  "share_price": "0.465116"
 }
 ```
 
-如果后端暂时不给，前端也可以缓存 `/soccer/rfq/matches` 做交叉判断，但体验和性能会弱一些。
+当前前端产品口径是不同时展示“概率”和“概率价格”。
 
-### 7.2 `GET /soccer/rfq/matches` 命名容易误解
+需要修改：
 
-文档中也写到该接口实际返回 `scope=match` 的全部 RFQ 市场，不是比赛列表。
+- API 可以保留两个字段，但文档需说明前端默认展示 `share_price`，不要同时展示 `implied_probability`。
+- 如果两者短期永远相等，建议只把 `implied_probability` 作为辅助字段，不作为主 UI 字段。
 
-建议改名或增加别名：
+### 5.5 WS 去重规则不足
 
-```text
-GET /api/v1/soccer/rfq/markets?scope=match
-```
+行情文档写：
 
-保留旧 path 也可以，但文档要明确其语义。
+> 同时订阅 market + subject 会收到 2 条相同消息，前端可按 market_id 去重。
 
-### 7.3 `trade_filled` 当前不含 account_id
+按 `market_id` 去重不够，因为同一 market 会持续产生多条 odds refresh。
 
-行情文档写当前 payload 不含 `account_id`，建议前端收到就刷新 portfolio。
+需要修改：
 
-这在 v1.0 可以接受，但会导致所有订阅者都触发额外请求。建议 v1.1 补：
+- WS payload 增加 `event_id`，前端按 `event_id` 去重。
+- 如果暂不加 `event_id`，至少建议按 `type + market_id + at` 去重。
 
-```json
-{
-  "account_id": "123",
-  "client_trade_id": "ct_123"
-}
-```
+### 5.6 `rfq.market_suspended` 的弹窗处理需更精确
 
-前端可以只对当前用户的成交刷新 Portfolio。
+行情文档建议：
 
-### 7.4 WS 事件命名要统一
+> 收到 rfq.market_suspended 立即 close 弹窗 + 提示
 
-技术方案中出现 `rfq.odds.refreshed`，行情文档中是 `rfq.odds_refreshed`。
+需要修改：
 
-建议统一为一种。前端更建议使用下划线版本：
+- 如果用户已经拿到 quote，暂停时应明确 quote 是否立即失效。
+- 如果 quote 仍在 TTL 内但 market 暂停，trade 是否会被拒绝需要写清楚。
+- 前端应按后端结论决定是关闭弹窗、禁用确认按钮，还是提示重新询价。
 
-```text
-rfq.odds_refreshed
-rfq.trade_filled
-rfq.market_suspended
-rfq.market_reopened
-rfq.market_closed
-rfq.market_settled
-```
+## 6. P2 可读性与联调补充项
 
-## 8. 前端 UI 字段口径
+### 6.1 路径前缀要统一
 
-当前下单面板最终建议不要同时展示概率和概率价格，也不要一行塞三个价格。
-
-推荐英文显示：
+文档前面流程写：
 
 ```text
-Share Price                         57¢
-Decimal Odds                        1.75
-
-Estimated Avg Price                 57.4¢
-Estimated Shares Received           87.1080 Shares
-Trading Fee                         0.30 USDT
-Max Loss                            50.30 USDT
-Potential Payout                    87.1080 USDT
-Potential Profit                    36.8080 USDT
+POST /soccer/rfq/quote
+POST /soccer/rfq/trade
+GET /soccer/rfq/portfolio
 ```
 
-接口需要支持这些字段，或者明确哪些由前端从 quote response 计算。
+接口详情写：
 
-不建议前端展示：
+```text
+POST /api/v1/soccer/rfq/quote
+POST /api/v1/soccer/rfq/trade
+GET /api/v1/soccer/rfq/portfolio
+```
 
-- `Price Impact`
-- `provider`
-- `RFQ`
-- `做市商`
+需要修改：
 
-建议展示：
+- 全文统一使用 `/api/v1/...`。
+- 伪代码也应统一，避免前端封装时出现双前缀或漏前缀。
+
+### 6.2 `sell_trade` 是否保留需要定稿
+
+下单文档写：
+
+```text
+POST /api/v1/soccer/rfq/trade        # 通用入口（buy / sell 都用此）
+POST /api/v1/soccer/rfq/sell_trade   # 与上等价
+```
+
+需要修改，二选一：
+
+- 只保留通用 `/trade`，由 quote.side 决定 buy / sell。
+- 或保留 `/sell_trade`，但明确它是否只是 alias，以及幂等、权限、错误码是否完全一致。
+
+### 6.3 `position_id` 在 sell_quote 中不应写得过于可选
+
+下单文档写 `position_id` 可选，不传则按 `(account, market, outcome)` 自动定位。
+
+需要修改：
+
+- 如果系统保证同一 account + market + outcome 永远聚合成一个 position，可以保留可选。
+- 如果未来会出现分批 position、不同成本批次、跨账户子钱包，建议 `position_id` 必填。
+- 至少要明确前端 Portfolio 卖出入口应优先传 `position_id`。
+
+### 6.4 金额与份额精度需要覆盖所有字段
+
+行情文档写 6 位小数，下单文档也写 decimal string，但部分字段如 `shares`、`position_shares` 可能需要 8 位小数。
+
+需要修改：
+
+- 明确金额、赔率、份额分别的精度。
+- 建议金额 6 位，赔率 6 位，shares 8 位。
+- 前端不使用 JS float 做核心计算。
+
+### 6.5 下单确认页字段需要一次性补齐
+
+下单文档最后建议展示：
+
+```text
+quoted_odds / estimated_shares / max_loss / fee
+accepted_odds / max_loss / fee
+```
+
+当前前端口径还需要：
 
 - `Share Price`
 - `Decimal Odds`
 - `Estimated Avg Price`
-- `Estimated Shares Received`
-- `Trading Fee`
-- `Max Loss`
 - `Potential Payout`
 - `Potential Profit`
-- 卖出时展示 `Estimated Proceeds`、`Realized P&L`、`Remaining Shares`
+- 卖出时的 `Estimated Proceeds`
+- 卖出时的 `Realized P&L`
+- 卖出后的 `Remaining Shares`
 
-## 9. 后端需要补充的文档清单
+需要修改：
 
-请后端补充或修订以下内容：
+- 后端要么直接返回这些字段。
+- 要么在接口规范中明确每个字段由前端如何计算。
+- 推荐后端直接返回，减少前端口径分歧。
 
-1. 重新导出可读的 `T-前端下单接口规范 v1.0`。
-2. 明确 quote TTL，统一所有文档和接口字段。
-3. 明确 sell 的链上支持边界，是扩合约、链下记账，还是后续版本。
-4. 统一 market / outcome / quote / trade / position 状态枚举。
-5. 给出买入 quote、买入 trade、卖出 quote、卖出 trade、portfolio 五个接口完整 JSON 示例。
-6. 补齐错误码和前端处理建议。
-7. 明确 `accepted_odds` 与 `quoted_odds` 的精度比较规则。
-8. 明确 `estimated_proceeds`、`net_proceeds`、`fee` 是否含手续费。
-9. 明确 DB 与链上交易之间的异步状态、补偿和扫块回流规则。
-10. 把 v1.0 示例市场收口到当前足球 v7.0 范围，扩展盘口放后续章节。
+## 7. 建议后端本轮直接修改的清单
 
-## 10. 最终验收标准
-
-后端文档修订后，应满足以下验收标准：
-
-- 前端无需读技术方案，也能仅凭接口规范完成联调。
-- 所有金额、份额、赔率、份额价格字段都是 decimal string，避免 JS 浮点误差。
-- 所有 quote 都有 `quote_id`、`expires_at`、`ttl_seconds`。
-- 所有 trade 都有 `client_trade_id` 幂等规则。
-- 所有 sell quote 都有 `position_version`。
-- 所有 position 都有 `available_shares`、`version`、`status`。
-- 行情参考价与成交 quote 价格边界清晰。
-- 用户侧不展示 provider / RFQ / 做市商 / price impact。
-- 市场暂停、关盘、结算、void 能通过状态和 WS 事件完整驱动前端。
-- 买入、卖出、结算、void 都能刷新 Portfolio。
-
-## 11. 反馈结论
-
-后端 v3.0 技术方案可以继续推进，但当前接口文档还需要补齐后才能进入前端正式接入。
-
-优先级最高的是重新提供可读的下单接口规范，并统一 quote TTL、状态枚举、sell 链上边界和 quote response 字段。行情接口和技术方案整体方向正确，建议按本文问题修订后进入联调。
+1. 删除“下单接口不可读”的历史问题，改为“Word 版已可读，但仍有字段冲突”。
+2. 删除或降级前端 request 中的 `account_id`，以后端鉴权主体为准。
+3. 统一 quote 过期字段：`quote_expires_at` 与 `ttl_seconds`。
+4. 补充 buy quote 的 `share_price`、`estimated_avg_price`、`potential_payout`、`potential_profit`。
+5. 明确 fee 是否从本金扣除，修正 `estimated_shares` 公式表述。
+6. 明确 RFQ 锁价下 `min_shares_out / min_collateral_out` 的意义，避免滑点误解。
+7. 统一 sell quote 的到账字段命名和展示口径。
+8. trade response 补充 `status`、`quote_id`、`client_trade_id`。
+9. 明确 trade 200、链上异步、链上失败补偿之间的关系。
+10. WS `trade_filled` 补充 `account_id / client_trade_id`，或明确 v1.0 收到即刷新。
+11. 用户侧文案移除 provider / 做市商 / RFQ。
+12. 统一错误码命名，尤其是幂等、provider、chain 相关错误。
+13. 统一 portfolio 字段名：`portfolio_value / open_positions / position_version` 或另一套，不要混用。
+14. 行情接口示例收口到当前 v7.0 范围，扩展盘口放 future。
+15. `/soccer/rfq/matches` 命名或说明需要修正。
+16. 明确 `matches/:matchId/markets` 使用内部 match id，不直接用 provider id。
+17. WS payload 增加 `event_id`，或明确去重规则为 `type + market_id + at`。
+18. 全文统一 `/api/v1/...` 路径前缀。
