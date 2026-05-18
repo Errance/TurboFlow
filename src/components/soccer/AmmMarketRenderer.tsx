@@ -33,8 +33,10 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
   const yesProbabilityTotal = outcomes
     .filter((outcome) => outcome.binarySide === 'yes')
     .reduce((sum, outcome) => sum + outcome.probability, 0)
-  const probabilityTargetSlots = market.type === 'buttonGroup' ? market.probabilityTargetSlots : undefined
-  const probabilityTargetLabel = market.type === 'buttonGroup' ? market.probabilityTargetLabel : undefined
+  const seriesProbability = market.type === 'buttonGroup' ? market.seriesProbability : undefined
+  const targetSlots = seriesProbability?.targetSlots
+  const modelLabel = seriesProbability?.model === 'single-result' ? '唯一结果型' : seriesProbability?.model === 'multi-slot' ? '多名额型' : undefined
+  const coverageTone = seriesProbability?.coverage === 'featured' ? '当前展示候选' : '全量候选'
 
   if (isBinaryFuture) {
     return (
@@ -44,10 +46,11 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
             <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[#E85A7E]">系列赛 · 二元子市场</span>
             <span>每个候选独立结算；是 + 否在结算上严格互补</span>
             <span>
-              YES 合计 {formatProbability(yesProbabilityTotal)}
-              {probabilityTargetSlots ? ` / 目标 ${formatProbability(probabilityTargetSlots)}` : ''}
+              已展示 YES 合计 {formatProbability(yesProbabilityTotal)}
+              {targetSlots ? ` / 目标 ${formatProbability(targetSlots)}` : ''}
             </span>
-            {probabilityTargetLabel && <span>{probabilityTargetLabel}</span>}
+            {modelLabel && <span>{modelLabel}</span>}
+            {seriesProbability && <span>{coverageTone}：{seriesProbability.coverageLabel}</span>}
             <span>「否」侧标注「参考价」时，成交以交易面板最新报价为准</span>
           </div>
           <BinaryCandidateGrid

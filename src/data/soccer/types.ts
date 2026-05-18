@@ -131,6 +131,16 @@ export interface ButtonGroupOption {
   isReferencePrice?: boolean
 }
 
+export type SeriesProbabilityModel = 'single-result' | 'multi-slot'
+export type SeriesCandidateCoverage = 'complete' | 'complete-with-other' | 'featured'
+
+export interface SeriesProbabilityMeta {
+  model: SeriesProbabilityModel
+  targetSlots: number
+  coverage: SeriesCandidateCoverage
+  coverageLabel: string
+}
+
 export interface BinaryFutureOption extends ButtonGroupOption {
   side: BinaryFutureSide
   candidate: string
@@ -140,8 +150,7 @@ export interface ButtonGroupMarket extends MarketBase {
   type: 'buttonGroup'
   title: string
   options: ButtonGroupOption[]
-  probabilityTargetSlots?: number
-  probabilityTargetLabel?: string
+  seriesProbability?: SeriesProbabilityMeta
 }
 
 export interface BinaryFutureMarket extends Omit<ButtonGroupMarket, 'options'> {

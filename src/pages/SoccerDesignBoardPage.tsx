@@ -1396,29 +1396,34 @@ function V71SeriesYesNoTab() {
         </div>
 
         <StateCard
-          title="Polymarket 类市场组概率约束"
-          description="冠军不是每个队伍各自一组概率为 1；冠军候选共享同一个市场组，所有候选 YES 合计约等于 100%。多名额市场按名额数合计。"
+          title="全局系列赛市场组概率模型"
+          description="冠军不是唯一需要概率组约束的市场；所有系列赛市场都必须说明模型类型、目标名额和候选覆盖范围。"
         >
-          <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr]">
+          <div className="grid gap-3 xl:grid-cols-[1.15fr_1fr]">
             <div className="space-y-1.5">
               {[
-                ['法国', '18.3%', '是 18.3¢', '否 81.7¢'],
-                ['西班牙', '16.7%', '是 16.7¢', '否 83.3¢'],
-                ['英格兰', '11.4%', '是 11.4¢', '否 88.6¢'],
-                ['巴西', '9.1%', '是 9.1¢', '否 90.9¢'],
-                ['其他候选合计', '44.5%', '多队 YES', '各自 NO'],
-              ].map(([team, probability, yes, no]) => (
-                <div key={team} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px]">
-                  <span className="font-semibold text-[var(--text-primary)]">{team}</span>
-                  <span className="font-mono text-[var(--text-primary)]">{probability}</span>
-                  <span className="rounded bg-emerald-500/15 px-2 py-1 font-semibold text-emerald-300">{yes}</span>
-                  <span className="rounded bg-rose-500/15 px-2 py-1 font-semibold text-rose-300">{no}</span>
+                ['小组第一', '唯一结果型', '目标 1', '全量候选 + 其他球队合计'],
+                ['小组出线', '多名额型', '目标 2', '全量候选 + 其他球队合计'],
+                ['进入8强', '多名额型', '目标 8', '热门候选，显示已展示合计'],
+                ['进入4强', '多名额型', '目标 4', '热门候选，显示已展示合计'],
+                ['进入决赛', '多名额型', '目标 2', '热门候选，显示已展示合计'],
+                ['冠军', '唯一结果型', '目标 1', '热门候选 + 其他球队合计'],
+                ['两回合晋级', '唯一结果型', '目标 1', '两队全量候选'],
+                ['欧冠资格', '多名额型', '目标按赛季规则', '竞争候选，显示已展示合计'],
+                ['降级', '多名额型', '目标 3', '高风险候选，显示已展示合计'],
+              ].map(([market, model, target, coverage]) => (
+                <div key={market} className="grid grid-cols-[0.9fr_0.9fr_0.7fr_1.5fr] items-center gap-2 rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px]">
+                  <span className="font-semibold text-[var(--text-primary)]">{market}</span>
+                  <span className="rounded bg-[#2DD4BF]/10 px-2 py-1 text-[#2DD4BF]">{model}</span>
+                  <span className="font-mono text-[var(--text-primary)]">{target}</span>
+                  <span className="text-[var(--text-secondary)]">{coverage}</span>
                 </div>
               ))}
             </div>
-            <div className="grid gap-2 text-[10px]">
+            <div className="grid gap-2 text-[10px] content-start">
               <SmallState title="唯一结果型" text="冠军、小组第一、两回合晋级：所有候选 YES 合计目标约 100%。" />
               <SmallState title="多名额型" text="小组出线、8强、4强、决赛、欧冠资格、降级：YES 合计目标等于名额数。" />
+              <SmallState title="覆盖范围" text="全量候选、热门候选、其他候选合计必须明确；热门候选只能写已展示 YES 合计。" />
               <SmallState title="RFQ/SIG" text="页面展示组内校验；成交仍以交易面板最新报价为准，不在前端机械调价。" />
             </div>
           </div>

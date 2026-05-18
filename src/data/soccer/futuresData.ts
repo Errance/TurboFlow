@@ -1,4 +1,4 @@
-import type { BetSubject, ButtonGroupMarket, ButtonGroupOption, Market, MarketStatus } from './types'
+import type { BetSubject, ButtonGroupMarket, ButtonGroupOption, Market, MarketStatus, SeriesProbabilityMeta } from './types'
 
 export type FutureMarketGroup = '小组赛' | '淘汰赛' | '冠军' | '晋级' | '赛季结果' | '系列赛'
 
@@ -63,10 +63,18 @@ function buttonMarket(
   title: string,
   options: ButtonGroupOption[],
   status?: MarketStatus,
-  probabilityTargetSlots?: number,
-  probabilityTargetLabel?: string,
+  seriesProbability?: SeriesProbabilityMeta,
 ): ButtonGroupMarket {
-  return { type: 'buttonGroup', title, options, status, probabilityTargetSlots, probabilityTargetLabel }
+  return { type: 'buttonGroup', title, options, status, seriesProbability }
+}
+
+function probabilityMeta(
+  model: SeriesProbabilityMeta['model'],
+  targetSlots: number,
+  coverage: SeriesProbabilityMeta['coverage'],
+  coverageLabel: string,
+): SeriesProbabilityMeta {
+  return { model, targetSlots, coverage, coverageLabel }
 }
 
 /**
@@ -105,11 +113,11 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '小组赛',
         subject: worldCupSubject,
         market: buttonMarket('A组第一', [
-          ...binaryCandidate('mexico', '墨西哥', 2.05),
-          ...binaryCandidate('czechia', '捷克', 3.80),
-          ...binaryCandidate('south-africa', '南非', 5.20),
-          ...binaryCandidate('group-a-other', '其他球队', 8.00),
-        ], undefined, 1, '唯一小组第一：展示候选 YES 合计目标约 100%'),
+          ...binaryCandidate('mexico', '墨西哥', 2.25),
+          ...binaryCandidate('czechia', '捷克', 4.20),
+          ...binaryCandidate('south-africa', '南非', 6.50),
+          ...binaryCandidate('group-a-other', '其他球队', 6.10),
+        ], undefined, probabilityMeta('single-result', 1, 'complete-with-other', 'A 组全量候选，其他球队合并为一行')),
         description: '预测球队是否获得 A 组最终第一名，按小组赛全部比赛结束后的 FIFA 官方排名结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -122,7 +130,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('czechia', '捷克', 2.10, { noOdds: 1.72, isNoReferencePrice: false }),
           ...binaryCandidate('south-africa', '南非', 2.80),
           ...binaryCandidate('group-a-other', '其他球队', 2.45),
-        ], undefined, 2, '小组 2 个出线名额：展示候选 YES 合计目标约 200%'),
+        ], undefined, probabilityMeta('multi-slot', 2, 'complete-with-other', 'A 组 2 个出线名额，其他球队合并为一行')),
         description: '预测球队是否从 A 组晋级淘汰赛，按 FIFA 官方小组出线结果结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -135,7 +143,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('brazil', '巴西', 1.72, { noOdds: 2.10, isNoReferencePrice: false }),
           ...binaryCandidate('argentina', '阿根廷', 1.90),
           ...binaryCandidate('spain', '西班牙', 1.88),
-        ], undefined, 8, '完整赛事 8 个名额：当前展示热门候选 YES 合计'),
+        ], undefined, probabilityMeta('multi-slot', 8, 'featured', '完整赛事 8 个名额，当前仅展示热门候选')),
         description: '预测球队是否进入 8 强，包含常规时间、加时赛和点球大战后的晋级结果；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -148,7 +156,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('brazil', '巴西', 2.35),
           ...binaryCandidate('argentina', '阿根廷', 2.75),
           ...binaryCandidate('spain', '西班牙', 2.65),
-        ], undefined, 4, '完整赛事 4 个名额：当前展示热门候选 YES 合计'),
+        ], undefined, probabilityMeta('multi-slot', 4, 'featured', '完整赛事 4 个名额，当前仅展示热门候选')),
         description: '预测球队是否进入 4 强/半决赛，按四分之一决赛结束后的 FIFA 官方晋级结果结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -161,7 +169,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('argentina', '阿根廷', 3.60, { noOdds: 1.30, isNoReferencePrice: false }),
           ...binaryCandidate('brazil', '巴西', 3.10),
           ...binaryCandidate('spain', '西班牙', 3.05),
-        ], undefined, 2, '完整赛事 2 个决赛名额：当前展示热门候选 YES 合计'),
+        ], undefined, probabilityMeta('multi-slot', 2, 'featured', '完整赛事 2 个决赛名额，当前仅展示热门候选')),
         description: '预测球队是否晋级决赛，按半决赛结束后的官方晋级结果结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -179,7 +187,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('germany', '德国', 19.23),
           ...binaryCandidate('netherlands', '荷兰', 28.57),
           ...binaryCandidate('world-cup-other', '其他球队', 5.62),
-        ], undefined, 1, '冠军唯一结果：全组候选 YES 合计目标约 100%'),
+        ], undefined, probabilityMeta('single-result', 1, 'complete-with-other', '冠军唯一结果，全量候选由热门球队 + 其他球队合并覆盖')),
         description: '预测 2026 FIFA World Cup 最终冠军，按 FIFA 官方冠军结果结算；每个候选有 YES + NO 两侧，同时所有候选 YES 共同组成冠军概率分布，合计目标约 100%。',
         status: 'open',
       },
@@ -200,14 +208,15 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '冠军',
         subject: uclSubject,
         market: buttonMarket('欧冠冠军', [
-          ...binaryCandidate('real-madrid', '皇家马德里', 4.80),
-          ...binaryCandidate('man-city', '曼城', 5.20),
-          ...binaryCandidate('psg', '巴黎圣日耳曼', 6.20),
-          ...binaryCandidate('bayern', '拜仁慕尼黑', 7.20),
-          ...binaryCandidate('arsenal', '阿森纳', 8.80),
-          ...binaryCandidate('inter', '国际米兰', 10.00),
-          ...binaryCandidate('barcelona', '巴塞罗那', 12.50),
-        ], undefined, 1, '冠军唯一结果：全组候选 YES 合计目标约 100%'),
+          ...binaryCandidate('real-madrid', '皇家马德里', 5.10),
+          ...binaryCandidate('man-city', '曼城', 5.50),
+          ...binaryCandidate('psg', '巴黎圣日耳曼', 7.00),
+          ...binaryCandidate('bayern', '拜仁慕尼黑', 8.00),
+          ...binaryCandidate('arsenal', '阿森纳', 9.50),
+          ...binaryCandidate('inter', '国际米兰', 12.50),
+          ...binaryCandidate('barcelona', '巴塞罗那', 16.00),
+          ...binaryCandidate('ucl-other', '其他球队', 9.40),
+        ], undefined, probabilityMeta('single-result', 1, 'complete-with-other', '冠军唯一结果，全量候选由热门球队 + 其他球队合并覆盖')),
         description: '预测本赛季 UEFA Champions League 最终冠军，按官方冠军结果结算；每个候选有 YES + NO 两侧，同时所有候选 YES 共同组成冠军概率分布，合计目标约 100%。',
         status: 'open',
       },
@@ -220,7 +229,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('man-city', '曼城', 2.55, { noOdds: 1.54, isNoReferencePrice: false }),
           ...binaryCandidate('psg', '巴黎圣日耳曼', 2.95),
           ...binaryCandidate('bayern', '拜仁慕尼黑', 3.10),
-        ], undefined, 2, '决赛 2 个名额：当前展示热门候选 YES 合计'),
+        ], undefined, probabilityMeta('multi-slot', 2, 'featured', '决赛 2 个名额，当前仅展示热门候选')),
         description: '预测球队是否进入决赛。该类晋级市场包含加时赛和点球大战结果；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -229,9 +238,9 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '系列赛',
         subject: elClasicoTieSubject,
         market: buttonMarket('两回合系列赛晋级', [
-          ...binaryCandidate('real-madrid', '皇家马德里', 1.92),
-          ...binaryCandidate('barcelona', '巴塞罗那', 1.96),
-        ], undefined, 1, '唯一晋级方：两队 YES 合计目标约 100%'),
+          ...binaryCandidate('real-madrid', '皇家马德里', 1.98),
+          ...binaryCandidate('barcelona', '巴塞罗那', 2.02),
+        ], undefined, probabilityMeta('single-result', 1, 'complete', '两队系列赛全量候选，唯一晋级方')),
         description: '预测两回合淘汰赛最终晋级方。常规时间、加时和点球均按官方晋级结果处理；两队 YES 共同组成唯一晋级方分布，合计目标约 100%。',
         status: 'open',
       },
@@ -252,11 +261,12 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '冠军',
         subject: premierLeagueSubject,
         market: buttonMarket('英超冠军', [
-          ...binaryCandidate('arsenal', '阿森纳', 2.95),
-          ...binaryCandidate('mancity', '曼城', 3.10),
-          ...binaryCandidate('liverpool', '利物浦', 4.40),
-          ...binaryCandidate('chelsea', '切尔西', 8.80),
-        ], undefined, 1, '冠军唯一结果：全组候选 YES 合计目标约 100%'),
+          ...binaryCandidate('arsenal', '阿森纳', 3.20),
+          ...binaryCandidate('mancity', '曼城', 3.40),
+          ...binaryCandidate('liverpool', '利物浦', 4.80),
+          ...binaryCandidate('chelsea', '切尔西', 10.00),
+          ...binaryCandidate('pl-other', '其他球队', 11.70),
+        ], undefined, probabilityMeta('single-result', 1, 'complete-with-other', '冠军唯一结果，全量候选由热门球队 + 其他球队合并覆盖')),
         description: '预测赛季最终冠军，按 Premier League 官方最终积分榜结算；每个候选有 YES + NO 两侧，同时所有候选 YES 共同组成冠军概率分布，合计目标约 100%。',
         status: 'open',
       },
@@ -269,7 +279,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('tottenham', '热刺', 2.70, { noOdds: 1.50, isNoReferencePrice: false }),
           ...binaryCandidate('aston-villa', '阿斯顿维拉', 3.05),
           ...binaryCandidate('man-united', '曼联', 3.40),
-        ], undefined, 4, '欧冠资格名额：当前展示竞争候选 YES 合计'),
+        ], undefined, probabilityMeta('multi-slot', 4, 'featured', '欧冠资格名额按赛季规则确认，当前仅展示竞争候选')),
         description: '预测球队是否获得下赛季欧冠资格，按赛季官方名次和资格规则结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
@@ -282,7 +292,7 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
           ...binaryCandidate('sheffield-united', '谢菲尔德联', 1.88),
           ...binaryCandidate('luton', '卢顿', 2.15),
           ...binaryCandidate('everton', '埃弗顿', 5.40),
-        ], 'upcoming', 3, '降级 3 个名额：当前展示候选 YES 合计'),
+        ], 'upcoming', probabilityMeta('multi-slot', 3, 'featured', '降级 3 个名额，当前仅展示高风险候选')),
         description: '预测球队是否在赛季结束后进入降级区。当前为即将开放状态；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'upcoming',
       },
