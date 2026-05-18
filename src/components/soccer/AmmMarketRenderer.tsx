@@ -30,6 +30,11 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
   // 这里同时看 market 原始 option 和枚举后的 outcome，避免系列赛路径市场回落成「法国 是」/「法国 否」两张旧卡片。
   const hasBinaryOutcomes = outcomes.some((outcome) => outcome.candidate && outcome.binarySide)
   const isBinaryFuture = market.type === 'buttonGroup' && (isBinaryFutureMarket(market) || hasBinaryOutcomes)
+  const yesProbabilityTotal = outcomes
+    .filter((outcome) => outcome.binarySide === 'yes')
+    .reduce((sum, outcome) => sum + outcome.probability, 0)
+  const probabilityTargetSlots = market.type === 'buttonGroup' ? market.probabilityTargetSlots : undefined
+  const probabilityTargetLabel = market.type === 'buttonGroup' ? market.probabilityTargetLabel : undefined
 
   if (isBinaryFuture) {
     return (
@@ -38,6 +43,11 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
           <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-secondary)]">
             <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[#E85A7E]">系列赛 · 二元子市场</span>
             <span>每个候选独立结算；是 + 否在结算上严格互补</span>
+            <span>
+              YES 合计 {formatProbability(yesProbabilityTotal)}
+              {probabilityTargetSlots ? ` / 目标 ${formatProbability(probabilityTargetSlots)}` : ''}
+            </span>
+            {probabilityTargetLabel && <span>{probabilityTargetLabel}</span>}
             <span>「否」侧标注「参考价」时，成交以交易面板最新报价为准</span>
           </div>
           <BinaryCandidateGrid

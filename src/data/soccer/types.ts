@@ -140,6 +140,8 @@ export interface ButtonGroupMarket extends MarketBase {
   type: 'buttonGroup'
   title: string
   options: ButtonGroupOption[]
+  probabilityTargetSlots?: number
+  probabilityTargetLabel?: string
 }
 
 export interface BinaryFutureMarket extends Omit<ButtonGroupMarket, 'options'> {

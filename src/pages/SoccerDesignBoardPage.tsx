@@ -1390,9 +1390,39 @@ function V71SeriesYesNoTab() {
           <div className="grid gap-3 md:grid-cols-3">
             <SmallState title="读法" text="从左到右看：v7.0 单场（或单边）→ v7.1 系列赛 YES + NO 两腿。" />
             <SmallState title="覆盖" text={`页面 5/5；系列赛/赛季命题 ${futureMarketCoverage.length}/${futureMarketCoverage.length} 已结构化为 candidate + YES/NO；持仓状态机 9 态命名复用。`} />
+            <SmallState title="概率组" text="候选内 YES/NO 互补；同一市场组内 YES 按唯一结果或名额数合计。" />
             <SmallState title="原则" text="单场 7/7 只做回归；返佣展示沿用主站，不在足球 Design Board 重画。" />
           </div>
         </div>
+
+        <StateCard
+          title="Polymarket 类市场组概率约束"
+          description="冠军不是每个队伍各自一组概率为 1；冠军候选共享同一个市场组，所有候选 YES 合计约等于 100%。多名额市场按名额数合计。"
+        >
+          <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr]">
+            <div className="space-y-1.5">
+              {[
+                ['法国', '18.3%', '是 18.3¢', '否 81.7¢'],
+                ['西班牙', '16.7%', '是 16.7¢', '否 83.3¢'],
+                ['英格兰', '11.4%', '是 11.4¢', '否 88.6¢'],
+                ['巴西', '9.1%', '是 9.1¢', '否 90.9¢'],
+                ['其他候选合计', '44.5%', '多队 YES', '各自 NO'],
+              ].map(([team, probability, yes, no]) => (
+                <div key={team} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 rounded-lg bg-[var(--bg-control)] px-3 py-2 text-[10px]">
+                  <span className="font-semibold text-[var(--text-primary)]">{team}</span>
+                  <span className="font-mono text-[var(--text-primary)]">{probability}</span>
+                  <span className="rounded bg-emerald-500/15 px-2 py-1 font-semibold text-emerald-300">{yes}</span>
+                  <span className="rounded bg-rose-500/15 px-2 py-1 font-semibold text-rose-300">{no}</span>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-2 text-[10px]">
+              <SmallState title="唯一结果型" text="冠军、小组第一、两回合晋级：所有候选 YES 合计目标约 100%。" />
+              <SmallState title="多名额型" text="小组出线、8强、4强、决赛、欧冠资格、降级：YES 合计目标等于名额数。" />
+              <SmallState title="RFQ/SIG" text="页面展示组内校验；成交仍以交易面板最新报价为准，不在前端机械调价。" />
+            </div>
+          </div>
+        </StateCard>
 
         <div className="space-y-6">
           <ChangeComparisonRow
@@ -1415,13 +1445,14 @@ function V71SeriesYesNoTab() {
             index="02"
             title="系列赛市场卡：单按钮列表 → 候选行 + 是/否双列"
             scope="AmmMarketRenderer / SoccerFuturesPage"
-            summary="v7.0 系列赛市场把每个候选当一个 outcome 单按钮；v7.1 检测 isBinaryFutureMarket 后按候选分组渲染，行内并排「是」「否」两个按钮，是为绿、否为红，参考价单独徽标。"
+            summary="v7.0 系列赛市场把每个候选当一个 outcome 单按钮；v7.1 按候选分组渲染，行内并排「是」「否」两个按钮，并显示 YES 合计与市场组目标。"
             before={<V71OldSeriesMarketPreview />}
             after={<V71NewSeriesMarketPreview />}
             paths={['src/components/soccer/AmmMarketRenderer.tsx', 'src/data/soccer/types.ts']}
             statusTags={['系列赛', '二元子市场', '候选分组']}
             notes={[
               '同一候选下点「是」与点「否」是两次独立 outcome 选择，触发两次独立询价。',
+              '冠军、小组第一等唯一结果型的候选 YES 合计目标约 100%；晋级类按名额数展示目标。',
               '行内显示当前已持「是」与已持「否」份额，避免用户误以为只能持一侧。',
               '小组第一、小组出线、8强、4强、决赛、两回合晋级、资格、降级均走同一套 BinaryCandidateGrid。',
             ]}
@@ -1526,7 +1557,7 @@ function V71SeriesYesNoTab() {
                 ['世界杯路径命题', '6/6', 'A组第一、A组出线、进入8强、进入4强、进入决赛、世界杯冠军。'],
                 ['欧冠路径命题', '3/3', '欧冠冠军、晋级决赛、两回合系列赛晋级。'],
                 ['英超赛季命题', '3/3', '英超冠军、获得欧冠资格、降级球队。'],
-                ['语义约束', '全量适用', '每个候选内 YES/NO 互补，多候选之间相关但合约层独立。'],
+                ['概率组约束', '全量适用', '候选内 YES/NO 互补；市场组内 YES 按唯一结果或名额数合计。'],
               ]}
               compact
             />
