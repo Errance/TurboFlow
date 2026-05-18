@@ -90,6 +90,9 @@ export const useSoccerAmmStore = create<SoccerAmmState>((set, get) => ({
       avgPrice: quote.avgPrice,
       collateral: side === 'buy' ? totalCost : netReturn,
       createdAt: new Date().toISOString(),
+      // v7.1：把 side 维度透传到成交历史，供导出 / 历史列表的 side 列使用
+      binarySide: outcome.binarySide,
+      candidate: outcome.candidate,
     }
 
     if (side === 'buy') {
@@ -125,6 +128,9 @@ export const useSoccerAmmStore = create<SoccerAmmState>((set, get) => ({
                 currentProbability: outcome.probability,
                 realizedPnl: 0,
                 updatedAt: new Date().toISOString(),
+                // v7.1：新建持仓也带 side / candidate 维度，供 Portfolio 分组渲染
+                binarySide: outcome.binarySide,
+                candidate: outcome.candidate,
               },
               ...state.positions,
             ]

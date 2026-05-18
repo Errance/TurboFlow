@@ -113,10 +113,64 @@ interface MarketBase {
   winningSelection?: string
 }
 
+/**
+ * v7.1 增补：系列赛二元子市场 side 维度。仅在系列赛 YES/NO 市场使用；
+ * 单场 7/7 与其他系列赛市场保持 v7.0 形态（不设置 side / candidate / isReferencePrice）。
+ *
+ * - `side`：当前期权属于 YES 或 NO 腿。
+ * - `candidate`：候选结果稳定 id（如 'france'、'brazil'、'newcastle'），用于把同一候选的 YES + NO 分组渲染。
+ * - `isReferencePrice`：true 表示该 option 价格来自互补推导，不是报价方直接下发；UI 必须标注「参考价（成交以最新报价为准）」。
+ */
+export type BinaryFutureSide = 'yes' | 'no'
+
+export interface ButtonGroupOption {
+  label: string
+  odds: number
+  side?: BinaryFutureSide
+  candidate?: string
+  isReferencePrice?: boolean
+}
+
 export interface ButtonGroupMarket extends MarketBase {
   type: 'buttonGroup'
   title: string
-  options: { label: string; odds: number }[]
+  options: ButtonGroupOption[]
+}
+
+/** v7.1：当 buttonGroup 全部 options 都带 side 与 candidate 时，视为系列赛二元子市场。 */
+export function isBinaryFutureMarket(market: ButtonGroupMarket): boolean {
+  return (
+    market.options.length > 0 &&
+    market.options.every((option) => option.side !== undefined && option.candidate !== undefined)
+  )
+}
+
+/** v7.1：把 binary future market 的 options 按 candidate 分组，便于渲染为双价位行。 */
+export interface BinaryFutureCandidateView {
+  candidate: string
+  candidateLabel: string
+  yes?: ButtonGroupOption
+  no?: ButtonGroupOption
+}
+
+export function groupBinaryFutureOptions(market: ButtonGroupMarket): BinaryFutureCandidateView[] {
+  const order: string[] = []
+  const map = new Map<string, BinaryFutureCandidateView>()
+  market.options.forEach((option) => {
+    if (!option.candidate || !option.side) return
+    if (!map.has(option.candidate)) {
+      order.push(option.candidate)
+      map.set(option.candidate, {
+        candidate: option.candidate,
+        candidateLabel: option.label.replace(/\s*(是|否)\s*$/, '').trim(),
+      })
+    }
+    const entry = map.get(option.candidate)
+    if (!entry) return
+    if (option.side === 'yes') entry.yes = option
+    if (option.side === 'no') entry.no = option
+  })
+  return order.map((key) => map.get(key)!).filter(Boolean)
 }
 
 export interface OddsTableMarket extends MarketBase {

@@ -30,6 +30,12 @@ const deltaBoardSections = [
   ['v60-amm-delta', 'v6 → v7 报价交易对比'],
 ]
 
+const v71BoardSections = [
+  ['coverage', '总览'],
+  ['v71-series-yesno', 'v7.0 单场 ↔ v7.1 系列赛 YES/NO'],
+  ['v71-coverage-matrix', 'v7.1 覆盖矩阵'],
+]
+
 const v6ActiveCoverage = [
   ['SoccerPage', '/soccer', '首页 tab、比赛列表、AMM 价格格式切换'],
   ['SoccerMatchPage', '/soccer/match/:matchId', '比赛详情、AmmMarketRenderer、AmmTradePanel、AmmPortfolioPanel'],
@@ -99,9 +105,15 @@ function stopBoardInteraction(event: React.SyntheticEvent) {
   event.stopPropagation()
 }
 
+type BoardTab = 'v6' | 'delta' | 'v71'
+
 export default function SoccerDesignBoardPage() {
-  const [activeBoardTab, setActiveBoardTab] = useState<'v6' | 'delta'>('delta')
-  const currentBoardSections = activeBoardTab === 'v6' ? v6BoardSections : deltaBoardSections
+  const [activeBoardTab, setActiveBoardTab] = useState<BoardTab>('v71')
+  const currentBoardSections = activeBoardTab === 'v6'
+    ? v6BoardSections
+    : activeBoardTab === 'v71'
+      ? v71BoardSections
+      : deltaBoardSections
 
   return (
     <div
@@ -121,6 +133,15 @@ export default function SoccerDesignBoardPage() {
             <Metric label="本期盘口" value="7" />
             <Metric label="赛事级市场" value={String(futureMarketCoverage.length)} />
             <Metric label="待确认边界" value={String(excludedCoverage.length)} />
+          </div>
+        ) : activeBoardTab === 'v71' ? (
+          <div className="mt-4 grid gap-2 md:grid-cols-6">
+            <Metric label="v7.1 变更项" value="6/6" />
+            <Metric label="页面区域" value="5/5" />
+            <Metric label="单场市场" value="7/7 不动" />
+            <Metric label="系列赛 mock 演示门槛" value="2/11" />
+            <Metric label="系列赛上线门槛" value="11/11" />
+            <Metric label="持仓状态机" value="9 态 复用" />
           </div>
         ) : (
           <div className="mt-4 grid gap-2 md:grid-cols-6">
@@ -146,14 +167,15 @@ export default function SoccerDesignBoardPage() {
             本页以两个 tab 组织：v6.0 基线用于保留 AMM 语境；v6.0 → v7.0 对比用于核对报价交易改动，且不把串关、Cash Out 等历史能力写成永久删除。
           </p>
         </div>
-        <div className="mt-5 grid gap-2 md:grid-cols-2">
+        <div className="mt-5 grid gap-2 md:grid-cols-3">
           {[
+            ['v71', 'v7.0 单场 ↔ v7.1 系列赛 YES/NO', '系列赛/冠军与晋级每个候选新增 YES + NO 两腿；单场 7/7 不动。'],
             ['delta', 'v6.0 → v7.0 报价交易对比', '只展示从 AMM 切到短时有效报价后真实变化的 UI 和产品语义。'],
             ['v6', 'v6.0 AMM 基线', '上一版 AMM 主流程、页面、组件、状态、价格和结算语境。'],
           ].map(([id, label, description]) => (
             <button
               key={id}
-              onClick={() => setActiveBoardTab(id as 'v6' | 'delta')}
+              onClick={() => setActiveBoardTab(id as BoardTab)}
               className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                 activeBoardTab === id
                   ? 'border-[#2DD4BF]/40 bg-[#2DD4BF]/10 text-[#2DD4BF]'
@@ -179,6 +201,8 @@ export default function SoccerDesignBoardPage() {
 
       {activeBoardTab === 'v6' ? (
         <V6FullDesignBoardTab />
+      ) : activeBoardTab === 'v71' ? (
+        <V71SeriesYesNoTab />
       ) : (
         <>
       <BoardSection id="v60-amm-delta" title="v6.0 AMM → v7.0 报价交易 UI 变更对比" description="本区只展示用户能看到的界面变化。每行左侧是 v6 AMM 基线，右侧是 v7 报价交易目标状态，下方只写可见变化点。">
@@ -1349,6 +1373,442 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
       <p className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{value}</p>
     </div>
+  )
+}
+
+// =================== v7.1 系列赛 YES/NO 比对面板 ===================
+
+function V71SeriesYesNoTab() {
+  return (
+    <>
+      <BoardSection
+        id="v71-series-yesno"
+        title="v7.0 单场 ↔ v7.1 系列赛 YES/NO 对比"
+        description="只展示系列赛/冠军与晋级类市场（11 类）从单边改为 YES + NO 两腿后的可见变化；单场 7/7 完全不动，本 tab 不再罗列。"
+      >
+        <div className="rounded-2xl border border-[#E85A7E]/25 bg-[#E85A7E]/5 p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <SmallState title="读法" text="从左到右看：v7.0 单场（或单边）→ v7.1 系列赛 YES + NO 两腿。" />
+            <SmallState title="覆盖" text="页面 5/5；系列赛市场 mock 演示门槛 ≥ 2/11，上线门槛 11/11；持仓状态机 9 态命名复用。" />
+            <SmallState title="原则" text="单场 7/7 只做回归；返佣展示沿用主站，不在足球 Design Board 重画。" />
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <ChangeComparisonRow
+            index="01"
+            title="首页系列赛入口卡片：单价 → YES + NO 双价位"
+            scope="SoccerPage / 系列赛入口卡"
+            summary="v7.0 首页系列赛入口卡仅展示候选 + 报价文案；v7.1 加 「v7.1 系列赛 YES + NO 已开放」徽标与候选行的「是 odds / 否 odds」双价位 mini 预览，NO 侧若为参考价加 * 注脚。"
+            before={<V71OldFuturesEntryPreview />}
+            after={<V71NewFuturesEntryPreview />}
+            paths={['src/pages/SoccerPage.tsx', 'src/data/soccer/futuresData.ts']}
+            statusTags={['首页', '入口卡', 'YES + NO 双价位']}
+            notes={[
+              '徽标只在含 binary 子市场的系列赛卡上出现（mock 演示门槛 ≥ 2/11）。',
+              'NO 侧 odds 在 mock 中按互补推导，带「参考价」星号；上线后报价方直接下发可去掉。',
+              '单场比赛列表卡（MatchListCard）只回归不动。',
+            ]}
+          />
+
+          <ChangeComparisonRow
+            index="02"
+            title="系列赛市场卡：单按钮列表 → 候选行 + 是/否双列"
+            scope="AmmMarketRenderer / SoccerFuturesPage"
+            summary="v7.0 系列赛市场把每个候选当一个 outcome 单按钮；v7.1 检测 isBinaryFutureMarket 后按候选分组渲染，行内并排「是」「否」两个按钮，是为绿、否为红，参考价单独徽标。"
+            before={<V71OldSeriesMarketPreview />}
+            after={<V71NewSeriesMarketPreview />}
+            paths={['src/components/soccer/AmmMarketRenderer.tsx', 'src/data/soccer/types.ts']}
+            statusTags={['系列赛', '二元子市场', '候选分组']}
+            notes={[
+              '同一候选下点「是」与点「否」是两次独立 outcome 选择，触发两次独立询价。',
+              '行内显示当前已持「是」与已持「否」份额，避免用户误以为只能持一侧。',
+              '非 binary 的系列赛市场（如小组出线等）继续走 v7.0 OutcomeGrid。',
+            ]}
+          />
+
+          <ChangeComparisonRow
+            index="03"
+            title="交易面板：单 outcome 文案 → side 徽标 + 参考价提示"
+            scope="AmmTradePanel"
+            summary="v7.0 交易面板只显示 outcome 标题；v7.1 在选中系列赛 outcome 时追加「系列赛 · 是 YES / 否 NO 腿」徽标、参考价徽标、以及「买法国 NO ≠ 买巴西 YES」语义提示。"
+            before={<V71OldTradePanelPreview />}
+            after={<V71NewTradePanelPreview />}
+            paths={['src/components/soccer/AmmTradePanel.tsx', 'src/stores/soccerAmmStore.ts']}
+            statusTags={['交易面板', 'side 徽标', '参考价']}
+            notes={[
+              'side 维度由 outcome.binarySide 决定，单场 outcome 不带 side，不显示徽标。',
+              '参考价文案统一为「参考价（成交以最新报价为准）」，与 PRD 5.3、移动端 v7.1 第 5 节一致。',
+              '买/卖（buy/sell）侧的二级切换与 v7.0 完全一致，未做改动。',
+            ]}
+          />
+
+          <ChangeComparisonRow
+            index="04"
+            title="Portfolio：单行列表 → 候选分组 / 是与否分行 / 结算徽标"
+            scope="AmmPortfolioPanel / SoccerMyBetsPage"
+            summary="v7.0 持仓单行展示；v7.1 系列赛持仓按 (subject + market + candidate) 分组，组内「是 YES」与「否 NO」分行展示与卖出；已结算分别标注胜出 / 失败 / Void 退款；不展示净持仓与 YES − NO 合并均价。"
+            before={<V71OldPortfolioPreview />}
+            after={<V71NewPortfolioPreview />}
+            paths={['src/components/soccer/AmmPortfolioPanel.tsx', 'src/data/soccer/ammData.ts']}
+            statusTags={['Portfolio', '四向分组', '结算徽标']}
+            notes={[
+              '同一候选下持有 YES + NO 不阻断，但不展示合并行；UI 不主动建议这种组合。',
+              '只能卖出当前 side 持仓，卖出按钮明示「卖出 是 YES」或「卖出 否 NO」。',
+              '已结算行不再显示「卖出」入口，只保留胜出 / 失败 / Void 退款徽标。',
+              '单场持仓走旧的单行展示，未受影响。',
+            ]}
+          />
+
+          <ChangeComparisonRow
+            index="05"
+            title="成交历史与 CSV：新增 side 列；单场成交 side 为空"
+            scope="AmmPortfolioPanel 成交历史"
+            summary="v7.0 成交历史只有 buy/sell；v7.1 成交历史新增「YES / NO」徽标列（仅系列赛二元子市场出现），并在 CSV 导出沿用现有字段、追加 side 列，单场 7/7 成交 side 列为空。"
+            before={<V71OldTradeHistoryPreview />}
+            after={<V71NewTradeHistoryPreview />}
+            paths={['src/components/soccer/AmmPortfolioPanel.tsx', 'src/stores/soccerAmmStore.ts']}
+            statusTags={['成交历史', 'side 列', 'CSV 兼容']}
+            notes={[
+              '旧列（操作、市场、outcome、金额）不删，新增 side 列为可选展示。',
+              'CSV 字段命名与主站现行口径一致：空字符串代表单场 / 非 binary 成交。',
+              '结算流水沿用 v7.0 通道，不在本展板单独展示。',
+            ]}
+          />
+
+          <ChangeComparisonRow
+            index="06"
+            title="返佣展示位：沿用主站，不在足球 Design Board 重画"
+            scope="主站返佣展示位"
+            summary="v7.1 不在足球 RFQ 内重画返佣展示组件；统一沿用主站现有「直推 + 代理（无限级）」展示位，足球 RFQ 仅作为成交计入主站返佣引擎的来源之一。"
+            before={<V71OldRebatePreview />}
+            after={<V71NewRebatePreview />}
+            paths={['（不动足球前端代码；指向主站返佣展示模块）']}
+            statusTags={['返佣', '沿用主站', '不重画']}
+            notes={[
+              'PRD v7.1 第 8 节已明确：足球 RFQ 全部成交计入主站返佣，事件命名 / 归因配置走主站现行规范，本 PRD 不展开。',
+              '若主站对外不展示返佣，则足球 RFQ 也不在用户端暴露。',
+              '本展板只标注「沿用主站返佣展示」，不再绘制返佣组件预览。',
+            ]}
+          />
+        </div>
+      </BoardSection>
+
+      <BoardSection
+        id="v71-coverage-matrix"
+        title="v7.1 覆盖矩阵 + 历史能力沿用 v7.0 口径"
+        description="给出 v7.1 增量在页面 / 市场 / 状态 / 文案 / 历史能力上的覆盖矩阵，以及 mock 演示门槛与上线门槛的区分。"
+      >
+        <div className="grid gap-4 xl:grid-cols-2">
+          <StateCard
+            title="页面 / 组件覆盖 5/5"
+            description="所有页面与组件的 v7.1 增量改造点。"
+          >
+            <CoverageList
+              items={[
+                ['SoccerPage 首页', '01', '系列赛入口卡新增徽标 + YES/NO mini 双价位预览。'],
+                ['SoccerFuturesPage 系列赛', '02', '系列赛市场卡走 BinaryCandidateGrid 双列布局。'],
+                ['SoccerMatchPage 单场详情', '—', '只回归不动，不在 v7.1 改造范围。'],
+                ['SoccerMyBetsPage 持仓主视图', '04 / 05', 'Portfolio 候选分组、YES/NO 分行、side 列。'],
+                ['SoccerDesignBoardPage 自身', '01-06', '本 tab 即覆盖证据，v7.1 默认展示。'],
+              ]}
+              status="active"
+              compact
+            />
+          </StateCard>
+
+          <StateCard
+            title="市场覆盖：演示门槛 2/11 vs 上线门槛 11/11"
+            description="mock 演示门槛仅做产品评审与开发对照；上线必须 11/11 全量改造，两档门槛在 PRD 与审计中硬分开。"
+          >
+            <CoverageList
+              items={[
+                ['世界杯冠军 (wc-winner)', 'mock 演示 ✅', '法国 / 巴西 / 阿根廷 / 西班牙 各 YES + NO 双侧。'],
+                ['英超冠军 (pl-winner)', 'mock 演示 ✅', '阿森纳 / 曼城 / 利物浦 / 切尔西 各 YES + NO 双侧。'],
+                ['其他 9 类系列赛', '上线门槛 11/11', '小组赛 / 淘汰赛 / 资格 / 名次 / 两回合系列赛等，按 PRD 上线门槛全量改造，本期 mock 不演示。'],
+              ]}
+              compact
+            />
+          </StateCard>
+
+          <StateCard
+            title="状态机：沿用 v7.0 第 9 节 9 态命名"
+            description="持仓状态机不引入新名字，只在每个状态上扩展 side 维度。"
+          >
+            <div className="grid gap-2 md:grid-cols-3 text-[10px]">
+              {['Active', 'Selling', 'Reduced', 'Closed', 'Settling', 'SettledWon', 'SettledLost', 'VoidRefunded', 'Suspended'].map((s) => (
+                <div key={s} className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+                  <p className="font-mono text-[var(--text-primary)]">{s}</p>
+                  <p className="mt-1 text-[var(--text-secondary)]">YES / NO 各一条独立状态机，互不共享</p>
+                </div>
+              ))}
+            </div>
+          </StateCard>
+
+          <StateCard
+            title="历史能力沿用 v7.0 口径（不写永久删除）"
+            description="v7.1 不改变 v7.0 第 3.2 节列出的历史能力暂不交付口径；审计章节会做关键词检索校验。"
+          >
+            <CoverageList
+              items={[
+                ['串关 / 多笔单注', '不写永久删除', '后续可设计为组合 RFQ 或独立模块。'],
+                ['Cash Out', '不写永久删除', '当前退出能力通过获取退出报价后卖出实现。'],
+                ['传统投注单 / 我的注单', '不写永久删除', '主视图为 Portfolio；历史兼容形态待确认。'],
+                ['扩展盘口 / 球员 / 角球', '不写永久删除', 'provider 可同步但需白名单过滤。'],
+                ['v4.5 整届赛事预测大赛', '不写永久删除', '不进入当前 v7 RFQ 主流程。'],
+                ['足球 CLOB', '不写永久删除', '独立产品线，不进入当前 RFQ 主流程。'],
+              ]}
+              compact
+              status="excluded"
+            />
+          </StateCard>
+        </div>
+
+        <StateCard
+          title="语义防混用：买「法国 NO」≠ 买「巴西 YES」"
+          description="PRD v7.1 第 3.3 节、移动端 v7.1 第 3 节、本 Design Board 三处文案对齐，audit 会做关键词检索。"
+        >
+          <div className="grid gap-2 md:grid-cols-3 text-[10px]">
+            <div className="rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-300">
+              <p className="font-semibold">法国 YES</p>
+              <p className="mt-1">仅法国夺冠时获利</p>
+            </div>
+            <div className="rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">
+              <p className="font-semibold">法国 NO</p>
+              <p className="mt-1">除法国外任何一队夺冠都获利（覆盖「其余全部分支」）</p>
+            </div>
+            <div className="rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-300">
+              <p className="font-semibold">巴西 YES</p>
+              <p className="mt-1">仅巴西夺冠时获利（只覆盖巴西一支）</p>
+            </div>
+          </div>
+          <p className="mt-3 text-[10px] text-[var(--text-secondary)]">
+            「法国 NO」与「巴西 YES」在 payoff 结构上不等价；产品文档、UI 文案、客服话术按这一口径解释，不得用「巴西 YES」替代「法国 NO」。
+          </p>
+        </StateCard>
+      </BoardSection>
+    </>
+  )
+}
+
+// ---------- v7.1 比对面板的轻量 preview 组件（不直接引用业务组件，仅作 Design Board 文案/结构示意） ----------
+
+function V71OldFuturesEntryPreview() {
+  return (
+    <UiPanel title="v7.0 首页系列赛入口卡">
+      <div className="rounded-lg bg-[var(--bg-control)] px-3 py-2">
+        <p className="text-xs font-semibold text-[var(--text-primary)]">世界杯冠军</p>
+        <p className="mt-1 text-[10px] text-[var(--text-secondary)]">法国 · 报价 / 巴西 · 报价</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71NewFuturesEntryPreview() {
+  return (
+    <UiPanel title="v7.1 首页系列赛入口卡">
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] font-semibold text-[#E85A7E]">v7.1 系列赛 YES + NO 已开放</div>
+        <div className="rounded-lg border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">世界杯冠军</p>
+          <div className="mt-1.5 space-y-1 text-[10px]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[var(--text-primary)]">法国</span>
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">是 5.80</span>
+                <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-300">否 1.21 *</span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[var(--text-primary)]">巴西</span>
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">是 6.20</span>
+                <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-300">否 1.19 *</span>
+              </span>
+            </div>
+            <p className="text-[9px] text-[var(--text-secondary)]">* 否 为参考价（成交以最新报价为准）</p>
+          </div>
+        </div>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71OldSeriesMarketPreview() {
+  return (
+    <UiPanel title="v7.0 系列赛市场卡 · 单按钮列表">
+      <div className="grid gap-2 grid-cols-2">
+        {['法国 5.80', '巴西 6.20', '阿根廷 7.40', '西班牙 8.00'].map((label) => (
+          <div key={label} className="rounded-md border border-[var(--border)] bg-[var(--bg-control)] px-3 py-1.5 text-[10px] text-[var(--text-primary)]">{label}</div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71NewSeriesMarketPreview() {
+  return (
+    <UiPanel title="v7.1 系列赛市场卡 · 候选行 + 是/否双列">
+      <div className="space-y-1.5">
+        {[
+          { name: '法国', yes: '5.80', no: '1.21', ref: true },
+          { name: '巴西', yes: '6.20', no: '1.19', ref: true },
+          { name: '阿根廷', yes: '7.40', no: '1.16', ref: true },
+        ].map((c) => (
+          <div key={c.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-md border border-[#2DD4BF]/20 bg-[#2DD4BF]/5 px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-primary)]">{c.name}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">买入「是」押该候选成立；买入「否」押该候选不成立</p>
+            </div>
+            <div className="min-w-[68px] rounded-md bg-emerald-500/10 px-2.5 py-1 text-center">
+              <p className="text-[10px] font-semibold text-emerald-300">是</p>
+              <p className="text-[10px] font-mono text-[var(--text-primary)]">{c.yes}</p>
+            </div>
+            <div className="min-w-[68px] rounded-md bg-rose-500/10 px-2.5 py-1 text-center">
+              <p className="text-[10px] font-semibold text-rose-300">否 {c.ref && <span className="text-amber-300">参考价</span>}</p>
+              <p className="text-[10px] font-mono text-[var(--text-primary)]">{c.no}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71OldTradePanelPreview() {
+  return (
+    <UiPanel title="v7.0 交易面板 outcome 区">
+      <div className="rounded-lg bg-[var(--bg-control)] p-3">
+        <p className="text-xs font-semibold text-[var(--text-primary)]">世界杯冠军</p>
+        <p className="mt-1 text-sm text-[#2DD4BF]">法国</p>
+        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">FIFA World Cup 2026 · 法国 是否赢得世界杯？</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71NewTradePanelPreview() {
+  return (
+    <UiPanel title="v7.1 交易面板 outcome 区">
+      <div className="rounded-lg bg-[var(--bg-control)] p-3">
+        <p className="text-xs font-semibold text-[var(--text-primary)]">世界杯冠军</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <p className="text-sm text-[#2DD4BF]">法国 否</p>
+          <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-semibold text-rose-300">系列赛 · 否 NO 腿</span>
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">参考价（成交以最新报价为准）</span>
+        </div>
+        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">FIFA World Cup 2026 · 法国 否 是否成立？</p>
+        <p className="mt-2 text-[10px] text-[var(--text-secondary)]">
+          是与否各自一次询价、一次确认；切换 side、修改候选或金额都会让旧报价失效。买「法国 否」≠ 买「巴西 是」，盈亏结构不同。
+        </p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71OldPortfolioPreview() {
+  return (
+    <UiPanel title="v7.0 Portfolio 单行">
+      <div className="space-y-1.5">
+        {['世界杯冠军 · 法国 · 60 份 · 均价 15¢', '英超冠军 · 阿森纳 · 50 份 · 均价 34¢'].map((line) => (
+          <div key={line} className="rounded-md bg-[var(--bg-control)] px-3 py-2 text-[10px] text-[var(--text-primary)]">{line}</div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71NewPortfolioPreview() {
+  return (
+    <UiPanel title="v7.1 Portfolio 候选分组 + YES/NO 分行">
+      <div className="space-y-2">
+        <div className="rounded-md bg-[var(--bg-control)] p-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-[var(--text-primary)]">世界杯冠军 · 法国</p>
+            <span className="rounded-full bg-[#E85A7E]/10 px-2 py-0.5 text-[9px] text-[#E85A7E]">系列赛 二元子市场</span>
+          </div>
+          <div className="mt-1.5 space-y-1.5 text-[10px]">
+            <div className="rounded bg-[var(--bg-card)]/60 px-2 py-1.5">
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-300">是 YES</span>
+              <span className="ml-2 text-[var(--text-secondary)]">60 份 · 均价 15¢ · 卖出</span>
+            </div>
+            <div className="rounded bg-[var(--bg-card)]/60 px-2 py-1.5">
+              <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-semibold text-rose-300">否 NO</span>
+              <span className="ml-2 text-[var(--text-secondary)]">25 份 · 均价 84¢ · 卖出</span>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-md bg-[var(--bg-control)] p-2">
+          <p className="text-xs font-semibold text-[var(--text-primary)]">英超冠军 · 切尔西</p>
+          <div className="mt-1.5 rounded bg-[var(--bg-card)]/60 px-2 py-1.5 text-[10px]">
+            <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-semibold text-rose-300">否 NO</span>
+            <span className="ml-1 rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-300">Void 退款</span>
+            <span className="ml-2 text-[var(--text-secondary)]">18 份 · 已结算</span>
+          </div>
+        </div>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71OldTradeHistoryPreview() {
+  return (
+    <UiPanel title="v7.0 最近成交">
+      <div className="space-y-1">
+        {['买入 世界杯冠军 · 法国 · 9.00 USDT', '卖出 英超冠军 · 阿森纳 · 3.35 USDT'].map((line) => (
+          <div key={line} className="rounded-md bg-[var(--bg-control)] px-3 py-1.5 text-[10px] text-[var(--text-primary)]">{line}</div>
+        ))}
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71NewTradeHistoryPreview() {
+  return (
+    <UiPanel title="v7.1 最近成交（side 列）">
+      <div className="space-y-1 text-[10px]">
+        <div className="flex items-center gap-1.5 rounded-md bg-[var(--bg-control)] px-3 py-1.5">
+          <span className="rounded bg-[#2DD4BF]/15 px-1.5 py-0.5 font-semibold text-[#2DD4BF]">买入</span>
+          <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-300">YES</span>
+          <span className="text-[var(--text-secondary)]">世界杯冠军 · 法国 是</span>
+          <span className="ml-auto font-mono text-[var(--text-primary)]">9.00</span>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-md bg-[var(--bg-control)] px-3 py-1.5">
+          <span className="rounded bg-[#2DD4BF]/15 px-1.5 py-0.5 font-semibold text-[#2DD4BF]">买入</span>
+          <span className="rounded bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-300">NO</span>
+          <span className="text-[var(--text-secondary)]">世界杯冠军 · 法国 否</span>
+          <span className="ml-auto font-mono text-[var(--text-primary)]">21.00</span>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-md bg-[var(--bg-control)] px-3 py-1.5">
+          <span className="rounded bg-[#E85A7E]/15 px-1.5 py-0.5 font-semibold text-[#E85A7E]">卖出</span>
+          <span className="rounded bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-300">NO</span>
+          <span className="text-[var(--text-secondary)]">英超冠军 · 阿森纳 否</span>
+          <span className="ml-auto font-mono text-[var(--text-primary)]">3.35</span>
+        </div>
+        <p className="mt-1 text-[9px] text-[var(--text-secondary)]">CSV 导出沿用现有字段，新增 side 列（YES / NO）；单场 7/7 成交 side 列为空。</p>
+      </div>
+    </UiPanel>
+  )
+}
+
+function V71OldRebatePreview() {
+  return (
+    <UiPanel title="v7.0 返佣展示">
+      <p className="text-[10px] text-[var(--text-secondary)]">沿用主站现有「直推 + 代理（无限级）」返佣展示位，足球前端不自绘返佣组件。</p>
+    </UiPanel>
+  )
+}
+
+function V71NewRebatePreview() {
+  return (
+    <UiPanel title="v7.1 返佣展示（不变）">
+      <p className="text-[10px] text-[var(--text-secondary)]">
+        足球 RFQ 全部成交（含系列赛 YES + NO 双侧）按主站现行规则计入返佣引擎。展示位、事件命名与归因配置走主站规范，本展板不在足球域重画。
+      </p>
+      <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
+        若主站不对外暴露返佣展示，则足球 RFQ 也不在用户端暴露。
+      </p>
+    </UiPanel>
   )
 }
 

@@ -1,10 +1,12 @@
-import type { Market, BetSubject, SoccerMatch } from './types'
+import type { BinaryFutureSide, Market, BetSubject, SoccerMatch } from './types'
 
 export type SoccerAmmPriceFormat = 'probability' | 'european'
 export type SoccerAmmSide = 'buy' | 'sell'
 export type SoccerAmmMarketKind = 'binary' | 'multi'
 export type SoccerAmmSubjectScope = 'match' | 'competition' | 'tie' | 'season'
 export type SoccerAmmMarketStatus = 'open' | 'paused' | 'closed' | 'settled' | 'void'
+/** v7.1：position / trade 结算口径，沿用 v7.0 第 9 节状态机命名。 */
+export type SoccerAmmSettlementResult = 'won' | 'lost' | 'void_refunded'
 
 export interface SoccerAmmSubject {
   scope: SoccerAmmSubjectScope
@@ -31,6 +33,12 @@ export interface SoccerAmmOutcome {
   status: SoccerAmmMarketStatus
   voidRule: string
   delayOrDisputePolicy: string
+  /** v7.1：仅系列赛二元子市场使用；YES / NO 两腿独立成 outcome。 */
+  binarySide?: BinaryFutureSide
+  /** v7.1：候选稳定 id（如 'france'），用于把同一候选的 YES/NO 分组渲染。 */
+  candidate?: string
+  /** v7.1：true 表示该 outcome 价格来自互补推导；UI 必须标注「参考价（成交以最新报价为准）」。 */
+  isReferencePrice?: boolean
 }
 
 export interface SoccerAmmPosition {
@@ -44,6 +52,12 @@ export interface SoccerAmmPosition {
   currentProbability: number
   realizedPnl: number
   updatedAt: string
+  /** v7.1：系列赛持仓所属侧别。 */
+  binarySide?: BinaryFutureSide
+  /** v7.1：系列赛持仓所属候选稳定 id。 */
+  candidate?: string
+  /** v7.1：结算后用于在 Portfolio 与历史中区分胜出 / 失败 / void 退款；undefined 表示未结算。 */
+  settlement?: SoccerAmmSettlementResult
 }
 
 export interface SoccerAmmTrade {
@@ -57,6 +71,9 @@ export interface SoccerAmmTrade {
   collateral: number
   realizedPnl?: number
   createdAt: string
+  /** v7.1：成交所属侧别；导出 / 历史列表新增 `side` 列时取该值。 */
+  binarySide?: BinaryFutureSide
+  candidate?: string
 }
 
 export interface SoccerAmmQuote {
@@ -180,6 +197,12 @@ function groupForScore(label: string): string | undefined {
   return '客胜比分'
 }
 
+interface BinaryMeta {
+  binarySide?: BinaryFutureSide
+  candidate?: string
+  isReferencePrice?: boolean
+}
+
 function baseOutcome(
   subject: SoccerAmmSubject,
   market: Market,
@@ -187,11 +210,13 @@ function baseOutcome(
   odds: number,
   index: number,
   groupLabel?: string,
+  binaryMeta?: BinaryMeta,
 ): SoccerAmmOutcome {
   const probability = probabilityFromEuropeanOdds(odds)
   const liquidity = 12_000 + index * 750 + subject.id.length * 120
+  const sideSuffix = binaryMeta?.binarySide ? `::${binaryMeta.binarySide}` : ''
   return {
-    id: `${subject.id}::${slug(market.title)}::${slug(label)}`,
+    id: `${subject.id}::${slug(market.title)}::${slug(label)}${sideSuffix}`,
     subject,
     marketTitle: market.title,
     marketKind: marketKind(market),
@@ -206,6 +231,9 @@ function baseOutcome(
     status: market.status === 'suspended' || market.status === 'upcoming' ? 'paused' : market.status === 'settled' ? 'settled' : market.status === 'void' || market.status === 'cancelled' ? 'void' : 'open',
     voidRule: '官方取消、市场失效或结算来源无法确认时按 void 规则退回可兑付价值。',
     delayOrDisputePolicy: 'VAR、延期、腰斩、官方改判或资格递补时进入暂停或等待官方确认。',
+    binarySide: binaryMeta?.binarySide,
+    candidate: binaryMeta?.candidate,
+    isReferencePrice: binaryMeta?.isReferencePrice,
   }
 }
 
@@ -214,12 +242,18 @@ export function enumerateAmmMarketOutcomes(
   subject: SoccerAmmSubject,
 ): SoccerAmmOutcome[] {
   const outcomes: SoccerAmmOutcome[] = []
-  const push = (label: string, odds: number, groupLabel?: string) => {
-    outcomes.push(baseOutcome(subject, market, label, odds, outcomes.length, groupLabel))
+  const push = (label: string, odds: number, groupLabel?: string, binaryMeta?: BinaryMeta) => {
+    outcomes.push(baseOutcome(subject, market, label, odds, outcomes.length, groupLabel, binaryMeta))
   }
 
   switch (market.type) {
     case 'buttonGroup':
+      market.options.forEach((option) => push(option.label, option.odds, undefined, {
+        binarySide: option.side,
+        candidate: option.candidate,
+        isReferencePrice: option.isReferencePrice,
+      }))
+      break
     case 'rangeButtons':
       market.options.forEach((option) => push(option.label, option.odds))
       break
@@ -299,16 +333,215 @@ export const seedAmmPositions: SoccerAmmPosition[] = [
     realizedPnl: 0,
     updatedAt: new Date(now - 1000 * 60 * 12).toISOString(),
   },
+  // ---- v7.1 系列赛四向持仓样本（buy YES / buy NO / 多候选同 YES / 候选 NO） ----
+  // 1. 法国 YES：典型「看涨」持仓
   {
-    id: 'amm-pos-world-cup-france',
-    outcomeId: 'future-world-cup-2026::世界杯冠军::法国',
+    id: 'amm-pos-wc-france-yes',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::法国-是::yes',
     subjectLabel: 'FIFA World Cup 2026',
     marketTitle: '世界杯冠军',
-    outcomeLabel: '法国',
+    outcomeLabel: '法国 是',
     shares: 60,
     avgPrice: 0.15,
     currentProbability: 0.17,
     realizedPnl: 2.8,
     updatedAt: new Date(now - 1000 * 60 * 40).toISOString(),
+    binarySide: 'yes',
+    candidate: 'france',
+  },
+  // 2. 法国 NO：「看跌法国」直接表达，与「买巴西 YES」payoff 不等价
+  {
+    id: 'amm-pos-wc-france-no',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::法国-否::no',
+    subjectLabel: 'FIFA World Cup 2026',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '法国 否',
+    shares: 25,
+    avgPrice: 0.84,
+    currentProbability: 0.83,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 20).toISOString(),
+    binarySide: 'no',
+    candidate: 'france',
+  },
+  // 3. 巴西 YES：演示「多候选 YES 同时持有」组合押注
+  {
+    id: 'amm-pos-wc-brazil-yes',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::巴西-是::yes',
+    subjectLabel: 'FIFA World Cup 2026',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '巴西 是',
+    shares: 30,
+    avgPrice: 0.16,
+    currentProbability: 0.16,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
+    binarySide: 'yes',
+    candidate: 'brazil',
+  },
+  // 4. 阿森纳 NO：英超冠军 NO 侧持仓
+  {
+    id: 'amm-pos-pl-arsenal-no',
+    outcomeId: 'future-premier-league-2026::英超冠军::阿森纳-否::no',
+    subjectLabel: 'Premier League 2025/26',
+    marketTitle: '英超冠军',
+    outcomeLabel: '阿森纳 否',
+    shares: 50,
+    avgPrice: 0.66,
+    currentProbability: 0.65,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 60 * 4).toISOString(),
+    binarySide: 'no',
+    candidate: 'arsenal',
+  },
+  // ---- v7.1 结算样本（胜出 / 失败 / void 退款 各 1） ----
+  // 5. 已结算-胜出：阿根廷 YES 兑付 1
+  {
+    id: 'amm-pos-wc-argentina-yes-settled-won',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::阿根廷-是::yes',
+    subjectLabel: 'FIFA World Cup 2026',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '阿根廷 是',
+    shares: 20,
+    avgPrice: 0.18,
+    currentProbability: 1,
+    realizedPnl: 16.4,
+    updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    binarySide: 'yes',
+    candidate: 'argentina',
+    settlement: 'won',
+  },
+  // 6. 已结算-失败：曼城 YES 兑付 0
+  {
+    id: 'amm-pos-pl-mancity-yes-settled-lost',
+    outcomeId: 'future-premier-league-2026::英超冠军::曼城-是::yes',
+    subjectLabel: 'Premier League 2025/26',
+    marketTitle: '英超冠军',
+    outcomeLabel: '曼城 是',
+    shares: 40,
+    avgPrice: 0.34,
+    currentProbability: 0,
+    realizedPnl: -13.6,
+    updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    binarySide: 'yes',
+    candidate: 'mancity',
+    settlement: 'lost',
+  },
+  // 7. 已结算-void 退款：切尔西 NO（赛季因不可抗力宣告无效）
+  {
+    id: 'amm-pos-pl-chelsea-no-void',
+    outcomeId: 'future-premier-league-2026::英超冠军::切尔西-否::no',
+    subjectLabel: 'Premier League 2025/26',
+    marketTitle: '英超冠军',
+    outcomeLabel: '切尔西 否',
+    shares: 18,
+    avgPrice: 0.88,
+    currentProbability: 0.88,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    binarySide: 'no',
+    candidate: 'chelsea',
+    settlement: 'void_refunded',
+  },
+]
+
+// ---- v7.1 系列赛异常样本（报价过期 / 暂停 / 不可卖各 1）：UI 通过 mock outcomeId 触发对应文案 ----
+export type SoccerAmmExceptionKind = 'quote_expired' | 'market_suspended' | 'not_sellable'
+
+export interface SoccerAmmExceptionSample {
+  id: string
+  kind: SoccerAmmExceptionKind
+  candidate: string
+  binarySide: BinaryFutureSide
+  marketTitle: string
+  outcomeLabel: string
+  message: string
+}
+
+export const seedAmmExceptionSamples: SoccerAmmExceptionSample[] = [
+  {
+    id: 'exc-quote-expired-fr-yes',
+    kind: 'quote_expired',
+    candidate: 'france',
+    binarySide: 'yes',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '法国 是',
+    message: '报价已过期，请重新获取',
+  },
+  {
+    id: 'exc-market-suspended-br-no',
+    kind: 'market_suspended',
+    candidate: 'brazil',
+    binarySide: 'no',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '巴西 否',
+    message: '市场暂停，恢复后重新询价',
+  },
+  {
+    id: 'exc-not-sellable-arsenal-no',
+    kind: 'not_sellable',
+    candidate: 'arsenal',
+    binarySide: 'no',
+    marketTitle: '英超冠军',
+    outcomeLabel: '阿森纳 否',
+    message: '当前暂无法提供退出报价',
+  },
+]
+
+// ---- v7.1 系列赛四向成交历史样本（导出 / 历史列表新增 `side` 列时取 binarySide） ----
+export const seedAmmTradeHistory: SoccerAmmTrade[] = [
+  {
+    id: 'amm-trd-wc-france-yes-buy',
+    side: 'buy',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::法国-是::yes',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '法国 是',
+    shares: 60,
+    avgPrice: 0.15,
+    collateral: 9,
+    createdAt: new Date(now - 1000 * 60 * 60 * 6).toISOString(),
+    binarySide: 'yes',
+    candidate: 'france',
+  },
+  {
+    id: 'amm-trd-wc-france-yes-sell',
+    side: 'sell',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::法国-是::yes',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '法国 是',
+    shares: 10,
+    avgPrice: 0.18,
+    collateral: 1.8,
+    realizedPnl: 0.3,
+    createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString(),
+    binarySide: 'yes',
+    candidate: 'france',
+  },
+  {
+    id: 'amm-trd-wc-france-no-buy',
+    side: 'buy',
+    outcomeId: 'future-world-cup-2026::世界杯冠军::法国-否::no',
+    marketTitle: '世界杯冠军',
+    outcomeLabel: '法国 否',
+    shares: 25,
+    avgPrice: 0.84,
+    collateral: 21,
+    createdAt: new Date(now - 1000 * 60 * 60 * 5).toISOString(),
+    binarySide: 'no',
+    candidate: 'france',
+  },
+  {
+    id: 'amm-trd-pl-arsenal-no-sell',
+    side: 'sell',
+    outcomeId: 'future-premier-league-2026::英超冠军::阿森纳-否::no',
+    marketTitle: '英超冠军',
+    outcomeLabel: '阿森纳 否',
+    shares: 5,
+    avgPrice: 0.67,
+    collateral: 3.35,
+    realizedPnl: 0.05,
+    createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString(),
+    binarySide: 'no',
+    candidate: 'arsenal',
   },
 ]

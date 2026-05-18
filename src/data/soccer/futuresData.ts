@@ -1,4 +1,4 @@
-import type { BetSubject, ButtonGroupMarket, Market, MarketStatus } from './types'
+import type { BetSubject, ButtonGroupMarket, ButtonGroupOption, Market, MarketStatus } from './types'
 
 export type FutureMarketGroup = '小组赛' | '淘汰赛' | '冠军' | '晋级' | '赛季结果' | '系列赛'
 
@@ -59,8 +59,28 @@ const elClasicoTieSubject: BetSubject = {
   resolutionSource: 'UEFA 官方淘汰赛结果',
 }
 
-function buttonMarket(title: string, options: Array<{ label: string; odds: number }>, status?: MarketStatus): ButtonGroupMarket {
+function buttonMarket(title: string, options: ButtonGroupOption[], status?: MarketStatus): ButtonGroupMarket {
   return { type: 'buttonGroup', title, options, status }
+}
+
+/**
+ * v7.1：把候选 odds 展开为 YES + NO 两 option。
+ * NO 侧 odds 按互补 1/(1 - implied_yes) 推导，并标 isReferencePrice=true，
+ * 与 PRD 5.3「展示尽量与同类预测市场对齐；成交以最新报价为准」口径一致。
+ *
+ * SIG 上线后若 NO 侧由报价方直接下发，去掉 isReferencePrice 即可，无需改 UI。
+ */
+function binaryCandidate(candidate: string, candidateLabel: string, yesOdds: number, options?: {
+  noOdds?: number
+  isNoReferencePrice?: boolean
+}): ButtonGroupOption[] {
+  const yesImplied = 1 / yesOdds
+  const noImplied = Math.max(0.02, Math.min(0.98, 1 - yesImplied))
+  const noOdds = options?.noOdds ?? +(1 / noImplied).toFixed(2)
+  return [
+    { label: `${candidateLabel} 是`, odds: +yesOdds.toFixed(2), candidate, side: 'yes' },
+    { label: `${candidateLabel} 否`, odds: +noOdds.toFixed(2), candidate, side: 'no', isReferencePrice: options?.isNoReferencePrice ?? true },
+  ]
 }
 
 export const futuresCompetitions: SoccerFutureCompetition[] = [
@@ -131,12 +151,12 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '冠军',
         subject: worldCupSubject,
         market: buttonMarket('世界杯冠军', [
-          { label: '法国', odds: 5.80 },
-          { label: '巴西', odds: 6.20 },
-          { label: '阿根廷', odds: 7.40 },
-          { label: '西班牙', odds: 8.00 },
+          ...binaryCandidate('france', '法国', 5.80),
+          ...binaryCandidate('brazil', '巴西', 6.20),
+          ...binaryCandidate('argentina', '阿根廷', 7.40),
+          ...binaryCandidate('spain', '西班牙', 8.00),
         ]),
-        description: '预测 2026 FIFA World Cup 最终冠军，按 FIFA 官方冠军结果结算。',
+        description: '预测 2026 FIFA World Cup 最终冠军，按 FIFA 官方冠军结果结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
     ],
@@ -207,12 +227,12 @@ export const futuresCompetitions: SoccerFutureCompetition[] = [
         group: '冠军',
         subject: premierLeagueSubject,
         market: buttonMarket('英超冠军', [
-          { label: '阿森纳', odds: 2.95 },
-          { label: '曼城', odds: 3.10 },
-          { label: '利物浦', odds: 4.40 },
-          { label: '切尔西', odds: 8.80 },
+          ...binaryCandidate('arsenal', '阿森纳', 2.95),
+          ...binaryCandidate('mancity', '曼城', 3.10),
+          ...binaryCandidate('liverpool', '利物浦', 4.40),
+          ...binaryCandidate('chelsea', '切尔西', 8.80),
         ]),
-        description: '预测赛季最终冠军，按 Premier League 官方最终积分榜结算。',
+        description: '预测赛季最终冠军，按 Premier League 官方最终积分榜结算；每个候选按 YES + NO 两个二元子市场独立结算。',
         status: 'open',
       },
       {

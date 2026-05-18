@@ -5,6 +5,7 @@ import { futuresCompetitions } from '../data/soccer/futuresData'
 import MatchListCard from '../components/soccer/MatchListCard'
 import { SoccerListSkeleton } from '../components/soccer/SoccerSkeletons'
 import SoccerPriceFormatToggle from '../components/soccer/SoccerPriceFormatToggle'
+import { groupBinaryFutureOptions, isBinaryFutureMarket } from '../data/soccer/types'
 
 type SoccerView = 'matches' | 'futures'
 
@@ -267,18 +268,50 @@ export default function SoccerPage() {
                       </div>
                     ))}
                   </div>
+                  {competition.markets.some((item) => isBinaryFutureMarket(item.market)) && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#E85A7E]/10 px-2.5 py-1 text-[10px] font-semibold text-[#E85A7E]">
+                      v7.1 系列赛 YES + NO 已开放
+                    </div>
+                  )}
                   <div className="mt-4 space-y-2">
-                    {competition.markets.slice(0, 2).map((item) => (
-                      <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-[var(--text-primary)]">{item.market.title}</span>
-                          <span className="text-[10px] text-[var(--text-secondary)]">{item.group}</span>
+                    {competition.markets.slice(0, 2).map((item) => {
+                      const isBinary = isBinaryFutureMarket(item.market)
+                      const candidates = isBinary ? groupBinaryFutureOptions(item.market).slice(0, 2) : []
+                      return (
+                        <div key={item.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-control)] px-3 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold text-[var(--text-primary)]">{item.market.title}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)]">{item.group}</span>
+                          </div>
+                          {isBinary && candidates.length > 0 ? (
+                            <div className="mt-1.5 space-y-1">
+                              {candidates.map((entry) => (
+                                <div key={entry.candidate} className="flex items-center justify-between gap-2 text-[10px]">
+                                  <span className="text-[var(--text-primary)]">{entry.candidateLabel}</span>
+                                  <span className="flex items-center gap-1.5 font-mono text-[var(--text-secondary)]">
+                                    {entry.yes && (
+                                      <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">是 {entry.yes.odds.toFixed(2)}</span>
+                                    )}
+                                    {entry.no && (
+                                      <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-300">
+                                        否 {entry.no.odds.toFixed(2)}{entry.no.isReferencePrice && ' *'}
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              ))}
+                              {candidates.some((entry) => entry.no?.isReferencePrice) && (
+                                <p className="text-[9px] text-[var(--text-secondary)]">* 否 为参考价（成交以最新报价为准）</p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">
+                              {item.market.options.slice(0, 2).map((option) => `${option.label} · 报价`).join(' / ')}
+                            </p>
+                          )}
                         </div>
-                        <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">
-                          {item.market.options.slice(0, 2).map((option) => `${option.label} · 报价`).join(' / ')}
-                        </p>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3 text-[10px] text-[var(--text-secondary)]">
                     <span>即时询价 · 关闭：{formatCloseTime(competition.markets[0]?.subject.closesAt)}</span>

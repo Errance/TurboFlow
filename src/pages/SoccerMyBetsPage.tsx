@@ -25,6 +25,9 @@ export default function SoccerMyBetsPage() {
           <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--text-secondary)]">
             这里展示预测持仓、可卖份额、平均成本、退出参考价、已实现和未实现盈亏；传统注单历史兼容形态后续待确认。
           </p>
+          <p className="mt-1 max-w-2xl text-[10px] leading-5 text-[var(--text-secondary)]">
+            v7.1：系列赛/冠军与晋级按候选分组，组内「是 YES / 否 NO」分行展示与卖出，不展示净持仓；结算后分别标注胜出 / 失败 / Void 退款。
+          </p>
         </div>
         <SoccerPriceFormatToggle />
       </div>

@@ -85,8 +85,27 @@ export default function AmmTradePanel() {
 
       <div className="mt-4 rounded-lg bg-[var(--bg-control)] p-3">
         <p className="text-xs font-semibold text-[var(--text-primary)]">{selectedOutcome.marketTitle}</p>
-        <p className="mt-1 text-sm text-[#2DD4BF]">{selectedOutcome.label}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <p className="text-sm text-[#2DD4BF]">{selectedOutcome.label}</p>
+          {selectedOutcome.binarySide && (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              selectedOutcome.binarySide === 'yes'
+                ? 'bg-emerald-500/15 text-emerald-300'
+                : 'bg-rose-500/15 text-rose-300'
+            }`}>
+              系列赛 · {selectedOutcome.binarySide === 'yes' ? '是 YES' : '否 NO'} 腿
+            </span>
+          )}
+          {selectedOutcome.isReferencePrice && (
+            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">参考价（成交以最新报价为准）</span>
+          )}
+        </div>
         <p className="mt-2 text-[10px] leading-5 text-[var(--text-secondary)]">{selectedOutcome.questionTitle}</p>
+        {selectedOutcome.binarySide && (
+          <p className="mt-2 text-[10px] leading-5 text-[var(--text-secondary)]">
+            是与否各自一次询价、一次确认；切换 side、修改候选或金额都会让旧报价失效。买「{selectedOutcome.label.replace(/\s*(是|否)\s*$/, '').trim()} 否」≠ 买其他候选的「是」，盈亏结构不同。
+          </p>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
