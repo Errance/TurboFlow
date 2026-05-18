@@ -3,6 +3,7 @@ import {
   SOCCER_AMM_DUST_THRESHOLD_USDT,
   quoteAmmTrade,
   seedAmmPositions,
+  seedAmmTradeHistory,
   type SoccerAmmOutcome,
   type SoccerAmmPosition,
   type SoccerAmmPriceFormat,
@@ -49,7 +50,7 @@ export const useSoccerAmmStore = create<SoccerAmmState>((set, get) => ({
   side: 'buy',
   priceFormat: persisted?.priceFormat ?? 'probability',
   positions: persisted?.positions ?? seedAmmPositions,
-  trades: persisted?.trades ?? [],
+  trades: persisted?.trades ?? seedAmmTradeHistory,
 
   selectOutcome: (outcome, side = 'buy') => set({ selectedOutcome: outcome, side }),
   clearSelection: () => set({ selectedOutcome: null }),

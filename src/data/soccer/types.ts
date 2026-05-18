@@ -131,14 +131,23 @@ export interface ButtonGroupOption {
   isReferencePrice?: boolean
 }
 
+export interface BinaryFutureOption extends ButtonGroupOption {
+  side: BinaryFutureSide
+  candidate: string
+}
+
 export interface ButtonGroupMarket extends MarketBase {
   type: 'buttonGroup'
   title: string
   options: ButtonGroupOption[]
 }
 
+export interface BinaryFutureMarket extends Omit<ButtonGroupMarket, 'options'> {
+  options: BinaryFutureOption[]
+}
+
 /** v7.1：当 buttonGroup 全部 options 都带 side 与 candidate 时，视为系列赛二元子市场。 */
-export function isBinaryFutureMarket(market: ButtonGroupMarket): boolean {
+export function isBinaryFutureMarket(market: ButtonGroupMarket): market is BinaryFutureMarket {
   return (
     market.options.length > 0 &&
     market.options.every((option) => option.side !== undefined && option.candidate !== undefined)

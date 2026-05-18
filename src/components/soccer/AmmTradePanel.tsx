@@ -2,10 +2,14 @@ import { useMemo, useState } from 'react'
 import {
   SOCCER_AMM_DUST_THRESHOLD_USDT,
   europeanOddsFromProbability,
+  enumerateAmmMarketOutcomes,
   formatAmmPrice,
   formatImpliedProbability,
   formatProbability,
+  formatSharePrice,
+  subjectFromBetSubject,
 } from '../../data/soccer/ammData'
+import { futureMarkets } from '../../data/soccer/futuresData'
 import { useSoccerAmmStore } from '../../stores/soccerAmmStore'
 import { useWalletStore } from '../../stores/walletStore'
 
@@ -18,6 +22,7 @@ export default function AmmTradePanel() {
   const side = useSoccerAmmStore((state) => state.side)
   const setSide = useSoccerAmmStore((state) => state.setSide)
   const quote = useSoccerAmmStore((state) => state.quote)
+  const selectOutcome = useSoccerAmmStore((state) => state.selectOutcome)
   const executeTrade = useSoccerAmmStore((state) => state.executeTrade)
   const positions = useSoccerAmmStore((state) => state.positions)
   const balance = useWalletStore((state) => state.balance)
@@ -31,6 +36,24 @@ export default function AmmTradePanel() {
     () => quote(quoteValue, quoteMode),
     [quote, quoteValue, quoteMode],
   )
+  const counterpartOutcome = useMemo(() => {
+    if (!selectedOutcome?.binarySide || !selectedOutcome.candidate) return undefined
+    const marketItem = futureMarkets.find((item) => (
+      item.subject.subjectId === selectedOutcome.subject.id &&
+      item.market.title === selectedOutcome.marketTitle
+    ))
+    if (!marketItem) return undefined
+    const outcomes = enumerateAmmMarketOutcomes(
+      marketItem.market,
+      subjectFromBetSubject(marketItem.subject),
+    )
+    return outcomes.find((outcome) => (
+      outcome.candidate === selectedOutcome.candidate &&
+      outcome.binarySide &&
+      outcome.binarySide !== selectedOutcome.binarySide
+    ))
+  }, [selectedOutcome])
+  const binaryOutcomeLabel = selectedOutcome?.binarySide === 'no' ? 'No' : 'Yes'
 
   const sellAll = () => {
     if (!position) return
@@ -50,6 +73,12 @@ export default function AmmTradePanel() {
     } else {
       setSharesInput('')
     }
+  }
+
+  const switchBinarySide = () => {
+    if (!counterpartOutcome) return
+    selectOutcome(counterpartOutcome, 'buy')
+    setSharesInput('')
   }
 
   if (!selectedOutcome) {
@@ -105,6 +134,15 @@ export default function AmmTradePanel() {
           <p className="mt-2 text-[10px] leading-5 text-[var(--text-secondary)]">
             是与否各自一次询价、一次确认；切换 side、修改候选或金额都会让旧报价失效。买「{selectedOutcome.label.replace(/\s*(是|否)\s*$/, '').trim()} 否」≠ 买其他候选的「是」，盈亏结构不同。
           </p>
+        )}
+        {selectedOutcome.binarySide && counterpartOutcome && (
+          <button
+            type="button"
+            onClick={switchBinarySide}
+            className="mt-2 rounded-md bg-[var(--bg-card)] px-2 py-1 text-[10px] font-semibold text-[#2DD4BF] hover:text-[#5EEAD4]"
+          >
+            切换到同候选 {counterpartOutcome.binarySide === 'yes' ? 'YES 是' : 'NO 否'}
+          </button>
         )}
       </div>
 
@@ -177,7 +215,7 @@ export default function AmmTradePanel() {
       )}
 
       <div className="mt-4 space-y-2 rounded-lg border border-[var(--border)] p-3 text-xs">
-        <QuoteRow label="当前概率 / 份额价格" value={`${formatProbability(selectedOutcome.probability)} / Buy Yes ${formatAmmPrice(selectedOutcome.probability, 'probability')} / 欧赔 ${europeanOddsFromProbability(selectedOutcome.probability).toFixed(2)}`} />
+        <QuoteRow label="当前概率 / 份额价格" value={`${formatProbability(selectedOutcome.probability)} / Buy ${binaryOutcomeLabel} ${formatSharePrice(selectedOutcome.probability)} / 欧赔 ${europeanOddsFromProbability(selectedOutcome.probability).toFixed(2)}`} />
         <QuoteRow label={side === 'buy' ? '买入报价' : '退出报价'} value={currentQuote ? `${formatImpliedProbability(currentQuote.avgPrice)} / ${formatAmmPrice(currentQuote.avgPrice, 'probability')} / 欧赔 ${europeanOddsFromProbability(currentQuote.avgPrice).toFixed(2)}` : '--'} />
         <QuoteRow label={side === 'buy' ? '预估获得份额' : '预计收回金额'} value={currentQuote ? (side === 'buy' ? `${currentQuote.shares.toFixed(4)} 份` : `${Math.max(0, currentQuote.collateral - currentQuote.fee).toFixed(2)} USDT`) : '--'} />
         <QuoteRow label="报价变化" value={currentQuote ? formatProbability(currentQuote.providerSpread) : '--'} warning={!!currentQuote && currentQuote.providerSpread > 0.05} />

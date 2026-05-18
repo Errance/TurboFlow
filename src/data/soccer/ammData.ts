@@ -162,11 +162,20 @@ export function subjectFromBetSubject(subject: BetSubject): SoccerAmmSubject {
 
 function marketKind(market: Market): SoccerAmmMarketKind {
   if (market.type === 'oddsTable') return 'binary'
+  if (market.type === 'buttonGroup' && market.options.every((option) => option.side && option.candidate)) return 'binary'
   if (market.type === 'buttonGroup' && market.options.length === 2) return 'binary'
   return 'multi'
 }
 
 function questionFor(marketTitle: string, label: string, subjectLabel: string): string {
+  const baseLabel = label.replace(/\s*(是|否)\s*$/, '').trim()
+  const binarySide = label.endsWith(' 否') ? 'no' : label.endsWith(' 是') ? 'yes' : undefined
+  if (binarySide) {
+    if (marketTitle.includes('冠军')) return `${baseLabel} ${binarySide === 'yes' ? '是否赢得' : '是否不会赢得'}${marketTitle.includes('世界杯') ? '世界杯' : marketTitle}？`
+    if (marketTitle.includes('降级')) return `${baseLabel} ${binarySide === 'yes' ? '是否降级' : '是否不会降级'}？`
+    if (marketTitle.includes('第一')) return `${baseLabel} ${binarySide === 'yes' ? '是否获得' : '是否不会获得'}「${marketTitle}」？`
+    return `${baseLabel} ${binarySide === 'yes' ? '是否达成' : '是否不会达成'}「${marketTitle}」？`
+  }
   if (marketTitle === '胜平负') return `${subjectLabel} 的全场赛果是否为「${label}」？`
   if (marketTitle === '开球权') return `${subjectLabel} 是否由「${label}」先开球？`
   if (marketTitle === '大小球') return `${subjectLabel} 全场总进球是否为「${label}」？`
@@ -333,6 +342,63 @@ export const seedAmmPositions: SoccerAmmPosition[] = [
     realizedPnl: 0,
     updatedAt: new Date(now - 1000 * 60 * 12).toISOString(),
   },
+  // ---- v7.1 非冠军阶段路径样本（出线 / 8强 / 两回合晋级 / 降级） ----
+  {
+    id: 'amm-pos-wc-mexico-qualify-no',
+    outcomeId: 'future-world-cup-2026::a组出线::墨西哥-否::no',
+    subjectLabel: 'FIFA World Cup 2026',
+    marketTitle: 'A组出线',
+    outcomeLabel: '墨西哥 否',
+    shares: 42,
+    avgPrice: 0.29,
+    currentProbability: 0.31,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 18).toISOString(),
+    binarySide: 'no',
+    candidate: 'mexico',
+  },
+  {
+    id: 'amm-pos-wc-france-quarterfinal-yes',
+    outcomeId: 'future-world-cup-2026::进入8强::法国-是::yes',
+    subjectLabel: 'FIFA World Cup 2026',
+    marketTitle: '进入8强',
+    outcomeLabel: '法国 是',
+    shares: 74,
+    avgPrice: 0.54,
+    currentProbability: 0.56,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 52).toISOString(),
+    binarySide: 'yes',
+    candidate: 'france',
+  },
+  {
+    id: 'amm-pos-ucl-real-advance-yes',
+    outcomeId: 'future-ucl-real-barca-tie::两回合系列赛晋级::皇家马德里-是::yes',
+    subjectLabel: '皇家马德里 vs 巴塞罗那 · 两回合系列赛',
+    marketTitle: '两回合系列赛晋级',
+    outcomeLabel: '皇家马德里 是',
+    shares: 55,
+    avgPrice: 0.52,
+    currentProbability: 0.52,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 64).toISOString(),
+    binarySide: 'yes',
+    candidate: 'real-madrid',
+  },
+  {
+    id: 'amm-pos-pl-burnley-relegation-no',
+    outcomeId: 'future-premier-league-2026::降级球队::伯恩利-否::no',
+    subjectLabel: 'Premier League 2025/26',
+    marketTitle: '降级球队',
+    outcomeLabel: '伯恩利 否',
+    shares: 36,
+    avgPrice: 0.42,
+    currentProbability: 0.42,
+    realizedPnl: 0,
+    updatedAt: new Date(now - 1000 * 60 * 82).toISOString(),
+    binarySide: 'no',
+    candidate: 'burnley',
+  },
   // ---- v7.1 系列赛四向持仓样本（buy YES / buy NO / 多候选同 YES / 候选 NO） ----
   // 1. 法国 YES：典型「看涨」持仓
   {
@@ -490,6 +556,58 @@ export const seedAmmExceptionSamples: SoccerAmmExceptionSample[] = [
 
 // ---- v7.1 系列赛四向成交历史样本（导出 / 历史列表新增 `side` 列时取 binarySide） ----
 export const seedAmmTradeHistory: SoccerAmmTrade[] = [
+  {
+    id: 'amm-trd-wc-france-quarterfinal-yes-buy',
+    side: 'buy',
+    outcomeId: 'future-world-cup-2026::进入8强::法国-是::yes',
+    marketTitle: '进入8强',
+    outcomeLabel: '法国 是',
+    shares: 74,
+    avgPrice: 0.54,
+    collateral: 39.96,
+    createdAt: new Date(now - 1000 * 60 * 70).toISOString(),
+    binarySide: 'yes',
+    candidate: 'france',
+  },
+  {
+    id: 'amm-trd-wc-mexico-qualify-no-buy',
+    side: 'buy',
+    outcomeId: 'future-world-cup-2026::a组出线::墨西哥-否::no',
+    marketTitle: 'A组出线',
+    outcomeLabel: '墨西哥 否',
+    shares: 42,
+    avgPrice: 0.29,
+    collateral: 12.18,
+    createdAt: new Date(now - 1000 * 60 * 60).toISOString(),
+    binarySide: 'no',
+    candidate: 'mexico',
+  },
+  {
+    id: 'amm-trd-ucl-real-advance-yes-buy',
+    side: 'buy',
+    outcomeId: 'future-ucl-real-barca-tie::两回合系列赛晋级::皇家马德里-是::yes',
+    marketTitle: '两回合系列赛晋级',
+    outcomeLabel: '皇家马德里 是',
+    shares: 55,
+    avgPrice: 0.52,
+    collateral: 28.6,
+    createdAt: new Date(now - 1000 * 60 * 48).toISOString(),
+    binarySide: 'yes',
+    candidate: 'real-madrid',
+  },
+  {
+    id: 'amm-trd-pl-burnley-relegation-no-buy',
+    side: 'buy',
+    outcomeId: 'future-premier-league-2026::降级球队::伯恩利-否::no',
+    marketTitle: '降级球队',
+    outcomeLabel: '伯恩利 否',
+    shares: 36,
+    avgPrice: 0.42,
+    collateral: 15.12,
+    createdAt: new Date(now - 1000 * 60 * 36).toISOString(),
+    binarySide: 'no',
+    candidate: 'burnley',
+  },
   {
     id: 'amm-trd-wc-france-yes-buy',
     side: 'buy',
