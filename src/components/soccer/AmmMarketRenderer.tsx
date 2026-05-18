@@ -26,8 +26,10 @@ export default function AmmMarketRenderer({ market, displayTitle, subject }: Pro
 
   if ((market.status ?? 'open') === 'hidden') return null
 
-  // v7.1：系列赛二元子市场走「候选 + 是/否双列」布局；其余市场（含单场 7/7）保持 v7.0 OutcomeGrid。
-  const isBinaryFuture = market.type === 'buttonGroup' && isBinaryFutureMarket(market)
+  // v7.1：只要 outcome 已带 candidate/side，就必须走「候选 + 是/否双列」布局。
+  // 这里同时看 market 原始 option 和枚举后的 outcome，避免系列赛路径市场回落成「法国 是」/「法国 否」两张旧卡片。
+  const hasBinaryOutcomes = outcomes.some((outcome) => outcome.candidate && outcome.binarySide)
+  const isBinaryFuture = market.type === 'buttonGroup' && (isBinaryFutureMarket(market) || hasBinaryOutcomes)
 
   if (isBinaryFuture) {
     return (
@@ -254,7 +256,7 @@ function OutcomeGrid({
             </div>
             {priceFormat === 'probability' && (
               <div className="mt-1 rounded-md bg-[#2DD4BF]/10 px-2 py-1 text-center text-[10px] font-semibold text-[#2DD4BF]">
-                Buy Yes {formatSharePrice(outcome.probability)}
+                Buy {outcome.binarySide === 'no' ? 'No' : 'Yes'} {formatSharePrice(outcome.probability)}
               </div>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--text-secondary)]">
